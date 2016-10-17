@@ -1,0 +1,2 @@
+requests==2.11.1
+http-signature==0.1.4
