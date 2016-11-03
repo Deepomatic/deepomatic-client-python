@@ -388,8 +388,8 @@ class Client(object):
         return self._response_(response, status)
 
 
-    def detect(self, detector_type, img_url, wait = False) :
-        response, status = self.helper.get('/detect/%s/url/?query=%s' % (detector_type, img_url))
+    def detect(self, detector_type, img_url, wait = False):
+        response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, img_url))
         complete_response = self._response_(response, status)
         if wait :
             self.waitForCompletion(complete_response)
