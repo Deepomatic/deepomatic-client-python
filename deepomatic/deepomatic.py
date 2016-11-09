@@ -306,7 +306,7 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
-    def saveObject(self, db, id = None, imgs = [], data = {}):
+    def saveObject(self, db, id = None, imgs = [], data = {}, wait = False):
         for img in imgs:
             if "file" in img:
                 with open(img["file"], "rb") as image_file:
@@ -322,7 +322,10 @@ class Client(object):
             response, status = self.helper.post('/search/dbs/%s/objects' % db, data = obj)
         else:
             response, status = self.helper.put('/search/dbs/%s/objects/%s' % (db, str(id)), data = obj)
-        return self._response_(response, status)
+        complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response), status)
+        return complete_response
 
     #--------------------------------------------------------------------
 
@@ -375,7 +378,7 @@ class Client(object):
 
         response, status = self.helper.get('/search/query/%s/' % db, params = params)
         complete_response = self._response_(response, status)
-        if wait :
+        if wait:
             return self._response_(self.waitForCompletion(complete_response)["data"], status)
         return complete_response
 
