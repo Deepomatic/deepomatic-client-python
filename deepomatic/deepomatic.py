@@ -269,8 +269,10 @@ class Client(object):
     #--------------------------------------------------------------------
 
     def waitForCompletion(self, response) :
-        while self.retrieveTask(response["task_id"])['task']['status'] == "pending" :
-            continue
+        while True:
+            t = self.retrieveTask(response["task_id"])['task']
+            if t['status'] != "pending":
+                return t
 
     #--------------------------------------------------------------------
 
@@ -284,7 +286,7 @@ class Client(object):
         response, status = self.helper.delete('/search/dbs/%s/objects' % db)
         complete_response = self._response_(response, status, [200])
         if wait :
-            self.waitForCompletion(complete_response)
+            return self._response_(self.waitForCompletion(complete_response), status)
         return complete_response
 
     #--------------------------------------------------------------------
@@ -293,7 +295,7 @@ class Client(object):
         response, status = self.helper.delete('/search/dbs/%s' % db)
         complete_response = self._response_(response, status, [200])
         if wait :
-            self.waitForCompletion(complete_response)
+            return self._response_(self.waitForCompletion(complete_response), status)
         return complete_response
 
     #--------------------------------------------------------------------
@@ -340,7 +342,7 @@ class Client(object):
         response, status = self.helper.delete('/search/dbs/%s/objects/%s' % (db, str(id)))
         complete_response = self._response_(response, status)
         if wait :
-            self.waitForCompletion(complete_response)
+            return self._response_(self.waitForCompletion(complete_response), status)
         return complete_response
 
     #--------------------------------------------------------------------
@@ -374,8 +376,7 @@ class Client(object):
         response, status = self.helper.get('/search/query/%s/' % db, params = params)
         complete_response = self._response_(response, status)
         if wait :
-            self.waitForCompletion(complete_response)
-            return self._response_(self.retrieveTask(response["task_id"])['task']['data'], status)
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
         return complete_response
 
     #--------------------------------------------------------------------
@@ -392,7 +393,7 @@ class Client(object):
         response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, img_url))
         complete_response = self._response_(response, status)
         if wait :
-            self.waitForCompletion(complete_response)
+            return self._response_(self.waitForCompletion(complete_response), status)
         return complete_response
 
 
