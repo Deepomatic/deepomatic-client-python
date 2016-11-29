@@ -74,7 +74,7 @@ class ImgsSend(object):
         if bbox is not None:
             self.imgs[0].update({"bbox" : bbox})
 
-    def addObject(self, sourceType, source, polygon = None, bbox = None):
+    def addImg(self, sourceType, source, polygon = None, bbox = None):
         last = len(self.imgs)
         if sourceType == "file":
             with open(source, "rb") as image_file:

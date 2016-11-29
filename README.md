@@ -83,14 +83,14 @@ The bbox class takes 2 points, min and max.
 ```
 
 ### Images
-The class ImageSend, allows you to crate an image with multiple fields :
+The class ImgsSend, allows you to create an image with multiple fields :
 
 ```python
-    imgs = deepomatic.ImageSend(sourceType, source, polygon = None, bbox = None)
+    imgs = deepomatic.ImgsSend(sourceType, source, polygon = None, bbox = None)
 ```
-You can add images by using the addObject method with the same parameters:
+You can add images by using the addImg method with the same parameters:
 ```python
-    imgs.addObject(sourceType, source, polygon = None, bbox = None)
+    imgs.addImg(sourceType, source, polygon = None, bbox = None)
 ```
 You can use ```url```, ```base64``` or ```file``` for the sourceType.
 
@@ -123,7 +123,7 @@ response = client.getDBs()
 
 ## With url
 ```python
-imgs = deepomatic.ImageSend("url", "my_url", polygon = None, bbox = None)
+imgs = deepomatic.ImgsSend("url", "my_url", polygon = None, bbox = None)
 data = { "myData": "beautiful shoes" }
 id = "myID"
 # if id is not specified the server will generate an id returned it in the response
@@ -133,7 +133,7 @@ response = client.saveObject("db_name", imgs, data = data, id = id)
 
 ## With file
 ```python
-imgs = deepomatic.ImageSend("file", "my_file.jpg", polygon = None, bbox = None)
+imgs = deepomatic.ImgsSend("file", "my_file.jpg", polygon = None, bbox = None)
 data = { "myData": "beautiful shoes" }
 id = "myID"
 # if id is not specified the server will generate an id returned it in the response
@@ -196,7 +196,7 @@ requests = deepomatic.BatchObject(dbname)
 url_base = "http://example.com/image_%d.jpg"
 for i in range(10):
     # refer to https://api.deepomatic.com for the content of the requests
-    imgs = deepomatic.ImageSend(url, url_base % i)
+    imgs = deepomatic.ImgsSend(url, url_base % i)
     requests.addObject(imgs, name)
 # if wait = True it will wait until the task is completed
 response = client.batchRequest(requests, wait = True)
