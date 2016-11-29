@@ -93,7 +93,7 @@ def indexing_in_batch(db_name) :
 		obj = deepomatic.ImgsSend("url", url_base % i)
 		batch.addObject(obj, "shoes_%d" % i)
 
-	batch_response = client.batchRequest(batch)
+	batch_response = client.batchRequest(batch, wait = True)
 
 
 	print("DB %s has now %s element." % (db_name, str(client.getCount(db_name)['count'])))
@@ -134,12 +134,12 @@ def perfect_match(db_name) :
 		obj = deepomatic.ImgsSend("url", url_base % name)
 		batch.addObject(obj, name)
 
-	batch_response = client.batchRequest(batch)
+	batch_response = client.batchRequest(batch, wait = True)
 
 	time.sleep(5)
 
 	image_test = "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/perfect_match/query.jpg"
-	search_results = client.search(db_name, {'url' : image_test}, wait = True, perfect_match = True)
+	search_results = client.search(db_name, {'url' : image_test}, wait = True)
 	print("Did we found a perfect match: %s" % str(search_results['hits'][0]['is_perfect_match']))
 
 def detection() :
@@ -150,10 +150,8 @@ def detection() :
 
 	response = client.detect("fashion", "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait = True)
 
-	results_detection = client.retrieveTask(response["task_id"])
-
 	print("Here is what we have deteted:")
-	print(json.dumps(results_detection['task']['data']['boxes'], indent=2, sort_keys=True))
+	print(json.dumps(response['data']['boxes'], indent=2, sort_keys=True))
 
 
 db_and_indexing("demo_1", "demo_2")

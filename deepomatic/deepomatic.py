@@ -235,7 +235,7 @@ class HTTPHelper(object):
 
 class Client(object):
 
-    def __init__(self, app_id, api_key, verify = False, host = API_HOST, version = API_VERSION):
+    def __init__(self, app_id, api_key, verify = True, host = API_HOST, version = API_VERSION):
         if app_id == None or api_key == None:
             raise Exception("Please specify APP_ID and API_KEY.")
 
@@ -384,11 +384,13 @@ class Client(object):
 
     #--------------------------------------------------------------------
     # Send Batch request
-    def batchRequest(self, requests):
+    def batchRequest(self, requests, wait = False):
         data = {
             "requests" : requests.requests
         }
         response, status = self.helper.post('/search/batch/dbs', data = json.dumps(data))
+        if wait :
+            return self._response_(self.waitForCompletion(response), status)
         return self._response_(response, status)
 
 
