@@ -25,6 +25,7 @@ THE SOFTWARE.
 import requests
 import json
 import base64
+import urllib
 
 ###############################################################################
 
@@ -271,7 +272,10 @@ class Client(object):
     def waitForCompletion(self, response) :
         while True:
             t = self.retrieveTask(response["task_id"])['task']
-            if t['status'] != "pending":
+            status = t['status']
+            if status != "pending":
+                if status == "error":
+                    raise Exception ("Error on task: %s" % t)
                 return t
 
     #--------------------------------------------------------------------
@@ -395,10 +399,10 @@ class Client(object):
 
 
     def detect(self, detector_type, img_url, wait = False):
-        response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, img_url))
+        response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, urllib.quote_plus(img_url)))
         complete_response = self._response_(response, status)
         if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
         return complete_response
 
 
