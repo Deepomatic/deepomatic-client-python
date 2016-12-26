@@ -345,6 +345,12 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
+    def getObjects(self, db, **kwargs):
+        response, status = self.helper.get('/search/dbs/%s/objects/' % db, params = kwargs)
+        return self._response_(response, status)
+
+    #--------------------------------------------------------------------
+
     def deleteObject(self, db, id, wait = False):
         response, status = self.helper.delete('/search/dbs/%s/objects/%s' % (db, str(id)))
         complete_response = self._response_(response, status)
@@ -376,7 +382,6 @@ class Client(object):
             source = {"base64" : img}
 
         params = source
-
         for k, v in kwargs.items():
             params[k] = v
 
