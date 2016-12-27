@@ -20,24 +20,26 @@ def db_and_indexing(db_name_1, db_name_2) :
 
 	# Delete the dbs if they exists for reproductibily
 	print("DELETE db %s if it exists." % db_name_1)
-	client.deleteDB(db_name_1, wait = True)
+	if db_name_1 in client.getDBs()['dbs'] :
+		client.deleteDB(db_name_1, wait = True)
 
 	print("DELETE db %s if it exists." % db_name_2)
-	client.deleteDB(db_name_2, wait = True)
+	if db_name_2 in client.getDBs()['dbs'] :
+		client.deleteDB(db_name_2, wait = True)
 
 
 	# POST an image into the db. An id is automatically created and returned.
 	# A task id is also returned to track the completion of the task
 	print("POST a new entry in %s with an auto-assigned id." % db_name_1)
 	img = [{"url": "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_0.jpg"}]
-	client.saveObject(db_name_1, imgs = img)
+	client.saveObject(db_name_1, imgs = img, wait = True)
 
 	# PUT an image into the db with a defined id.
 	# A task id is returned to track the completion of the task
 	print("PUT a new entry in %s with a predefined id." % db_name_1)
 	img = [{"url": "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_1.jpg"}]
 	predefined_id = "shoes_1"
-	client.saveObject(db_name_1, id = predefined_id, imgs = img)
+	client.saveObject(db_name_1, id = predefined_id, imgs = img, wait = True)
 
 	print("POST a new entry in %s with an auto-assigned id." % db_name_2)
 
@@ -45,7 +47,7 @@ def db_and_indexing(db_name_1, db_name_2) :
 	poly = deepomatic.Polygon()
 	poly.addPoints([deepomatic.Point(0,0), deepomatic.Point(1,1), deepomatic.Point(0,1), deepomatic.Point(1,0)])
 	obj = deepomatic.ImgsSend("url", "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_2.jpg", bbox = bbox.corners, polygon = poly.points)
-	client.saveObject(db_name_2, imgs = obj.imgs)
+	client.saveObject(db_name_2, imgs = obj.imgs, wait = True)
 
 	print("DBs are %s." % ", ".join(client.getDBs()['dbs']))
 
@@ -79,11 +81,12 @@ def indexing_in_batch(db_name) :
 	print("--------------------------------------------------------------------------------------------")
 
 	print("DELETE db %s if it exists." % db_name)
-	client.deleteDB(db_name, wait = True)
+	if db_name in client.getDBs()['dbs'] :
+		client.deleteDB(db_name, wait = True)
 
 	img = [{"url": "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_1.jpg"}]
 	predefined_id = "batchTestClient"
-	client.saveObject(db_name, id = predefined_id, imgs = img)
+	client.saveObject(db_name, id = predefined_id, imgs = img, wait = True)
 
 	batch = deepomatic.BatchObject(db_name)
 
@@ -111,7 +114,7 @@ def searching(db_name) :
 	print("--------------------------------------------------------------------------------------------")
 
 	img = [{"url": "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_0.jpg"}]
-	client.saveObject(db_name, imgs = img)
+	client.saveObject(db_name, imgs = img, wait=True)
 	image_test_url = {"url" : "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/shoes/shoes_20.jpg"}
 	search_results = client.search(db_name, image_test_url, wait = True)
 	print("The id of the image that is the most similar to the query is %s with a score of %.5f" % (search_results['hits'][0]['id'], search_results['hits'][0]['score']))
@@ -123,7 +126,8 @@ def perfect_match(db_name) :
 	print("--------------------------------------------------------------------------------------------")
 
 	print("DELETE db %s if it exists." % db_name)
-	client.deleteDB(db_name, wait = True)
+	if db_name in client.getDBs()['dbs'] :
+		client.deleteDB(db_name, wait = True)
 
 	url_base = "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/perfect_match/%s.jpg"
 	poster_names = ['elle', 'jurassic_shark', 'le_chasseur', 'sos_fantome', 'the_dark_night']
@@ -135,8 +139,6 @@ def perfect_match(db_name) :
 		batch.addObject(obj, name)
 
 	batch_response = client.batchRequest(batch, wait = True)
-
-	time.sleep(5)
 
 	image_test = "https://s3-eu-west-1.amazonaws.com/deepo-public/Demo/perfect_match/query.jpg"
 	search_results = client.search(db_name, {'url' : image_test}, wait = True)
@@ -151,7 +153,7 @@ def detection() :
 	response = client.detect("fashion", "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait = True)
 
 	print("Here is what we have deteted:")
-	print(json.dumps(response['data']['boxes'], indent=2, sort_keys=True))
+	print(json.dumps(response['boxes'], indent=2, sort_keys=True))
 
 
 db_and_indexing("demo_1", "demo_2")
