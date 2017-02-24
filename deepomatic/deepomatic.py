@@ -401,10 +401,24 @@ class Client(object):
         if wait :
             return self._response_(self.waitForCompletion(response), status)
         return self._response_(response, status)
-
+    
+    #--------------------------------------------------------------------
 
     def detect(self, detector_type, img_url, wait = False):
         response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, urllib.quote_plus(img_url)))
+        complete_response = self._response_(response, status)
+        if wait :
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def classify(self, model_id, img_url, is_public = False, wait = True):
+        if is_public:
+            url = '/classify/public/models/%d/test' % model_id
+        else:
+            url = '/classify/models/%d/test' % model_id
+        response, status = self.helper.post(url, data = json.dumps({ "img" : { "url" : img_url } }))
         complete_response = self._response_(response, status)
         if wait :
             return self._response_(self.waitForCompletion(complete_response)["data"], status)
