@@ -150,15 +150,15 @@ def detection() :
 	print("--------- detection")
 	print("--------------------------------------------------------------------------------------------")
 
-	response = client.detect("fashion", "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait = True)
+	response = client.detect("fashion", { "url": "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg" }, wait = True)
 
 	print("Here is what we have deteted:")
 	print(json.dumps(response['boxes'], indent=2, sort_keys=True))
 
 
-db_and_indexing("demo_1", "demo_2")
-indexing_in_batch("batch_indexing")
-searching("batch_indexing")
-perfect_match("perfect_match")
+# db_and_indexing("demo_1", "demo_2")
+# indexing_in_batch("batch_indexing")
+# searching("batch_indexing")
+# perfect_match("perfect_match")
 detection()
 

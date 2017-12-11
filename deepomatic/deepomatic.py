@@ -401,11 +401,11 @@ class Client(object):
         if wait :
             return self._response_(self.waitForCompletion(response), status)
         return self._response_(response, status)
-    
+
     #--------------------------------------------------------------------
 
-    def detect(self, detector_type, img_url, wait = False):
-        response, status = self.helper.get('/detect/%s/?url=%s' % (detector_type, urllib.quote_plus(img_url)))
+    def detect(self, detector_type, data, wait = False):
+        response, status = self.helper.post('/detect/%s/' % detector_type, data = json.dumps(data))
         complete_response = self._response_(response, status)
         if wait :
             return self._response_(self.waitForCompletion(complete_response)["data"], status)
