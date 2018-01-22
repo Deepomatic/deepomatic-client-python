@@ -280,129 +280,12 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
-    def getDBs(self):
-        response, status = self.helper.get('/search/dbs')
-        return self._response_(response, status)
-
-    #--------------------------------------------------------------------
-
-    def clearDB(self, db, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s/objects' % db)
-        complete_response = self._response_(response, status, [200])
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
-    def deleteDB(self, db, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s' % db)
-        complete_response = self._response_(response, status, [200])
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
-    def getCount(self, db):
-        response, status = self.helper.get('/search/dbs/%s/count/' % db)
-        return self._response_(response, status, [200])
-
-    #--------------------------------------------------------------------
-
-    def saveObject(self, db, id = None, imgs = [], data = {}, wait = False):
-        for img in imgs:
-            if "file" in img:
-                with open(img["file"], "rb") as image_file:
-                    img = base64.b64encode(image_file.read())
-                img += {"base64" : img}
-                del img["file"]
-
-        obj = {
-            'imgs' : imgs,
-            'data' : data,
-        }
-        if id is None:
-            response, status = self.helper.post('/search/dbs/%s/objects' % db, data = obj)
-        else:
-            response, status = self.helper.put('/search/dbs/%s/objects/%s' % (db, str(id)), data = obj)
-        complete_response = self._response_(response, status)
-        if wait:
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
     def retrieveTask(self, task_id):
         response, status = self.helper.get('/tasks/%s/' % task_id)
         return self._response_(response, status)
 
     #--------------------------------------------------------------------
 
-    def getObject(self, db, id):
-        response, status = self.helper.get('/search/dbs/%s/objects/%s' % (db, str(id)))
-        return self._response_(response, status)
-
-    #--------------------------------------------------------------------
-
-    def getObjects(self, db, **kwargs):
-        response, status = self.helper.get('/search/dbs/%s/objects/' % db, params = kwargs)
-        return self._response_(response, status)
-
-    #--------------------------------------------------------------------
-
-    def deleteObject(self, db, id, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s/objects/%s' % (db, str(id)))
-        complete_response = self._response_(response, status)
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
-    def search(self, db, source, wait = False, **kwargs):
-        """
-        Search for similar images.
-
-        Take:
-        - db      : the database name.
-        - source  : the url or file.
-        - filters : filters under the form of a MongoDB request. The query is
-                      performed on the data field of the database object.
-        - skip    : number of results to skip. Defaults to 0.
-        - limit   : number of results to return. Defaults to 100.
-
-        Give:
-        - hits    : list of matching images.
-        """
-
-        if "file" in source:
-            with open(source["file"], "rb") as image_file:
-                img = base64.b64encode(image_file.read())
-            source = {"base64" : img}
-
-        params = source
-        for k, v in kwargs.items():
-            params[k] = v
-
-        response, status = self.helper.get('/search/query/%s/' % db, params = params)
-        complete_response = self._response_(response, status)
-        if wait:
-            return self._response_(self.waitForCompletion(complete_response)["data"], status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-    # Send Batch request
-    def batchRequest(self, requests, wait = False):
-        data = {
-            "requests" : requests.requests
-        }
-        response, status = self.helper.post('/search/batch/dbs', data = json.dumps(data))
-        if wait :
-            return self._response_(self.waitForCompletion(response), status)
-        return self._response_(response, status)
-
-    #--------------------------------------------------------------------
 
     def detect(self, detector_type, data, wait = False):
         response, status = self.helper.post('/detect/%s/' % detector_type, data = json.dumps(data))
