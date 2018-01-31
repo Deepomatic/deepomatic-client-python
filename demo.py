@@ -7,7 +7,7 @@ appID  = os.environ['DEEPOMATIC_APP_ID']
 apiKey = os.environ['DEEPOMATIC_API_KEY']
 
 
-client = deepomatic.Client(appID, apiKey, host = "https://api-staging.deepomatic.com", version = "0.7")
+client = deepomatic.Client(appID, apiKey, host = "https://api-staging.deepomatic.com")
 
 
 # ---------------------------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ def modifier():
 	print(json.dumps(r))
 
 def afficher():
-	r = client.get_network("52")
+	r = client.get_network(52)
 	print(json.dumps(r))
 
 def ajouter():
@@ -60,7 +60,7 @@ def ajouter():
             "batched_output": True
         }
 
-	with open("/home/chloe/network/deploy.prototxt") as graph, open("/home/chloe/network/snapshot.caffemodel","rb") as weights, open("/home/chloe/network/mean.binaryproto","rb") as mean:
+	with open("/home/hugo/Downloads/network/deploy.prototxt") as graph, open("/home/hugo/Downloads/network/snapshot.caffemodel","rb") as weights, open("/home/hugo/Downloads/network/mean.binaryproto","rb") as mean:
 		r = client.add_network("test_network", "test1", preprocessing, graph, weights, extra_files={"mean.proto.bin": mean})
 	print(r)
 
