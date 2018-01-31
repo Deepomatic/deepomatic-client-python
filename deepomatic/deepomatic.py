@@ -29,7 +29,7 @@ import urllib
 
 ###############################################################################
 
-API_VERSION = 0.6
+API_VERSION = 0.7
 API_HOST = 'https://api.deepomatic.com'
 
 ###############################################################################
@@ -63,7 +63,7 @@ class Bbox(object):
         return self.corners
 
 class ImgsSend(object):
-    def __init__(self, sourceType, source, polygon = None, bbox = None):
+    def __init__(self, sourceType, source, polygon=None, bbox=None):
         self.imgs = []
         if sourceType == "file":
             with open(source, "rb") as image_file:
@@ -75,7 +75,7 @@ class ImgsSend(object):
         if bbox is not None:
             self.imgs[0].update({"bbox" : bbox})
 
-    def addImg(self, sourceType, source, polygon = None, bbox = None):
+    def addImg(self, sourceType, source, polygon=None, bbox=None):
         last = len(self.imgs)
         if sourceType == "file":
             with open(source, "rb") as image_file:
@@ -101,7 +101,7 @@ class BatchObject:
     def getObject(self, id):
         self.requests.append({"db" : self.db, "id" : id, "method" : "GET"})
 
-    def addObject(self, imgs, id = None):
+    def addObject(self, imgs, id=None):
         if id != None:
             self.requests.append({"db" : self.db, "imgs" : imgs.imgs, "method" : "POST"})
         else :
@@ -111,6 +111,7 @@ class BatchObject:
         return self.requests
 
 
+###############################################################################
 
 class HTTPHelper(object):
 
@@ -129,14 +130,14 @@ class HTTPHelper(object):
 
     #--------------------------------------------------------------------
 
-    def setupHeaders(self, headers = None):
+    def setupHeaders(self, headers=None, content_type=None):
         """
         Build authentification header
         """
         if headers is None:
-            headers = dict([])
+            headers = {}
 
-        if not 'Accept' in headers:
+        if content_type is not None and not 'Accept' in headers:
             headers['Accept'] = 'application/json'
         headers['X-APP-ID'] = self.app_id
         headers['X-API-KEY'] = self.api_key
@@ -180,20 +181,21 @@ class HTTPHelper(object):
     #--------------------------------------------------------------------
 
     def helperPPP(self, func, resource, params, data, contentType, files):
-        if contentType.startswith('application/json') and not isinstance(data, basestring):
+        if contentType is not None and contentType.startswith('application/json') and not isinstance(data, basestring):
             data = json.dumps(data)
-
+        headers = self.setupHeaders(content_type=contentType)
+        params = self.formatParams(params)
         r = func(self.host + resource,
-                    params = self.formatParams(params),
+                    params = params,
                     data = data,
                     files = files,
-                    headers = self.setupHeaders({"Content-Type": contentType}),
+                    headers = headers,
                     verify = self.verify)
         return self.response(r)
 
     #--------------------------------------------------------------------
 
-    def get(self, resource, params = None):
+    def get(self, resource, params=None):
         """
         Perform a GET request
         """
@@ -201,7 +203,7 @@ class HTTPHelper(object):
 
     #--------------------------------------------------------------------
 
-    def delete(self, resource, params = None):
+    def delete(self, resource, params=None):
         """
         Perform a DELETE request
         """
@@ -209,7 +211,7 @@ class HTTPHelper(object):
 
     #--------------------------------------------------------------------
 
-    def put(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def put(self, resource, params=None, data=None, contentType='application/json', files=None):
         """
         Perform a PUT request
         """
@@ -217,7 +219,7 @@ class HTTPHelper(object):
 
     #--------------------------------------------------------------------
 
-    def post(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def post(self, resource, params=None, data=None, contentType='application/json', files=None):
         """
         Perform a POST request
         """
@@ -225,7 +227,7 @@ class HTTPHelper(object):
 
     #--------------------------------------------------------------------
 
-    def patch(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def patch(self, resource, params=None, data=None, contentType='application/json', files=None):
         """
         Perform a PATCH request
         """
@@ -236,7 +238,7 @@ class HTTPHelper(object):
 
 class Client(object):
 
-    def __init__(self, app_id, api_key, verify = True, host = API_HOST, version = API_VERSION):
+    def __init__(self, app_id, api_key, verify=True, host = API_HOST, version=API_VERSION):
         if app_id == None or api_key == None:
             raise Exception("Please specify APP_ID and API_KEY.")
 
@@ -256,7 +258,7 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
-    def _response_(self, response, status, okStatus = [200], getStatus = False):
+    def _response_(self, response, status, okStatus=[200], getStatus=False):
         if status in okStatus:
             return response if getStatus is False else (response, status)
         else:
@@ -269,7 +271,7 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
-    def waitForCompletion(self, response) :
+    def waitForCompletion(self, response):
         while True:
             t = self.retrieveTask(response["task_id"])['task']
             status = t['status']
@@ -286,26 +288,83 @@ class Client(object):
 
     #--------------------------------------------------------------------
 
-
-    def detect(self, detector_type, data, wait = False):
+    def detect(self, detector_type, data, wait=False):
         response, status = self.helper.post('/detect/%s/' % detector_type, data = json.dumps(data))
         complete_response = self._response_(response, status)
-        if wait :
+        if wait:
             return self._response_(self.waitForCompletion(complete_response)["data"], status)
         return complete_response
 
     #--------------------------------------------------------------------
 
-    def classify(self, model_id, img_url, is_public = False, wait = True):
+    def classify(self, model_id, img_url, is_public=False, wait=True):
         if is_public:
             url = '/classify/public/models/%d/test' % model_id
         else:
             url = '/classify/models/%d/test' % model_id
         response, status = self.helper.post(url, data = json.dumps({ "img" : { "url" : img_url } }))
         complete_response = self._response_(response, status)
-        if wait :
+        if wait:
             return self._response_(self.waitForCompletion(complete_response)["data"], status)
         return complete_response
+
+    #--------------------------------------------------------------------
+
+    def list_networks(self, wait=False):
+    	response, status = self.helper.get("/networks")
+    	complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def get_network(self, network_id, wait=False):
+    	response, status = self.helper.get("/networks/%s" % network_id)
+    	complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def delete_network(self, network_id, wait=False):
+    	response, status = self.helper.delete("/networks/%s" % network_id)
+    	complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def edit_network(self, network_id, inputs, output_layers, wait=False):
+    	response, status = self.helper.patch("/networks/%s" % network_id, data = json.dumps({"inputs": inputs, "output_layers": output_layers}))
+    	complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def infere_network(self, network_id, output_layers, source, wait=False):
+    	response, status = self.helper.post("/networks/{network_id}/inference".format(network_id = network_id), data = {"inputs": [{"image": {"source": source}}], "output_layers": output_layers})
+    	complete_response = self._response_(response, status)
+        if wait:
+            return self._response_(self.waitForCompletion(complete_response)["data"], status)
+        return complete_response
+
+    #--------------------------------------------------------------------
+
+    def add_network(self, name, description, preprocessing, graph, weights, extra_files=None, wait=False):
+    	data = {"name": name, "description": description, "preprocessing": preprocessing}
+    	files = { "graph": graph, "weights" : weights}
+    	if extra_files is not None:
+    		files.update(extra_files)
+    	response, status = self.helper.post("/networks", data=data, contentType=None, files=files)
+    	complete_response = self._response_(response, status)
+    	if wait:
+    		return self._response_(self.waitForCompletion(complete_response)["data"], status)
+    	return complete_response
 
 
 ###############################################################################
