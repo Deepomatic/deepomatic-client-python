@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 import requests
 import json
-import base64
+from requests.structures import CaseInsensitiveDict
 
 ###############################################################################
 
@@ -106,10 +106,15 @@ class HTTPHelper(object):
         Build authentification header
         """
         if headers is None:
-            headers = {}
+            headers = CaseInsensitiveDict()
+        elif isinstance(headers, dict):
+            headers = CaseInsensitiveDict(headers)
 
-        if content_type is not None and 'Accept' not in headers:
-            headers['Accept'] = 'application/json'
+        if content_type is not None:
+            headers['Content-type'] = content_type
+            if 'Accept' not in headers:
+                headers['Accept'] = content_type
+
         headers['X-APP-ID'] = self.app_id
         headers['X-API-KEY'] = self.api_key
 
@@ -141,7 +146,7 @@ class HTTPHelper(object):
         return data
 
     def make_request(self, func, resource, params, data=None, content_type=None, files=None):
-        if content_type is not None and content_type.startswith('application/json') and not isinstance(data, basestring):
+        if content_type is not None and content_type.strip() == 'application/json' and not isinstance(data, basestring):
             data = json.dumps(data)
 
         headers = self.setup_headers(content_type=content_type)
@@ -229,7 +234,7 @@ class Client(object):
         return self.helper.delete("/networks/%s" % network_id)
 
     def edit_network(self, network_id, inputs, output_layers, wait=False):
-        response = self.helper.patch("/networks/%s" % network_id, data=json.dumps({"inputs": inputs, "output_layers": output_layers}))
+        response = self.helper.patch("/networks/%s" % network_id, data={"inputs": inputs, "output_layers": output_layers})
         return self._waitTaskOrNot(response, wait=wait)
 
     def infere_network(self, network_id, output_layers, source, wait=False):

@@ -42,7 +42,7 @@ def modifier():
 	print(json.dumps(r))
 
 def afficher():
-	r = client.get_network(52)
+	r = client.get_network(128)
 	print(json.dumps(r))
 
 def ajouter():
@@ -64,11 +64,14 @@ def ajouter():
 		r = client.add_network("test_network", "test1", preprocessing, graph, weights, extra_files={"mean.proto.bin": mean})
 	print(r)
 
-def inference():
-	r = client.infere_network(network_id, output_layers, source)
-	print(json.dumps(r))
 
+def infere():
+    r = client.infere_network(128, ["prob"], "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait=True)
+    print(json.dumps(r))
+
+
+infere()
 #lister()
 #afficher()
-ajouter()
+#ajouter()
 #modifier()
