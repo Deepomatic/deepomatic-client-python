@@ -42,7 +42,7 @@ def edit():
 	print(json.dumps(r))
 
 def get():
-	r = client.get_network("12132")
+	r = client.get_network(128)
 	print(json.dumps(r))
 
 def add():
@@ -65,7 +65,12 @@ def add():
 	print(json.dumps(r))
 
 def infere():
-	r = client.infere_network("128", ["prob"], "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg")
-	print(json.dumps(r))
+    r = client.infere_network(128, ["prob"], "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait=True)
+    print(json.dumps(r))
+
 
 infere()
+#lister()
+#afficher()
+#ajouter()
+#modifier()
