@@ -237,12 +237,15 @@ class Client(object):
         response = self.helper.patch("/networks/%s" % network_id, data={"inputs": inputs, "output_layers": output_layers})
         return self._waitTaskOrNot(response, wait=wait)
 
-    def infere_network(self, network_id, output_layers, source, wait=False):
+    def infere_network(self, network_id, output_layers, inputs, wait=False):
         response = self.helper.post("/networks/{network_id}/inference".format(network_id=network_id), data={
-            "inputs": [{"image": {"source": source}}],
+            "inputs": inputs,
             "output_layers": output_layers
         })
         return self._waitTaskOrNot(response, wait=wait)
+
+    def infere_network_from_source(self, network_id, output_layers, source, wait=False):
+    	return self.infere_network(network_id, output_layers, [{"image": {"source": source}}], wait=wait)
 
     def add_network(self, name, description, preprocessing, graph, weights, extra_files=None, wait=False):
         data = {"name": name, "description": description, "preprocessing": json.dumps(preprocessing)}
