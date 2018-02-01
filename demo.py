@@ -29,23 +29,23 @@ detection()
 '''
 
 
-def lister():
+def list():
 	r = client.list_networks()
 	print(json.dumps(r))
 
-def supprimer():
-	r = client.delete_network()
+def delete():
+	r = client.delete_network("12132")
 	print(json.dumps(r))
 
-def modifier():
+def edit():
 	r = client.edit_network(network_id, inputs, output_layers)
 	print(json.dumps(r))
 
-def afficher():
-	r = client.get_network(52)
+def get():
+	r = client.get_network("12132")
 	print(json.dumps(r))
 
-def ajouter():
+def add():
 	preprocessing = {
             "inputs": [{
                 "tensor_name": "data",
@@ -60,15 +60,12 @@ def ajouter():
             "batched_output": True
         }
 
-	with open("/home/hugo/Downloads/network/deploy.prototxt") as graph, open("/home/hugo/Downloads/network/snapshot.caffemodel","rb") as weights, open("/home/hugo/Downloads/network/mean.binaryproto","rb") as mean:
+	with open("/home/chloe/network/deploy.prototxt") as graph, open("/home/chloe/network/snapshot.caffemodel","rb") as weights, open("/home/chloe/network/mean.binaryproto","rb") as mean:
 		r = client.add_network("test_network", "test1", preprocessing, graph, weights, extra_files={"mean.proto.bin": mean})
-	print(r)
-
-def inference():
-	r = client.infere_network(network_id, output_layers, source)
 	print(json.dumps(r))
 
-#lister()
-#afficher()
-ajouter()
-#modifier()
+def infere():
+	r = client.infere_network("128", ["prob"], "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg")
+	print(json.dumps(r))
+
+infere()
