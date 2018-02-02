@@ -245,7 +245,7 @@ class Client(object):
         return self._waitTaskOrNot(response, wait=wait)
 
     def infere_network_from_source(self, network_id, output_layers, source, wait=False):
-    	return self.infere_network(network_id, output_layers, [{"image": {"source": source}}], wait=wait)
+        return self.infere_network(network_id, output_layers, [{"image": {"source": source}}], wait=wait)
 
     def add_network(self, name, description, preprocessing, graph, weights, extra_files=None, wait=False):
         data = {"name": name, "description": description, "preprocessing": json.dumps(preprocessing)}
@@ -254,3 +254,38 @@ class Client(object):
             files.update(extra_files)
         response = self.helper.post("/networks", data=data, content_type=None, files=files)
         return self._waitTaskOrNot(response, wait=wait)
+    
+    def list_recognition_specs(self):
+        return self.helper.get("/recognition/specs")
+
+    def get_recognition_spec(self, spec_id):
+        return self.helper.get("/recognition/specs/%s" % spec_id)
+
+    def delete_recognition_spec(self, spec_id):
+        return self.helper.delete("/recognition/specs/%s" % spec_id)
+
+    def edit_recognition_spec(self, spec_id, description, wait=False):
+        response = self.helper.patch("/recognition/specs/%s" % spec_id, data={"description": description})
+        return self._waitTaskOrNot(response, wait=wait)
+
+    def add_recognition_spec(self, name, description, outputs, wait=False):
+        response= self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
+        return self._waitTaskOrNot(response, wait=wait)
+
+    def list_versions(self):
+        return self.helper.get("/recognition/versions")
+
+    def get_version(self, version_id):
+        return self.helper.get("/recognition/versions/%s" % version_id)
+
+    def add_version(self, spec_id, network_id, post_processings, wait=False):
+        response = self.helper.post("/recognition/versions", data={"spec_id": spec_id, "network_id": network_id, "post_processings": post_processings})
+        return self._waitTaskOrNot(response, wait=wait)
+
+    def delete_version(self, version_id):
+        return self.helper.delete("/recognition/versions/%s" % version_id)
+
+    def change_current_version(self, spec_id, version_id, wait=False):
+        response = self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
+        return self._waitTaskOrNot(response, wait=wait)
+
