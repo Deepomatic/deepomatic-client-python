@@ -11,9 +11,9 @@ client = deepomatic.Client(appID, apiKey, host="https://api-staging.deepomatic.c
 
 
 # Example of ids
-NETWORK_ID = 12068
-RECOGNITION_SPEC_ID = 4594
-RECOGNITION_VERSION_ID = 4754
+NETWORK_ID = 111
+RECOGNITION_SPEC_ID = 222
+RECOGNITION_VERSION_ID = 333
 RECOGNITION_VERSION_ID_2 = 444
 
 
@@ -186,4 +186,3 @@ def example_delete_recognition_version():
     r = client.delete_recognition_version(RECOGNITION_VERSION_ID)
     print r
 
-example_edit_recognition_spec()
