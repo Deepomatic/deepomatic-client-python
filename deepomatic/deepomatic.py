@@ -254,7 +254,7 @@ class Client(object):
             files.update(extra_files)
         response = self.helper.post("/networks", data=data, content_type=None, files=files)
         return self._waitTaskOrNot(response, wait=wait)
-    
+
     def list_recognition_specs(self):
         return self.helper.get("/recognition/specs")
 
@@ -291,4 +291,3 @@ class Client(object):
 
     def change_current_recognition_version(self, spec_id, version_id):
         return self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
-
