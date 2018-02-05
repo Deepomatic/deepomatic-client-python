@@ -21,7 +21,7 @@ RECOGNITION_VERSION_ID_2 = 444
 # For the sake of reproducibility, we always wait for the tasks to complete via a check on the taskID
 # ---------------------------------------------------------------------------------------------------
 
-def example_list_network():
+def example_list_networks():
     r = client.list_networks()
     print r
 
@@ -32,7 +32,7 @@ def example_delete_network():
 
 
 def example_edit_network():
-    r = client.edit_network(NETWORK_ID, inputs, output_layers)
+    r = client.edit_network(NETWORK_ID, "test", "test", {})
     print r
 
 
@@ -186,7 +186,3 @@ def example_delete_recognition_version():
     r = client.delete_recognition_version(RECOGNITION_VERSION_ID)
     print r
 
-
-def example_change_current_recognition_version():
-    r = client.change_current_recognition_version(RECOGNITION_SPEC_ID, RECOGNITION_VERSION_ID_2)
-    print r

@@ -233,8 +233,8 @@ class Client(object):
     def delete_network(self, network_id):
         return self.helper.delete("/networks/%s" % network_id)
 
-    def edit_network(self, network_id, inputs, output_layers, wait=False):
-        response = self.helper.patch("/networks/%s" % network_id, data={"inputs": inputs, "output_layers": output_layers})
+    def edit_network(self, network_id, name, description, metadata, wait=False):
+        response = self.helper.patch("/networks/%s" % network_id, data={"name": name, "description": description, "metadata": metadata})
         return self._waitTaskOrNot(response, wait=wait)
 
     def infere_network(self, network_id, output_layers, inputs, wait=False):
@@ -264,8 +264,8 @@ class Client(object):
     def delete_recognition_spec(self, spec_id):
         return self.helper.delete("/recognition/specs/%s" % spec_id)
 
-    def edit_recognition_spec(self, spec_id, description):
-        return self.helper.patch("/recognition/specs/%s" % spec_id, data={"description": description})
+    def edit_recognition_spec(self, spec_id, name, description, metadata, current_version_id):
+        return self.helper.patch("/recognition/specs/%s" % spec_id, data={"name": name, "description": description, "metadata": metadata, "current_version_id": current_version_id})
 
     def add_recognition_spec(self, name, description, outputs):
         return self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
@@ -288,6 +288,3 @@ class Client(object):
 
     def delete_recognition_version(self, version_id):
         return self.helper.delete("/recognition/versions/%s" % version_id)
-
-    def change_current_recognition_version(self, spec_id, version_id):
-        return self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
