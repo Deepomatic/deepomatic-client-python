@@ -16,19 +16,19 @@ client = deepomatic.Client(appID, apiKey, host = "https://api-staging.deepomatic
 
 def example_list_network():
     r = client.list_networks()
-    print(json.dumps(r))
+    print r
 
 def example_delete_network():
     r = client.delete_network(12132)
-    print(json.dumps(r))
+    print r
 
 def example_edit_network():
     r = client.edit_network(network_id, inputs, output_layers)
-    print(json.dumps(r))
+    print r
 
 def example_get_network():
     r = client.get_network(128)
-    print(json.dumps(r))
+    print r
 
 def example_add_network():
     preprocessing = {
@@ -45,28 +45,28 @@ def example_add_network():
             "batched_output": True
         }
 
-    with open("/home/chloe/network/deploy.prototxt") as graph, open("/home/chloe/network/snapshot.caffemodel","rb") as weights, open("/home/chloe/network/mean.binaryproto","rb") as mean:
+    with open("~/network/deploy.prototxt") as graph, open("~/network/snapshot.caffemodel","rb") as weights, open("~/network/mean.binaryproto","rb") as mean:
         r = client.add_network("test_network", "test1", preprocessing, graph, weights, extra_files={"mean.proto.bin": mean})
-    print(json.dumps(r))
+    print r
 
 def example_infere_network_from_source():
     r = client.infere_network_from_source(128, ["prob"], "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg", wait=True)
-    print(json.dumps(r))
+    print r
 
 def example_infere_network():
     r = client.infere_network(128, ["prob"], [{"image": {"source": "http://static1.puretrend.com/articles/4/12/06/94/@/1392954-kim-kardashian-dans-les-rues-de-los-580x0-3.jpg"}}, 
         {"image": {"source": "http://cdn-img.instyle.com/sites/default/files/styles/684xflex/public/images/2017/11/112817-kim-kardashian-photo-shoot-lead.jpg?itok=5g1AiPP3.jpg"}}], wait=True)
-    print(json.dumps(r))
+    print r
 
 #----------------------------------------------------------
 
 def example_list_recognition_specs():
     r = client.list_recognition_specs()
-    print(json.dumps(r))
+    print r
 
 def example_get_recognition_spec():
-    r = client.get_recognition_spec(4594)
-    print(json.dumps(r))
+    r = client.get_recognition_spec(123)
+    print r
 
 def example_add_recognition_spec_detect():
     r = client.add_recognition_spec("detect", "", [
@@ -122,31 +122,35 @@ def example_add_recognition_spec_detect():
         }
     ]
 )
-    print(json.dumps(r))
+    print r
 
 def example_add_recognition_spec_classif():
     r = client.add_recognition_spec("classif", "", [{"roi": "NONE", "labels": [{"id": 0, "name": "tench Tinca tinca"},{"id": 1, "name": "goldfish Carassius auratus"}]}])
-    print(json.dumps(r))
+    print r
 
 def example_delete_recognition_spec():
-    r = client.delete_recognition_spec(4473)
-    print(json.dumps(r))
+    r = client.delete_recognition_spec(123)
+    print r
 
 def example_edit_recognition_spec():
-    r = client.edit_recognition_spec(4473, "test")
-    print(json.dumps(r))
+    r = client.edit_recognition_spec(123, "test")
+    print r
+
+def example_infere_recognition_spec():
+    r = client.infere_recognition_spec(123, "https://www.what-dog.net/Images/faces2/scroll0015.jpg")
+    print r
 
 #----------------------------------------------------------
 
-def example_list_versions():
-    r = client.list_versions()
-    print(json.dumps(r))
+def example_list_recognition_versions():
+    r = client.list_recognition_versions()
+    print r
 
-def example_get_version():
-    r = client.get_version(4752)
-    print(json.dumps(r))
+def example_get_recognition_version():
+    r = client.get_recognition_version(1234)
+    print r
 
-def example_add_version():
+def example_add_recognition_version():
     post_processings = [{
     "detection": {
       "faster_rcnn_tensors": {
@@ -158,18 +162,14 @@ def example_add_version():
       "nms_threshold": 0.5
     }
   }]
-    r = client.add_version(4594, 52, post_processings)
-    print(json.dumps(r))
+    r = client.add_recognition_version(123, 52, post_processings)
+    print r
 
-def example_delete_version():
-    r = client.delete_version(4753)
-    print(json.dumps(r))
+def example_delete_recognition_version():
+    r = client.delete_recognition_version(1234)
+    print r
 
-def example_change_current_version():
-    r = client.change_current_version(4594, 4755)
-    print(json.dumps(r))
-
-def exmaple_infere_recognition_spec():
-    r = client.infere_recognition_spec(4594, "https://www.what-dog.net/Images/faces2/scroll0015.jpg", wait=True)
-    print(json.dumps(r))
+def example_change_current_recognition_version():
+    r = client.change_current_recognition_version(123, 1234)
+    print r
 

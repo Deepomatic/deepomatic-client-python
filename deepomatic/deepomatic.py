@@ -264,33 +264,31 @@ class Client(object):
     def delete_recognition_spec(self, spec_id):
         return self.helper.delete("/recognition/specs/%s" % spec_id)
 
-    def edit_recognition_spec(self, spec_id, description, wait=False):
-        response = self.helper.patch("/recognition/specs/%s" % spec_id, data={"description": description})
+    def edit_recognition_spec(self, spec_id, description):
+        return self.helper.patch("/recognition/specs/%s" % spec_id, data={"description": description})
+
+    def add_recognition_spec(self, name, description, outputs):
+        return self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
+
+    def infere_recognition_spec(self, spec_id, inputs, wait=False):
+        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data={"imputs": inputs})
         return self._waitTaskOrNot(response, wait=wait)
 
-    def add_recognition_spec(self, name, description, outputs, wait=False):
-        response= self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
-        return self._waitTaskOrNot(response, wait=wait)
+    def infere_recognition_spec_from_source(self, spec_id, source, wait=False):
+        return self.helper.infere_recognition_spec(spec_id, [{"image": {"source": source}}], wait=wait)
 
-    def list_versions(self):
+    def list_recognition_versions(self):
         return self.helper.get("/recognition/versions")
 
-    def get_version(self, version_id):
+    def get_recognition_version(self, version_id):
         return self.helper.get("/recognition/versions/%s" % version_id)
 
-    def add_version(self, spec_id, network_id, post_processings, wait=False):
-        response = self.helper.post("/recognition/versions", data={"spec_id": spec_id, "network_id": network_id, "post_processings": post_processings})
-        return self._waitTaskOrNot(response, wait=wait)
+    def add_recognition_version(self, spec_id, network_id, post_processings):
+        return self.helper.post("/recognition/versions", data={"spec_id": spec_id, "network_id": network_id, "post_processings": post_processings})
 
-    def delete_version(self, version_id):
+    def delete_recognition_version(self, version_id):
         return self.helper.delete("/recognition/versions/%s" % version_id)
 
-    def change_current_version(self, spec_id, version_id, wait=False):
-        response = self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
-        return self._waitTaskOrNot(response, wait=wait)
-
-    def infere_recognition_spec(self, spec_id, source, wait=False):
-        data = {"inputs": [{"image": {"source": source}}]}
-        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data=data)
-        return self._waitTaskOrNot(response, wait=wait)
+    def change_current_recognition_version(self, spec_id, version_id):
+        return self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
 
