@@ -289,3 +289,8 @@ class Client(object):
         response = self.helper.patch("/recognition/specs/%s" % spec_id, data={'current_version_id': version_id})
         return self._waitTaskOrNot(response, wait=wait)
 
+    def infere_recognition_spec(self, spec_id, source, wait=False):
+        data = {"inputs": [{"image": {"source": source}}]}
+        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data=data)
+        return self._waitTaskOrNot(response, wait=wait)
+

@@ -68,7 +68,7 @@ def example_get_recognition_spec():
     r = client.get_recognition_spec(4594)
     print(json.dumps(r))
 
-def example_add_recognition_spec():
+def example_add_recognition_spec_detect():
     r = client.add_recognition_spec("detect", "", [
         {
             "roi": "BBOX",
@@ -124,6 +124,10 @@ def example_add_recognition_spec():
 )
     print(json.dumps(r))
 
+def example_add_recognition_spec_classif():
+    r = client.add_recognition_spec("classif", "", [{"roi": "NONE", "labels": [{"id": 0, "name": "tench Tinca tinca"},{"id": 1, "name": "goldfish Carassius auratus"}]}])
+    print(json.dumps(r))
+
 def example_delete_recognition_spec():
     r = client.delete_recognition_spec(4473)
     print(json.dumps(r))
@@ -139,7 +143,7 @@ def example_list_versions():
     print(json.dumps(r))
 
 def example_get_version():
-    r = client.get_version(4753)
+    r = client.get_version(4752)
     print(json.dumps(r))
 
 def example_add_version():
@@ -162,5 +166,10 @@ def example_delete_version():
     print(json.dumps(r))
 
 def example_change_current_version():
-    r = client.change_current_version(4594, 4753)
+    r = client.change_current_version(4594, 4755)
     print(json.dumps(r))
+
+def exmaple_infere_recognition_spec():
+    r = client.infere_recognition_spec(4594, "https://www.what-dog.net/Images/faces2/scroll0015.jpg", wait=True)
+    print(json.dumps(r))
+
