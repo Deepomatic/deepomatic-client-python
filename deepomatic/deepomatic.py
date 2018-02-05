@@ -233,9 +233,8 @@ class Client(object):
     def delete_network(self, network_id):
         return self.helper.delete("/networks/%s" % network_id)
 
-    def edit_network(self, network_id, name, description, metadata, wait=False):
-        response = self.helper.patch("/networks/%s" % network_id, data={"name": name, "description": description, "metadata": metadata})
-        return self._waitTaskOrNot(response, wait=wait)
+    def edit_network(self, network_id, name, description, metadata):
+        return self.helper.patch("/networks/%s" % network_id, data={"name": name, "description": description, "metadata": metadata})
 
     def infere_network(self, network_id, output_layers, inputs, wait=False):
         response = self.helper.post("/networks/{network_id}/inference".format(network_id=network_id), data={
