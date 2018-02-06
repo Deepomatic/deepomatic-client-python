@@ -1,13 +1,11 @@
 import os
-import time
-import json
 from deepomatic import deepomatic
 
-appID  = os.environ['DEEPOMATIC_APP_ID']
+appID = os.environ['DEEPOMATIC_APP_ID']
 apiKey = os.environ['DEEPOMATIC_API_KEY']
 
 
-client = deepomatic.Client(appID, apiKey, host="https://api-staging.deepomatic.com")
+client = deepomatic.Client(appID, apiKey)
 
 
 # Example of ids
@@ -16,10 +14,6 @@ RECOGNITION_SPEC_ID = 222
 RECOGNITION_VERSION_ID = 333
 RECOGNITION_VERSION_ID_2 = 444
 
-
-# ---------------------------------------------------------------------------------------------------
-# For the sake of reproducibility, we always wait for the tasks to complete via a check on the taskID
-# ---------------------------------------------------------------------------------------------------
 
 def example_list_networks():
     r = client.list_networks()
@@ -185,4 +179,3 @@ def example_add_recognition_version():
 def example_delete_recognition_version():
     r = client.delete_recognition_version(RECOGNITION_VERSION_ID)
     print r
-
