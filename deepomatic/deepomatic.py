@@ -207,6 +207,8 @@ class Client(object):
 
         self.helper = HTTPHelper(app_id, api_key, verify, host)
 
+    # task endpoints
+
     def waitForCompletion(self, response):
         while True:
             t = self.retrieveTask(response["task_id"])['task']
@@ -218,11 +220,15 @@ class Client(object):
 
     def _waitTaskOrNot(self, response, wait=False):
         if wait:
-            return self.waitForCompletion(response)["data"]
+            task = self.waitForCompletion(response)
+            if task["data"]:
+                return task["data"]
         return response
 
     def retrieveTask(self, task_id):
         return self.helper.get('/tasks/%s/' % task_id)
+
+    # networks endpoints
 
     def list_networks(self):
         return self.helper.get("/networks")
@@ -254,6 +260,8 @@ class Client(object):
         response = self.helper.post("/networks", data=data, content_type=None, files=files)
         return self._waitTaskOrNot(response, wait=wait)
 
+    # recognition endpoints
+
     def list_recognition_specs(self):
         return self.helper.get("/recognition/specs")
 
@@ -264,20 +272,26 @@ class Client(object):
         return self.helper.delete("/recognition/specs/%s" % spec_id)
 
     def edit_recognition_spec(self, spec_id, name, description, metadata, current_version_id):
-        return self.helper.patch("/recognition/specs/%s" % spec_id, data={"name": name, "description": description, "metadata": metadata, "current_version_id": current_version_id})
+        data = {"name": name, "description": description, "metadata": metadata, "current_version_id": current_version_id}
+        return self.helper.patch("/recognition/specs/%s" % spec_id, data=data)
 
     def add_recognition_spec(self, name, description, outputs):
         return self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
 
     def infere_recognition_spec(self, spec_id, inputs, wait=False):
-        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data={"imputs": inputs})
+        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data={"inputs": inputs})
         return self._waitTaskOrNot(response, wait=wait)
 
     def infere_recognition_spec_from_source(self, spec_id, source, wait=False):
-        return self.helper.infere_recognition_spec(spec_id, [{"image": {"source": source}}], wait=wait)
+        return self.infere_recognition_spec(spec_id, [{"image": {"source": source}}], wait=wait)
+
+    # versions endpoints
 
     def list_recognition_versions(self):
         return self.helper.get("/recognition/versions")
+
+    def list_recognition_spec_versions(self, spec_id):
+        return self.helper.get("/recognition/specs/%s/versions" % spec_id)
 
     def get_recognition_version(self, version_id):
         return self.helper.get("/recognition/versions/%s" % version_id)
@@ -287,3 +301,10 @@ class Client(object):
 
     def delete_recognition_version(self, version_id):
         return self.helper.delete("/recognition/versions/%s" % version_id)
+
+    def infere_recognition_version(self, version_id, inputs, wait=False):
+        response = self.helper.post("/recognition/versions/%s/inference" % version_id, data={"inputs": inputs})
+        return self._waitTaskOrNot(response, wait=wait)
+
+    def infere_recognition_version_from_source(self, version_id, source, wait=False):
+        return self.infere_recognition_version(version_id, [{"image": {"source": source}}], wait=wait)
