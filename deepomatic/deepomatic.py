@@ -53,37 +53,6 @@ class BadStatus(Exception):
         return "Bad status code %s with body %s" % (self.response.status_code, self.response.content)
 
 
-class Point(object):
-    def __init__(self, x, y):
-        self.point = {'x': x, 'y': y}
-
-    def __getitem__(self):
-        return self.point
-
-
-class Polygon(object):
-    def __init__(self):
-        self.points = []
-
-    def addPoint(self, point):
-        self.points.append(point.point)
-
-    def addPoints(self, points):
-        for pt in points:
-            self.points.append(pt.point)
-
-    def __getitem__(self):
-        return self.points
-
-
-class Bbox(object):
-    def __init__(self, min, max):
-        self.corners = {'xmin': min.point['x'], 'ymin': min.point['y'], 'xmax': max.point['x'], 'ymax': max.point['y']}
-
-    def __getitem__(self):
-        return self.corners
-
-
 ###############################################################################
 
 class HTTPHelper(object):
