@@ -23,6 +23,8 @@ sudo pip install -r requirements.txt
 Initialize a client.
 Does not make any call to the server.
 ```python
+from deepomatic import deepomatic
+
 # You should find your appID and apiKey in your account on developpers.deepomatic.com
 client = deepomatic.Client(appID, apiKey)
 ```
