@@ -24,21 +24,42 @@ THE SOFTWARE.
 
 import requests
 import json
-import base64
-import urllib
+from requests.structures import CaseInsensitiveDict
 
 ###############################################################################
 
-API_VERSION = 0.6
+API_VERSION = 0.7
 API_HOST = 'https://api.deepomatic.com'
 
 ###############################################################################
 
+
+class BadStatus(Exception):
+    def __init__(self, response):
+        self.response = response
+
+    def json(self):
+        return self.response.json()
+
+    @property
+    def content(self):
+        return self.response.content
+
+    @property
+    def status_code(self):
+        return self.response.status_code
+
+    def __str__(self):
+        return "Bad status code %s with body %s" % (self.response.status_code, self.response.content)
+
+
 class Point(object):
     def __init__(self, x, y):
-        self.point = {'x' : x, 'y' : y}
+        self.point = {'x': x, 'y': y}
+
     def __getitem__(self):
         return self.point
+
 
 class Polygon(object):
     def __init__(self):
@@ -57,60 +78,13 @@ class Polygon(object):
 
 class Bbox(object):
     def __init__(self, min, max):
-        self.corners = {'xmin' : min.point['x'], 'ymin' : min.point['y'], 'xmax' : max.point['x'], 'ymax' : max.point['y']}
+        self.corners = {'xmin': min.point['x'], 'ymin': min.point['y'], 'xmax': max.point['x'], 'ymax': max.point['y']}
 
     def __getitem__(self):
         return self.corners
 
-class ImgsSend(object):
-    def __init__(self, sourceType, source, polygon = None, bbox = None):
-        self.imgs = []
-        if sourceType == "file":
-            with open(source, "rb") as image_file:
-                source = base64.b64encode(image_file.read())
-            sourceType = "base64"
-        self.imgs.append({sourceType : source})
-        if polygon is not None:
-            self.imgs[0].update({"polygon" : polygon})
-        if bbox is not None:
-            self.imgs[0].update({"bbox" : bbox})
 
-    def addImg(self, sourceType, source, polygon = None, bbox = None):
-        last = len(self.imgs)
-        if sourceType == "file":
-            with open(source, "rb") as image_file:
-                source = base64.b64encode(image_file.read())
-            sourceType = "base64"
-        self.imgs.append({sourceType : source})
-        if polygon is not None:
-            self.imgs[last].update(polygon)
-        if bbox is not None:
-            self.imgs[last].update(bbox)
-
-    def __getitem__(self):
-        return self.imgs
-
-class BatchObject:
-    def __init__(self, dbname):
-        self.db = dbname
-        self.requests = []
-
-    def deleteObject(self, id):
-        self.requests.append({"db" : self.db, "id" : id, "method" : "DELETE"})
-
-    def getObject(self, id):
-        self.requests.append({"db" : self.db, "id" : id, "method" : "GET"})
-
-    def addObject(self, imgs, id = None):
-        if id != None:
-            self.requests.append({"db" : self.db, "imgs" : imgs.imgs, "method" : "POST"})
-        else :
-            self.requests.append({"db" : self.db, "id" : id, "imgs" : imgs.imgs, "method" : "PUT"})
-
-    def __getitem__(self):
-        return self.requests
-
-
+###############################################################################
 
 class HTTPHelper(object):
 
@@ -122,44 +96,47 @@ class HTTPHelper(object):
         self.app_id = str(app_id)
 
         self.verify = verify
-        if not host is None:
+        if host is not None:
             self.host = host
         if self.host[-1] == '/':
             self.host = self.host[:-1]
 
-    #--------------------------------------------------------------------
-
-    def setupHeaders(self, headers = None):
+    def setup_headers(self, headers=None, content_type=None):
         """
         Build authentification header
         """
         if headers is None:
-            headers = dict([])
+            headers = CaseInsensitiveDict()
+        elif isinstance(headers, dict):
+            headers = CaseInsensitiveDict(headers)
 
-        if not 'Accept' in headers:
-            headers['Accept'] = 'application/json'
+        if content_type is not None:
+            headers['Content-type'] = content_type
+            if 'Accept' not in headers:
+                headers['Accept'] = content_type
+
         headers['X-APP-ID'] = self.app_id
         headers['X-API-KEY'] = self.api_key
 
         return headers
 
-    #--------------------------------------------------------------------
-
-    def response(self, r):
+    def response(self, r, check_status=True):
         """
         Decode the response returned by the server
         """
-        if r.status_code == 204: #delete
-            return "No Content", r.status_code
+        if r.status_code == 204:  # delete
+            return "No Content"
+
+        if check_status:
+            if r.status_code < 200 or r.status_code >= 300:
+                raise BadStatus(r)
 
         if 'application/json' in r.headers['Content-Type']:
-            return r.json(), r.status_code
+            return r.json()
         else:
-            return r.content, r.status_code
+            return r.content
 
-    #--------------------------------------------------------------------
-
-    def formatParams(self, data):
+    def format_params(self, data):
         if data:
             for key, value in data.items():
                 if isinstance(value, bool):
@@ -168,76 +145,52 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
-    #--------------------------------------------------------------------
-
-    def helperGD(self, func, resource, params):
-        r = func(self.host + resource,
-                    headers = self.setupHeaders(),
-                    params  = self.formatParams(params),
-                    verify  = self.verify)
-        return self.response(r)
-
-    #--------------------------------------------------------------------
-
-    def helperPPP(self, func, resource, params, data, contentType, files):
-        if contentType.startswith('application/json') and not isinstance(data, basestring):
+    def make_request(self, func, resource, params, data=None, content_type=None, files=None):
+        if content_type is not None and content_type.strip() == 'application/json' and not isinstance(data, basestring):
             data = json.dumps(data)
 
-        r = func(self.host + resource,
-                    params = self.formatParams(params),
-                    data = data,
-                    files = files,
-                    headers = self.setupHeaders({"Content-Type": contentType}),
-                    verify = self.verify)
+        headers = self.setup_headers(content_type=content_type)
+        params = self.format_params(params)
+        r = func(self.host + resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
         return self.response(r)
 
-    #--------------------------------------------------------------------
-
-    def get(self, resource, params = None):
+    def get(self, resource, params=None):
         """
         Perform a GET request
         """
-        return self.helperGD(requests.get, resource, params)
+        return self.make_request(requests.get, resource, params)
 
-    #--------------------------------------------------------------------
-
-    def delete(self, resource, params = None):
+    def delete(self, resource, params=None):
         """
         Perform a DELETE request
         """
-        return self.helperGD(requests.delete, resource, params)
+        return self.make_request(requests.delete, resource, params)
 
-    #--------------------------------------------------------------------
-
-    def put(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def put(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a PUT request
         """
-        return self.helperPPP(requests.put, resource, params, data, contentType, files)
+        return self.make_request(requests.put, resource, params, data, content_type, files)
 
-    #--------------------------------------------------------------------
-
-    def post(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def post(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a POST request
         """
-        return self.helperPPP(requests.post, resource, params, data, contentType, files)
+        return self.make_request(requests.post, resource, params, data, content_type, files)
 
-    #--------------------------------------------------------------------
-
-    def patch(self, resource, params = None, data = None, contentType = 'application/json', files = None):
+    def patch(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a PATCH request
         """
-        return self.helperPPP(requests.patch, resource, params, data, contentType, files)
+        return self.make_request(requests.patch, resource, params, data, content_type, files)
 
 
 ###############################################################################
 
 class Client(object):
 
-    def __init__(self, app_id, api_key, verify = True, host = API_HOST, version = API_VERSION):
-        if app_id == None or api_key == None:
+    def __init__(self, app_id, api_key, verify=True, host=API_HOST, version=API_VERSION):
+        if app_id is None or api_key is None:
             raise Exception("Please specify APP_ID and API_KEY.")
 
         # Until v1.0, we force explicit versioning
@@ -254,175 +207,104 @@ class Client(object):
 
         self.helper = HTTPHelper(app_id, api_key, verify, host)
 
-    #--------------------------------------------------------------------
+    # task endpoints
 
-    def _response_(self, response, status, okStatus = [200], getStatus = False):
-        if status in okStatus:
-            return response if getStatus is False else (response, status)
-        else:
-            if isinstance(response, basestring):
-                raise Exception(response)
-            elif "message" in response:
-                raise Exception(response['message'])
-            else:
-                raise Exception(str(response))
-
-    #--------------------------------------------------------------------
-
-    def waitForCompletion(self, response) :
+    def waitForCompletion(self, response):
         while True:
             t = self.retrieveTask(response["task_id"])['task']
             status = t['status']
             if status != "pending":
                 if status == "error":
-                    raise Exception ("Error on task: %s" % t)
+                    raise Exception("Error on task: %s" % t)
                 return t
 
-    #--------------------------------------------------------------------
-
-    def getDBs(self):
-        response, status = self.helper.get('/search/dbs')
-        return self._response_(response, status)
-
-    #--------------------------------------------------------------------
-
-    def clearDB(self, db, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s/objects' % db)
-        complete_response = self._response_(response, status, [200])
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
-    def deleteDB(self, db, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s' % db)
-        complete_response = self._response_(response, status, [200])
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
-
-    def getCount(self, db):
-        response, status = self.helper.get('/search/dbs/%s/count/' % db)
-        return self._response_(response, status, [200])
-
-    #--------------------------------------------------------------------
-
-    def saveObject(self, db, id = None, imgs = [], data = {}, wait = False):
-        for img in imgs:
-            if "file" in img:
-                with open(img["file"], "rb") as image_file:
-                    img = base64.b64encode(image_file.read())
-                img += {"base64" : img}
-                del img["file"]
-
-        obj = {
-            'imgs' : imgs,
-            'data' : data,
-        }
-        if id is None:
-            response, status = self.helper.post('/search/dbs/%s/objects' % db, data = obj)
-        else:
-            response, status = self.helper.put('/search/dbs/%s/objects/%s' % (db, str(id)), data = obj)
-        complete_response = self._response_(response, status)
+    def _waitTaskOrNot(self, response, wait=False):
         if wait:
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
-
-    #--------------------------------------------------------------------
+            task = self.waitForCompletion(response)
+            if task["data"]:
+                return task["data"]
+        return response
 
     def retrieveTask(self, task_id):
-        response, status = self.helper.get('/tasks/%s/' % task_id)
-        return self._response_(response, status)
+        return self.helper.get('/tasks/%s/' % task_id)
 
-    #--------------------------------------------------------------------
+    # networks endpoints
 
-    def getObject(self, db, id):
-        response, status = self.helper.get('/search/dbs/%s/objects/%s' % (db, str(id)))
-        return self._response_(response, status)
+    def list_networks(self):
+        return self.helper.get("/networks")
 
-    #--------------------------------------------------------------------
+    def get_network(self, network_id):
+        return self.helper.get("/networks/%s" % network_id)
 
-    def getObjects(self, db, **kwargs):
-        response, status = self.helper.get('/search/dbs/%s/objects/' % db, params = kwargs)
-        return self._response_(response, status)
+    def delete_network(self, network_id):
+        return self.helper.delete("/networks/%s" % network_id)
 
-    #--------------------------------------------------------------------
+    def edit_network(self, network_id, name, description, metadata):
+        return self.helper.patch("/networks/%s" % network_id, data={"name": name, "description": description, "metadata": metadata})
 
-    def deleteObject(self, db, id, wait = False):
-        response, status = self.helper.delete('/search/dbs/%s/objects/%s' % (db, str(id)))
-        complete_response = self._response_(response, status)
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response), status)
-        return complete_response
+    def infere_network(self, network_id, output_layers, inputs, wait=False):
+        response = self.helper.post("/networks/{network_id}/inference".format(network_id=network_id), data={
+            "inputs": inputs,
+            "output_layers": output_layers
+        })
+        return self._waitTaskOrNot(response, wait=wait)
 
-    #--------------------------------------------------------------------
+    def infere_network_from_source(self, network_id, output_layers, source, wait=False):
+        return self.infere_network(network_id, output_layers, [{"image": {"source": source}}], wait=wait)
 
-    def search(self, db, source, wait = False, **kwargs):
-        """
-        Search for similar images.
+    def add_network(self, name, description, preprocessing, graph, weights, extra_files=None, wait=False):
+        data = {"name": name, "description": description, "preprocessing": json.dumps(preprocessing)}
+        files = {"graph": graph, "weights": weights}
+        if extra_files is not None:
+            files.update(extra_files)
+        response = self.helper.post("/networks", data=data, content_type=None, files=files)
+        return self._waitTaskOrNot(response, wait=wait)
 
-        Take:
-        - db      : the database name.
-        - source  : the url or file.
-        - filters : filters under the form of a MongoDB request. The query is
-                      performed on the data field of the database object.
-        - skip    : number of results to skip. Defaults to 0.
-        - limit   : number of results to return. Defaults to 100.
+    # recognition endpoints
 
-        Give:
-        - hits    : list of matching images.
-        """
+    def list_recognition_specs(self):
+        return self.helper.get("/recognition/specs")
 
-        if "file" in source:
-            with open(source["file"], "rb") as image_file:
-                img = base64.b64encode(image_file.read())
-            source = {"base64" : img}
+    def get_recognition_spec(self, spec_id):
+        return self.helper.get("/recognition/specs/%s" % spec_id)
 
-        params = source
-        for k, v in kwargs.items():
-            params[k] = v
+    def delete_recognition_spec(self, spec_id):
+        return self.helper.delete("/recognition/specs/%s" % spec_id)
 
-        response, status = self.helper.get('/search/query/%s/' % db, params = params)
-        complete_response = self._response_(response, status)
-        if wait:
-            return self._response_(self.waitForCompletion(complete_response)["data"], status)
-        return complete_response
+    def edit_recognition_spec(self, spec_id, name, description, metadata, current_version_id):
+        data = {"name": name, "description": description, "metadata": metadata, "current_version_id": current_version_id}
+        return self.helper.patch("/recognition/specs/%s" % spec_id, data=data)
 
-    #--------------------------------------------------------------------
-    # Send Batch request
-    def batchRequest(self, requests, wait = False):
-        data = {
-            "requests" : requests.requests
-        }
-        response, status = self.helper.post('/search/batch/dbs', data = json.dumps(data))
-        if wait :
-            return self._response_(self.waitForCompletion(response), status)
-        return self._response_(response, status)
+    def add_recognition_spec(self, name, description, outputs):
+        return self.helper.post("/recognition/specs", data={"name": name, "description": description, "outputs": outputs})
 
-    #--------------------------------------------------------------------
+    def infere_recognition_spec(self, spec_id, inputs, wait=False):
+        response = self.helper.post("/recognition/specs/%s/inference" % spec_id, data={"inputs": inputs})
+        return self._waitTaskOrNot(response, wait=wait)
 
-    def detect(self, detector_type, data, wait = False):
-        response, status = self.helper.post('/detect/%s/' % detector_type, data = json.dumps(data))
-        complete_response = self._response_(response, status)
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response)["data"], status)
-        return complete_response
+    def infere_recognition_spec_from_source(self, spec_id, source, wait=False):
+        return self.infere_recognition_spec(spec_id, [{"image": {"source": source}}], wait=wait)
 
-    #--------------------------------------------------------------------
+    # versions endpoints
 
-    def classify(self, model_id, img_url, is_public = False, wait = True):
-        if is_public:
-            url = '/classify/public/models/%d/test' % model_id
-        else:
-            url = '/classify/models/%d/test' % model_id
-        response, status = self.helper.post(url, data = json.dumps({ "img" : { "url" : img_url } }))
-        complete_response = self._response_(response, status)
-        if wait :
-            return self._response_(self.waitForCompletion(complete_response)["data"], status)
-        return complete_response
+    def list_recognition_versions(self):
+        return self.helper.get("/recognition/versions")
 
+    def list_recognition_spec_versions(self, spec_id):
+        return self.helper.get("/recognition/specs/%s/versions" % spec_id)
 
-###############################################################################
+    def get_recognition_version(self, version_id):
+        return self.helper.get("/recognition/versions/%s" % version_id)
+
+    def add_recognition_version(self, spec_id, network_id, post_processings):
+        return self.helper.post("/recognition/versions", data={"spec_id": spec_id, "network_id": network_id, "post_processings": post_processings})
+
+    def delete_recognition_version(self, version_id):
+        return self.helper.delete("/recognition/versions/%s" % version_id)
+
+    def infere_recognition_version(self, version_id, inputs, wait=False):
+        response = self.helper.post("/recognition/versions/%s/inference" % version_id, data={"inputs": inputs})
+        return self._waitTaskOrNot(response, wait=wait)
+
+    def infere_recognition_version_from_source(self, version_id, source, wait=False):
+        return self.infere_recognition_version(version_id, [{"image": {"source": source}}], wait=wait)
