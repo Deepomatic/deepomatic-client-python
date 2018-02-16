@@ -29,7 +29,7 @@ client = deepomatic.Client(appID, apiKey)
 
 ### Client methods
 
-All client methods can be found in [/deepomatic/deepomatic.py](/deepomatic/deepomatic.py)
+All client methods can be found in [deepomatic/deepomatic.py](/deepomatic/deepomatic.py)
 
 ### Examples
 
