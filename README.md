@@ -4,6 +4,8 @@ Deepomatic API Client for Python.
 
 This client have been made in order to help you integrating our services within your apps in python.
 
+Tested on python 2.7 & 3.6.
+
 <br/>
 
 # API Documentation

@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import requests
 import json
+from six import string_types
 from requests.structures import CaseInsensitiveDict
 
 ###############################################################################
@@ -51,6 +52,14 @@ class BadStatus(Exception):
 
     def __str__(self):
         return "Bad status code %s with body %s" % (self.response.status_code, self.response.content)
+
+
+class TaskError(Exception):
+    def __init__(self, task):
+        self.task = task
+
+    def __str__(self):
+        return "Error on task: %s" % self.task
 
 
 ###############################################################################
@@ -115,7 +124,7 @@ class HTTPHelper(object):
         return data
 
     def make_request(self, func, resource, params, data=None, content_type=None, files=None):
-        if content_type is not None and content_type.strip() == 'application/json' and not isinstance(data, basestring):
+        if content_type is not None and content_type.strip() == 'application/json' and not isinstance(data, string_types):
             data = json.dumps(data)
 
         headers = self.setup_headers(content_type=content_type)
@@ -167,7 +176,7 @@ class Client(object):
             raise Exception("API version should be explicitly mentionned.")
 
         if version is not None:
-            if not isinstance(version, basestring):
+            if not isinstance(version, string_types):
                 version = 'v%g' % version
             elif version[0] != 'v':
                 version = 'v' + version
@@ -184,7 +193,7 @@ class Client(object):
             status = t['status']
             if status != "pending":
                 if status == "error":
-                    raise Exception("Error on task: %s" % t)
+                    raise TaskError(t)
                 return t
 
     def _waitTaskOrNot(self, response, wait=False):
