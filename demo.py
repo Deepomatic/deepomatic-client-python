@@ -1,35 +1,34 @@
 import os
-from deepomatic import deepomatic
+import sys
+import json
 
-appID = os.environ['DEEPOMATIC_APP_ID']
-apiKey = os.environ['DEEPOMATIC_API_KEY']
+import deepomatic
 
+app_id = os.environ['DEEPOMATIC_APP_ID']
+api_key = os.environ['DEEPOMATIC_API_KEY']
+client = deepomatic.Client(app_id, api_key)
 
-client = deepomatic.Client(appID, apiKey)
+###########
+# Helpers #
+###########
 
-
-#############################################################
-# Example functions (doesn't depend on the type of network) #
-#############################################################
-
-
-def example_edit_network(network_id):
-    return client.edit_network(network_id, "test2", "test2", {})
-
-
-def example_edit_recognition_spec(spec_id, version_id):
-    r = client.edit_recognition_spec(spec_id, "test", "test", {}, version_id)
-    return r
+if sys.version_info >= (3, 0):
+    from urllib.request import urlretrieve
+else:
+    from urllib import urlretrieve
 
 
-def example_infere_recognition_spec_from_source(spec_id):
-    r = client.infere_recognition_spec_from_source(spec_id, "https://www.what-dog.net/Images/faces2/scroll0015.jpg")
-    return r
+def download(url, local_path):
+    if not os.path.isfile(local_path):
+        print("Downloading {} to {}".format(url, local_path))
+        urlretrieve(url, local_path)
+    else:
+        print("Skipping download of {} to {}: file already exist".format(url, local_path))
+    return local_path
 
 
-def example_infere_recognition_version_from_source(version_id):
-    r = client.infere_recognition_version_from_source(version_id, "https://www.what-dog.net/Images/faces2/scroll0015.jpg")
-    return r
+def pretty_print_json(data):
+    print(json.dumps(data, indent=4, separators=(',', ': ')))
 
 
 ################################################
@@ -227,81 +226,137 @@ def demo(add_network_func,
     # Handling networks #
     #####################
 
-    print ("Listing networks")
-    print (client.list_networks())
+    print("Adding network")
+    # network_id = add_network_func()["id"]
 
-    print ("Adding network")
-    network = add_network_func()
-
-    print ("Editing network")
-    example_edit_network(network["id"])
-
-    print ("Getting network")
-    print (client.get_network(network["id"]))
-
-    print ("Infering an image on network")
-    infere_network_from_source_func(network["id"])
+    # print("Editing network")
+    # network = client.network(network_id).edit(name="test2", description="test2", metadata={}).result()
 
     #########################
     # Handling recognitions #
     #########################
 
-    print ("Listing specs")
-    print (client.list_recognition_specs())
+    # print("Listing specs")
+    # print(client.list_recognition_specs())
 
-    print ("Adding a spec")
-    spec = add_recognition_spec_func()
+    # print("Adding a spec")
+    # spec = add_recognition_spec_func()
 
-    print ("Getting a spec")
-    print (client.get_recognition_spec(spec["id"]))
+    # print("Getting a spec")
+    # print(client.get_recognition_spec(spec["id"]))
 
-    print ("Adding a version")
-    first_version = add_recognition_version_func(spec["id"], network["id"])
+    # print("Adding a version")
+    # first_version = add_recognition_version_func(spec["id"], network["id"])
 
-    print ("Getting a version")
-    print (client.get_recognition_version(first_version["id"]))
+    # print("Getting a version")
+    # print(client.get_recognition_version(first_version["id"]))
 
-    print ("Adding another version")
-    second_version = add_recognition_version_func(spec["id"], network["id"])
+    # print("Adding another version")
+    # second_version = add_recognition_version_func(spec["id"], network["id"])
 
-    print ("Listing all versions")
-    print (client.list_recognition_versions())
+    # print("Listing all versions")
+    # print(client.list_recognition_versions())
 
-    print ("Listing versions of a spec")
-    print (client.list_recognition_spec_versions(spec["id"]))
+    # print("Listing versions of a spec")
+    # print(client.list_recognition_spec_versions(spec["id"]))
 
-    print ("Changing the current version of the recognition")
-    example_edit_recognition_spec(spec["id"], second_version["id"])
+    # print("Changing the current version of the recognition")
+    # client.recognition_model(spec["id"]).edit(name="test", description="test", metadata={}, current_version_id=second_version).result()
 
-    print ("Infering with the current version")
-    example_infere_recognition_spec_from_source(spec["id"])
+    # print("Infering with the current version")
+    # client.recognition_model(spec["id"]).infere(input_image)
 
-    print ("Infering with a specific version")
-    example_infere_recognition_version_from_source(first_version["id"])
+    # print("Infering with a specific version")
+    # client.recognition_version(first_version["id"]).infere(input_image)
 
-    print ("Deleting first version")
-    client.delete_recognition_version(first_version["id"])
+    # print("Deleting first version")
+    # client.delete_recognition_version(first_version["id"])
 
-    print ("Deleting spec")
-    client.delete_recognition_spec(spec["id"])
+    # print("Deleting spec")
+    # client.delete_recognition_spec(spec["id"])
 
-    ###########################
+    # ###########################
 
-    print ("Deleting the network we depend on")
-    client.delete_network(network["id"])
+    # print("Deleting the network we depend on")
+    # client.delete_network(network["id"])
 
 
-if __name__ == "__main__":
-    print ("Demo for classification")
-    demo(example_add_network_classif,
-         example_infere_network_from_source_classif,
-         example_add_recognition_spec_classif,
-         example_add_recognition_version_classif)
 
-    print ("-----------------------")
+#################################
+# Manipulation public resources #
+#################################
 
-    print ("Demo for detection")
-    demo(example_add_network_detect,
-         example_infere_network_from_source_detect,
-         example_add_recognition_spec_detect,
-         example_add_recognition_version_detect)
+# ###################
+# # Public networks #
+# ###################
+
+# print("Listing public networks")
+# for network in client.public_networks().list():
+#     print("- {network_id}: {name}".format(network_id=network['id'], name=network['name']))
+
+# network = client.network('imagenet-inception-v1')
+
+# print("Getting network:")
+# pretty_print_json(network.get().result())
+
+# print("Infering an image on network:")
+# input_image = deepomatic.ImageInput("https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg")
+# result = network.inference(input_image, ["prob", "pool2/3x3_s2", "pool5/7x7_s1"]).result()
+# for t in result['tensors']:
+#     print("- tensor '{name}', dimensions: {dims}".format(name=t['name'], dims='x'.join(map(str, t['dims']))))
+
+# #############################
+# # Public recognition models #
+# #############################
+
+# print("Listing public recognition models")
+# for spec in client.public_recognition_specs().list():
+#     print("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
+
+# spec = client.recognition_spec('imagenet-inception-v1')
+
+# print("Getting spec:")
+# pretty_print_json(spec.get().result())
+
+# print("Infering an image on recognition spec current version:")
+# result = spec.inference(input_image, show_discarded=True, max_predictions=3).result()
+# pretty_print_json(result)
+
+#################
+# Custom models #
+#################
+
+# Download tradionnal Caffe GoogLeNet model
+deploy_prototxt = download('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt', '/tmp/deploy.prototxt')
+snapshot_caffemodel = download('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel', '/tmp/snapshot.caffemodel')
+preprocessing = client.network('imagenet-inception-v1').get().result()['preprocessing']
+
+print("Adding a network (it may take some time to upload)...")
+files = {
+    'deploy.prototxt': deploy_prototxt,
+    'snapshot.caffemodel': snapshot_caffemodel,
+}
+network = client.networks().add(name="My first network",
+                                framework='nv-caffe-0.x-mod',
+                                preprocessing=preprocessing,
+                                files=files)
+
+print()
+
+
+labels = client.recognition_spec('imagenet-inception-v1').get().result()['outputs']
+
+
+# print("Demo for classification")
+# demo(example_add_network_classif,
+#      example_infere_network_from_source_classif,
+#      example_add_recognition_spec_classif,
+#      example_add_recognition_version_classif)
+
+# print("-----------------------")
+
+# print("Demo for detection")
+# demo(example_add_network_detect,
+#      example_infere_network_from_source_detect,
+#      example_add_recognition_spec_detect,
+#      example_add_recognition_version_detect)

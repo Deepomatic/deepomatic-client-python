@@ -22,6 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.client import API_VERSION as __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from deepomatic.core.resource import Resource, ResourceGetMixin
+from deepomatic.core.result import TaskResult, TaskDataResult
+
+
+###############################################################################
+
+class Task(ResourceGetMixin, Resource):
+    def __init__(self, helper, task_id):
+        uri = '/tasks/{task_id}'.format(task_id=task_id)
+        super(Task, self).__init__(helper, uri, True)
+
+    def wait(self):
+        return TaskResult(self._helper, self._uri)
+
+    def wait_data(self):
+        return TaskDataResult(self._helper, self._uri)
+
+###############################################################################

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017 Deepomatic SAS
+Copyright (c) 2018 Deepomatic SAS
 http://www.deepomatic.com/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.client import API_VERSION as __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from deepomatic.resources.task import Task
+from deepomatic.core.inputs import format_inputs
+
+
+###############################################################################
+
+def get_data_from_taked_promise(helper, promise, return_task):
+    result = promise.result()
+    task_id = result['task_id']
+    task = Task(helper, task_id)
+    if return_task:
+        return task.get()
+    else:
+        return task.wait_data()
+
+###############################################################################
+
+
+class ResourceInferenceMixin(object):
+    def inference(self, inputs, data, return_task=False):
+        content_type, data, files = format_inputs(inputs, data)
+        return get_data_from_taked_promise(
+            self._helper,
+            self._post(suffix='/inference', content_type=content_type, data=data, files=files),
+            return_task
+        )
+
