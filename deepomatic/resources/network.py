@@ -49,8 +49,7 @@ class NetworkList(ResourceList):
             'framework': framework,
             'preprocessing': preprocessing
         }
-        promise = super(NetworkList, self).add(data=data, files=files)
-        return get_data_from_taked_promise(self._helper, promise, return_task)
+        return super(NetworkList, self).add(data=data, files=files)
 
 
 ###############################################################################

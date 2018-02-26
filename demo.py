@@ -365,7 +365,7 @@ network = client.networks().add(name="My first network",
                                 preprocessing=preprocessing,
                                 files=files)
 
-print()
+print(network.get().result())
 
 
 # labels = client.recognition_spec('imagenet-inception-v1').get().result()['outputs']
