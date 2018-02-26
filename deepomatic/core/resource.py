@@ -70,22 +70,6 @@ class Resource(object):
 
 ###############################################################################
 
-class AddResultResource(Result, Resource):
-    def __init__(self, promise, helper, uri_root):
-        super(AddResultResource, self).__init__(promise)
-        self._helper = helper
-        if not uri_root.endswith('/'):
-            uri_root += '/'
-        self._uri_root = uri_root
-
-    @property
-    def _uri(self):
-        obj = self._promise.get()
-        return self._uri_root + obj['id']
-
-
-###############################################################################
-
 class ResourceGetMixin(object):
     def get(self):
         return self._get()
@@ -153,3 +137,18 @@ class ResourceList(ResourceAddMixin,
 
 ###############################################################################
 
+class AddResultResource(Result, ResourceObject):
+    def __init__(self, promise, helper, uri_root):
+        super(AddResultResource, self).__init__(promise)
+        self._helper = helper
+        if not uri_root.endswith('/'):
+            uri_root += '/'
+        self._uri_root = uri_root
+
+    @property
+    def _uri(self):
+        obj = self._promise.get()
+        return self._uri_root + obj['id']
+
+
+###############################################################################
