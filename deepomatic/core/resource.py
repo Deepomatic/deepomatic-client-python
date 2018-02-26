@@ -148,7 +148,7 @@ class AddResultResource(Result, ResourceObject):
     @property
     def _uri(self):
         obj = self._promise.result()
-        return self._uri_root + obj['id']
+        return self._uri_root + str(obj['id'])
 
 
 ###############################################################################
