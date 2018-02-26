@@ -35,29 +35,10 @@ def format_inputs(inputs, data):
 
     data = copy.deepcopy(data)
     data['inputs'] = [input_data.get_input() for input_data in inputs]
+    need_multipart = any([input_data.need_multipart() for input_data in inputs])
 
-    if any([input_data.is_file() for input_data in inputs]):
-        def make_fields(prefix, obj, data, files):
-            for key, value in obj.items():
-                p = prefix + key
-                if isinstance(value, dict):
-                    make_fields(p, value, data, files)
-                elif isinstance(value, list):
-                    for i, v in enumerate(value):
-                        make_fields(p + '[{}]'.format(i), v, data, files)
-                else:
-                    is_file = hasattr(value, 'read')
-                    if is_file:
-                        files[p] = value
-                    else:
-                        data[p] = value
-
-        new_data = {}
-        files = {}
-        make_fields('', data, new_data, files)
-        return None, new_data, files
-    else:
-        return 'application/json', data, None
+    content_type = 'multipart/mixed' if need_multipart else 'application/json'
+    return content_type, data
 
 
 ###############################################################################
@@ -70,8 +51,8 @@ class AbstractInput(object):
     supported_encodings = ['binary', 'base64']
 
     def __init__(self, source, encoding=None):
-        self._is_file = hasattr(source, 'read')
-        is_raw = not self._is_file and not any([source.startswith(p) for p in self.supported_protocols])
+        is_file = hasattr(source, 'read')
+        is_raw = not is_file and not any([source.startswith(p) for p in self.supported_protocols])
         if is_raw:
             if encoding is None:
                 raise DeepomaticException("You must specify 'encoding' when passing raw data")
@@ -83,12 +64,13 @@ class AbstractInput(object):
                 encoding=encoding)
             source = prefix + source
         self._source = source
+        self._need_multipart = is_file or (is_raw and encoding == 'binary')
 
     def get_input(self):
         raise Exception("Unimplemented")
 
-    def is_file(self):
-        return self._is_file
+    def need_multipart(self):
+        return self._need_multipart
 
 
 ###############################################################################

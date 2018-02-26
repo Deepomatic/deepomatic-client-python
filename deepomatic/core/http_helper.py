@@ -85,9 +85,45 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
+    def dump_json_for_multipart(self, data, files):
+        def recursive_json_dump(prefix, obj, data, files, omit_dot=False):
+            if isinstance(obj, dict):
+                if not omit_dot:  # see comment below
+                    prefix += '.'
+                for key, value in obj.items():
+                    recursive_json_dump(prefix + key, value, data, files)
+            elif isinstance(obj, list):
+                for i, value in enumerate(obj):
+                    # omit_dot is True as DRF parses list of dictionnaries like this:
+                    # {"parent": [{"subfield": 0}]} would be:
+                    # 'parent[0]subfield': 0
+                    recursive_json_dump(prefix + '[{}]'.format(i), value, data, files, omit_dot=True)
+            elif hasattr(obj, 'read'):  # if is file:
+                if prefix in files:
+                    raise DeepomaticException("Duplicate key: " + prefix)
+                files[prefix] = obj
+            else:
+                data[prefix] = obj
+
+        if files is None:
+            files = {}
+        new_data = {}
+
+        recursive_json_dump('', data, new_data, files, omit_dot=True)
+
+        if len(files) == 0:
+            files = None
+        return new_data, files
+
     def make_request(self, func, resource, params, data=None, content_type=None, files=None):
-        if content_type is not None and content_type.strip() == 'application/json' and not isinstance(data, string_types):
-            data = json.dumps(data)
+        if isinstance(data, dict) or isinstance(data, list):
+            if content_type.strip() == 'application/json':
+                data = json.dumps(data)
+            elif content_type.strip() == 'multipart/mixed':
+                content_type = None  # will be automatically set to multipart
+                data, files = self.dump_json_for_multipart(data, files)
+            else:
+                raise DeepomaticException("Unsupported Content-Type")
 
         headers = self.setup_headers(content_type=content_type)
         params = self.format_params(params)

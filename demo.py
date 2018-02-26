@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import base64
 
 import deepomatic
 
@@ -29,6 +30,11 @@ def download(url, local_path):
 
 def pretty_print_json(data):
     print(json.dumps(data, indent=4, separators=(',', ': ')))
+
+
+def display_inference_tensor(result):
+    for t in result['tensors']:
+        print("- tensor '{name}', dimensions: {dims}".format(name=t['name'], dims='x'.join(map(str, t['dims']))))
 
 
 ################################################
@@ -299,11 +305,26 @@ def demo(add_network_func,
 # print("Getting network:")
 # pretty_print_json(network.get().result())
 
-# print("Infering an image on network:")
-# input_image = deepomatic.ImageInput("https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg")
-# result = network.inference(input_image, ["prob", "pool2/3x3_s2", "pool5/7x7_s1"]).result()
-# for t in result['tensors']:
-#     print("- tensor '{name}', dimensions: {dims}".format(name=t['name'], dims='x'.join(map(str, t['dims']))))
+# print("Inference from a URL:")
+# url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+# result = network.inference(deepomatic.ImageInput(url), ["prob", "pool2/3x3_s2", "pool5/7x7_s1"]).result()
+# display_inference_tensor(result)
+
+# print("Inference from a file:")
+# file = open(download(url, '/tmp/img.jpg'), 'rb')
+# result = network.inference(deepomatic.ImageInput(file), ["prob"]).result()
+# display_inference_tensor(result)
+
+# print("Inference from binary data:")
+# binary_data = file.read()
+# result = network.inference(deepomatic.ImageInput(binary_data, encoding="binary"), ["prob"]).result()
+# display_inference_tensor(result)
+
+# print("Inference from base64 data:")
+# b64 = base64.b64encode(binary_data)
+# result = network.inference(deepomatic.ImageInput(b64, encoding="base64"), ["prob"]).result()
+# display_inference_tensor(result)
+
 
 # #############################
 # # Public recognition models #
@@ -321,6 +342,9 @@ def demo(add_network_func,
 # print("Infering an image on recognition spec current version:")
 # result = spec.inference(input_image, show_discarded=True, max_predictions=3).result()
 # pretty_print_json(result)
+
+
+
 
 #################
 # Custom models #
@@ -344,7 +368,7 @@ network = client.networks().add(name="My first network",
 print()
 
 
-labels = client.recognition_spec('imagenet-inception-v1').get().result()['outputs']
+# labels = client.recognition_spec('imagenet-inception-v1').get().result()['outputs']
 
 
 # print("Demo for classification")

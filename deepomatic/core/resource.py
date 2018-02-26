@@ -122,8 +122,8 @@ class ResourceAddMixin(object):
             raise DeepomaticException("You cannot create such resource")
         data = filter_empty(data)
         files = filter_empty(files)
-        if files is not None and content_type == 'application/json':
-            content_type = None  # will be set to multipart automatically
+        if files is not None:
+            content_type = 'multipart/mixed'
         promise = self._post(params=params, data=data, content_type=content_type, files=files)
         return AddResultResource(promise, self._helper, self._uri)
 

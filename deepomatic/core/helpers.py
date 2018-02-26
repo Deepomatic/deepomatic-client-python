@@ -42,10 +42,10 @@ def get_data_from_taked_promise(helper, promise, return_task):
 
 class ResourceInferenceMixin(object):
     def inference(self, inputs, data, return_task=False):
-        content_type, data, files = format_inputs(inputs, data)
+        content_type, data = format_inputs(inputs, data)
         return get_data_from_taked_promise(
             self._helper,
-            self._post(suffix='/inference', content_type=content_type, data=data, files=files),
+            self._post(suffix='/inference', content_type=content_type, data=data),
             return_task
         )
 
