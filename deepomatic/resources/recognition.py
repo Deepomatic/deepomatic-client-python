@@ -24,105 +24,75 @@ THE SOFTWARE.
 
 from six import string_types
 
-from deepomatic.core.resource import Empty, ResourceList, ResourceObject, ResourceGetMixin, ResourceDeleteMixin, Resource
-from deepomatic.core.helpers import ResourceInferenceMixin
+from deepomatic.core.resource import Resource
+import deepomatic.core.helpers as helpers
+import deepomatic.core.mixins as mixins
+from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg, EditOnlyArg
 
 
 ###############################################################################
 
-class RecognitionSpecList(ResourceList):
-    """
-    This is an helper to access the 'Network' resources.
-    """
-    def __init__(self, helper, is_public):
-        if is_public:
-            uri = '/recognition/public'
-        else:
-            uri = '/recognition/specs'
-        super(RecognitionSpecList, self).__init__(helper, uri, is_public)
-
-    def add(self, name, outputs, description=Empty(), metadata=Empty()):
-        data = {
-            'name': name,
-            'description': description,
-            'metadata': metadata,
-            'outputs': outputs
-        }
-        return super(RecognitionSpecList, self).add(data=data)
-
-
-###############################################################################
-
-class RecognitionSpec(ResourceInferenceMixin, ResourceObject):
+class RecognitionSpec(mixins.Get,
+                      mixins.Edit,
+                      mixins.Delete,
+                      mixins.Add,
+                      mixins.List,
+                      helpers.Inference,
+                      Resource):
     """
     This is an helper to manipulate a 'Network' object.
     """
-    def __init__(self, helper, spec_id):
-        is_public = isinstance(spec_id, string_types)
-        if is_public:
-            uri = '/recognition/public/{spec_id}'
-        else:
-            uri = '/recognition/specs/{spec_id}'
-        uri = uri.format(spec_id=spec_id)
-        self._spec_id = spec_id
-        super(RecognitionSpec, self).__init__(helper, uri, is_public)
+    object_template = {
+        'name':        RequiredArg(),
 
-    def edit(self, name=Empty(), description=Empty(), metadata=Empty(), current_version_id=Empty()):
-        data = {
-            'name': name,
-            'description': description,
-            'metadata': metadata,
-            'current_version_id': current_version_id
-        }
-        return super(RecognitionSpec, self).edit(data=data)
+        'description': OptionnalArg(),
+        'metadata':    OptionnalArg(),
+
+        'outputs':     ImmutableArg(),
+
+        'current_version_id': EditOnlyArg()
+    }
+
+    object_functions = ['versions', 'inference']
+
+    def get_base_uri(self):
+        is_public = isinstance(self._pk, string_types) or self._read_only
+        return '/recognition/public/' if is_public else '/recognition/specs/'
 
     def versions(self):
-        return RecognitionVersionList(self._helper, self._spec_id)
-
-    def inference(self, inputs, show_discarded=False, max_predictions=100, return_task=False):
-        data = {
-            'show_discarded': show_discarded,
-            'max_predictions': max_predictions,
-        }
-        return super(RecognitionSpec, self).inference(inputs, data, return_task)
+        if self._read_only:
+            raise Exception("You cannot call 'versions' on a public recognition spec")
+        return RecognitionVersion.as_set_ressource(self._helper, self._get_pk(), read_only=True)
 
 
 ###############################################################################
 
-class RecognitionVersionList(ResourceList):
-    """
-    This is an helper to access the 'Network' resources.
-    """
-    def __init__(self, helper, spec_id=None):
-        if spec_id is None:
-            uri = '/recognition/versions'
-        else:
-            uri = '/recognition/specs/{spec_id}/versions'.format(spec_id=spec_id)
-        super(RecognitionSpecList, self).__init__(helper, uri)
-
-    def add(self, spec_id, network_id, post_processings):
-        data = {
-            'spec_id': spec_id,
-            'network_id': network_id,
-            'post_processings': post_processings
-        }
-        return super(RecognitionVersionList, self).add(data=data)
-
-
-###############################################################################
-
-class RecognitionVersion(ResourceInferenceMixin, ResourceGetMixin, ResourceDeleteMixin, Resource):
+class RecognitionVersion(mixins.Get,
+                         mixins.Delete,
+                         mixins.Add,
+                         mixins.List,
+                         helpers.Inference,
+                         Resource):
     """
     This is an helper to manipulate a 'Network' object.
     """
-    def __init__(self, helper, version_id):
-        uri = '/recognition/versions/{version_id}'.format(version_id=version_id)
-        super(RecognitionVersion, self).__init__(helper, uri)
 
-    def inference(self, inputs, show_discarded=False, max_predictions=100, return_task=False):
-        data = {
-            'show_discarded': show_discarded,
-            'max_predictions': max_predictions,
-        }
-        return super(RecognitionVersion, self).inference(inputs, data, return_task)
+    object_template = {
+        'spec_id':          RequiredArg(),
+        'network_id':       RequiredArg(),
+        'post_processings': RequiredArg(),
+    }
 
+    def get_base_uri(self):
+        is_bound_to_spec = hasattr(self, '_spec_id') and self._spec_id is not None
+        if is_bound_to_spec:
+            return '/recognition/specs/{spec_id}/versions'.format(spec_id=self._spec_id)
+        else:
+            return '/recognition/versions/'
+        return '/recognition/public/' if is_bound_to_spec else '/recognition/specs/'
+
+    @classmethod
+    def as_set_ressource(cls, helper, spec_id=None, read_only=False):
+        resource = super(RecognitionVersion, cls).as_set_ressource(helper, read_only=read_only)
+        resource._spec_id = spec_id
+        return resource

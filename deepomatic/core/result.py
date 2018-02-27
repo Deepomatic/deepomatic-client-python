@@ -25,14 +25,13 @@ THE SOFTWARE.
 import time
 import urlparse
 
-from deepomatic.core.exceptions import TaskError
+from deepomatic.exceptions import TaskError, TaskTimeout
 
 
 ###############################################################################
 
 class Result(object):
     def __init__(self, promise):
-        self._start_time = time.time()
         self._promise = promise
 
     def then(self, did_fulfill, did_reject=None):
@@ -56,15 +55,13 @@ class ResultList(Result):
     """
     This is an helper to access a resource list.
     """
-    default_limit = 100
-
-    def __init__(self, helper, uri, offset=0, limit=None):
+    def __init__(self, helper, uri, offset, limit):
         self._helper = helper
-        params = {'offset': offset, 'limit': limit if limit is not None else self.default_limit}
+        params = {'offset': offset, 'limit': limit}
         super(ResultList, self).__init__(promise=self._helper.get(uri, params))
 
     def __iter__(self):
-        results = self.result()
+        results = self.result()['results']
         next_results = self.next()
 
         while True:
@@ -72,24 +69,17 @@ class ResultList(Result):
                 yield r
             if next_results is None:
                 break
-            results = next_results.results()
+            results = next_results.results()['results']
             next_results = next_results.next()
 
-    def result(self):
-        result = super(ResultList, self).result()
-        return result['results']
-
     def count(self):
-        result = super(ResultList, self).result()
-        return result['count']
+        return self.result()['count']
 
     def next(self):
-        result = super(ResultList, self).result()
-        return self._handle_prev_next(result['next'])
+        return self._handle_prev_next(self.result()['next'])
 
     def prev(self):
-        result = super(ResultList, self).result()
-        return self._handle_prev_next(result['prev'])
+        return self._handle_prev_next(self.result()['prev'])
 
     def _handle_prev_next(self, url):
         if url is None:
@@ -98,7 +88,7 @@ class ResultList(Result):
             o = urlparse.urlparse(url)
             params = urlparse.parse_qs(o.query)
             offset = params.get('offset', 0)
-            limit = params.get('limit', None)
+            limit = params.get('limit', 100)
             uri = urlparse.urlunparse(o.scheme, o.netloc, o.path, o.params, '', o.fragment)
             return ResultList(self.helper, uri, offset, limit)
 
@@ -109,24 +99,30 @@ class TaskResult(Result):
     """
     This is an helper to wait for a task result.
     """
-    def __init__(self, helper, uri):
+    def __init__(self, helper, uri, timeout):
         self._helper = helper
         self._uri = uri
+        self._timeout = timeout
         super(TaskResult, self).__init__(promise=self._helper.get(self._uri))
 
     def result(self):
-        last_time = self._start_time
+        start_time = time.time()
+        last_time = start_time
+        sleep_time = 0.2
         while True:
             result = super(TaskResult, self).result()
-            result = result['task']  # HACK until new deployment
             status = result['status']
             if status != "pending":
                 if status == "error":
                     raise TaskError(result)
                 return result
 
-            # Wait 0.2s before re-querying
-            sleep_time = time.time() - (last_time + 0.2)
+            # Check for timeout
+            if time.time() > start_time + self._timeout:
+                raise TaskTimeout(result)
+
+            # Wait 'sleep_time' second before re-querying
+            sleep_time = time.time() - (last_time + sleep_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
             self._promise = self._helper.get(self._uri)

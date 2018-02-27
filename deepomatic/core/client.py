@@ -22,9 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from six import string_types
+
 from deepomatic.core.http_helper import HTTPHelper
-from deepomatic.resources.network import NetworkList, Network
-from deepomatic.resources.recognition import RecognitionSpecList, RecognitionSpec, RecognitionVersionList, RecognitionVersion
+from deepomatic.resources.network import Network
+from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
 
 ###############################################################################
@@ -48,30 +50,31 @@ class Client(object):
     # /networks
 
     def public_networks(self):
-        return NetworkList(self.helper, True)
+        return Network.as_set_ressource(self.helper, read_only=True)
 
     def networks(self):
-        return NetworkList(self.helper, False)
+        return Network.as_set_ressource(self.helper)
 
     def network(self, network_id):
-        return Network(self.helper, network_id)
+        read_only = isinstance(network_id, string_types)
+        return Network.as_object_ressource(self.helper, network_id, read_only=read_only)
 
     # /recognition
 
     def public_recognition_specs(self):
-        return RecognitionSpecList(self.helper, True)
+        return RecognitionSpec.as_set_ressource(self.helper, read_only=True)
 
     def recognition_specs(self):
-        return RecognitionSpecList(self.helper, False)
+        return RecognitionSpec.as_set_ressource(self.helper)
 
     def recognition_spec(self, spec_id):
-        return RecognitionSpec(self.helper, spec_id)
+        return RecognitionSpec.as_object_ressource(self.helper, spec_id)
 
     def recognition_versions(self):
-        return RecognitionVersionList(self.helper)
+        return RecognitionVersion.as_set_ressource(self.helper)
 
     def recognition_version(self, version_id):
-        return RecognitionVersion(self.helper, version_id)
+        return RecognitionVersion.as_object_ressource(self.helper, version_id)
 
 
 

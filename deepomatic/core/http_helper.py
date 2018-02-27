@@ -29,7 +29,7 @@ from requests.structures import CaseInsensitiveDict
 from promise import Promise
 from six import string_types
 
-from deepomatic.core.exceptions import DeepomaticException, BadStatus
+from deepomatic.exceptions import DeepomaticException, BadStatus
 
 
 ###############################################################################
@@ -67,7 +67,7 @@ class HTTPHelper(object):
             headers = CaseInsensitiveDict(headers)
 
         if content_type is not None:
-            headers['Content-type'] = content_type
+            headers['Content-Type'] = content_type
             if 'Accept' not in headers:
                 headers['Accept'] = content_type
 

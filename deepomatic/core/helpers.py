@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from deepomatic.exceptions import DeepomaticException
 from deepomatic.resources.task import Task
 from deepomatic.core.inputs import format_inputs
 
@@ -40,12 +41,16 @@ def get_data_from_taked_promise(helper, promise, return_task):
 ###############################################################################
 
 
-class ResourceInferenceMixin(object):
-    def inference(self, inputs, data, return_task=False):
-        content_type, data = format_inputs(inputs, data)
+class Inference(object):
+    def inference(self, return_task=False, **kwargs):
+        inputs = kwargs.pop('inputs', None)
+        if inputs is None:
+            raise DeepomaticException("Missing keyword argument: inputs")
+        content_type, data = format_inputs(inputs, kwargs)
         return get_data_from_taked_promise(
             self._helper,
             self._post(suffix='/inference', content_type=content_type, data=data),
             return_task
         )
 
+###############################################################################

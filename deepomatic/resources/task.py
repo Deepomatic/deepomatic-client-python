@@ -22,21 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.resource import Resource, ResourceGetMixin
+from deepomatic.core.resource import Resource
+import deepomatic.core.mixins as mixins
 from deepomatic.core.result import TaskResult, TaskDataResult
 
 
 ###############################################################################
 
-class Task(ResourceGetMixin, Resource):
-    def __init__(self, helper, task_id):
-        uri = '/tasks/{task_id}'.format(task_id=task_id)
-        super(Task, self).__init__(helper, uri, True)
+class Task(mixins.Get,
+           Resource):
+    base_uri = '/tasks/'
 
-    def wait(self):
-        return TaskResult(self._helper, self._uri)
+    def wait(self, timeout=60):
+        """
+        Wait until task is completed. Expires after 'timeout' seconds.
+        """
+        return TaskResult(self._helper, self._uri(), timeout)
 
-    def wait_data(self):
-        return TaskDataResult(self._helper, self._uri)
+    def wait_data(self, timeout=60):
+        """
+        Wait until task is completed. Expires after 'timeout' seconds.
+        """
+        return TaskDataResult(self._helper, self._uri(), timeout)
 
 ###############################################################################

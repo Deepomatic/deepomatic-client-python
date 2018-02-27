@@ -24,57 +24,37 @@ THE SOFTWARE.
 
 from six import string_types
 
-from deepomatic.core.resource import Empty, ResourceList, ResourceObject
-from deepomatic.core.helpers import ResourceInferenceMixin, get_data_from_taked_promise
+from deepomatic.core.resource import Resource
+import deepomatic.core.helpers as helpers
+import deepomatic.core.mixins as mixins
+from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
 
 ###############################################################################
 
-class NetworkList(ResourceList):
-    """
-    This is an helper to access the 'Network' resources.
-    """
-    def __init__(self, helper, is_public):
-        if is_public:
-            uri = '/networks/public'
-        else:
-            uri = '/networks'
-        super(NetworkList, self).__init__(helper, uri, is_public)
-
-    def add(self, name, framework, preprocessing, files, description=Empty(), metadata=Empty(), return_task=False):
-        data = {
-            'name': name,
-            'description': description,
-            'metadata': metadata,
-            'framework': framework,
-            'preprocessing': preprocessing
-        }
-        return super(NetworkList, self).add(data=data, files=files)
-
-
-###############################################################################
-
-class Network(ResourceInferenceMixin, ResourceObject):
+class Network(mixins.Get,
+              mixins.Edit,
+              mixins.Delete,
+              mixins.Add,
+              mixins.List,
+              helpers.Inference,
+              Resource):
     """
     This is an helper to manipulate a 'Network' object.
     """
-    def __init__(self, helper, network_id):
-        is_public = isinstance(network_id, string_types)
-        if is_public:
-            uri = '/networks/public/{network_id}'
-        else:
-            uri = '/networks/{network_id}'
-        uri = uri.format(network_id=network_id)
-        super(Network, self).__init__(helper, uri, is_public)
+    object_template = {
+        'name':          RequiredArg(),
 
-    def edit(self, name=Empty(), description=Empty(), metadata=Empty()):
-        data = {
-            'name': name,
-            'description': description,
-            'metadata': metadata
-        }
-        return super(Network, self).edit(data=data)
+        'description':   OptionnalArg(),
+        'metadata':      OptionnalArg(),
 
-    def inference(self, inputs, output_layers, return_task=False):
-        return super(Network, self).inference(inputs, {"output_layers": output_layers}, return_task)
+        'framework':     ImmutableArg(),
+        'preprocessing': ImmutableArg(),
+    }
+
+    object_functions = ['inference']
+
+    def get_base_uri(self):
+        is_public = isinstance(self._pk, string_types) or self._read_only
+        return '/networks/public/' if is_public else '/networks'
 

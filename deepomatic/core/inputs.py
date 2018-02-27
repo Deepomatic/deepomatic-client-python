@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 import copy
 
-from deepomatic.core.exceptions import DeepomaticException
+from deepomatic.exceptions import DeepomaticException
 
 
 ###############################################################################

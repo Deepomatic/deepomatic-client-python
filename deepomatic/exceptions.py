@@ -69,4 +69,18 @@ class TaskError(Exception):
     def __str__(self):
         return "Error on task:\n{}".format(json.dumps(self.task))
 
+    def get_task_id(self):
+        return self.task['id']
+
+
 ###############################################################################
+
+class TaskTimeout(Exception):
+    def __init__(self, task):
+        self.task = task
+
+    def __str__(self):
+        return "Timeout on task:\n{}".format(json.dumps(self.task))
+
+    def get_task_id(self):
+        return self.task['id']
