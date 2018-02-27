@@ -35,7 +35,7 @@ from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
 class Network(mixins.Get,
               mixins.Edit,
               mixins.Delete,
-              mixins.Add,
+              mixins.Create,
               mixins.List,
               helpers.Inference,
               Resource):

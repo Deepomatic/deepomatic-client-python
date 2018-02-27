@@ -107,7 +107,7 @@ class Resource(object):
             raise DeepomaticException("Both pk and promise cannot be None.")
 
         resource = cls(helper, pk, promise, read_only=read_only)
-        function_to_forbid = ['add', 'list'] + cls.object_set_functions
+        function_to_forbid = ['create', 'list'] + cls.object_set_functions
         if read_only:
             function_to_forbid += ['edit', 'delete']
         for attr in function_to_forbid:
@@ -120,7 +120,7 @@ class Resource(object):
         resource = cls(helper, read_only=read_only)
         function_to_forbid = ['get', 'edit', 'delete'] + cls.object_functions
         if read_only:
-            function_to_forbid = ['add']
+            function_to_forbid = ['create']
         for attr in function_to_forbid:
             if hasattr(resource, attr):
                 setattr(resource, attr, cls._forbidden_on_set)

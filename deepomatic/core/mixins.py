@@ -64,8 +64,8 @@ class Get(object):
 ###############################################################################
 
 class Edit(object):
-    def edit(self, replace=False, content_type='application/json', files=None, check_args=True, **kwargs):
-        if check_args:
+    def edit(self, replace=False, content_type='application/json', files=None, **kwargs):
+        if self._helper.check_query_parameters:
             for arg_name in kwargs:
                 if arg_name not in self.object_template:
                     raise DeepomaticException("Unexpected keyword argument: " + arg_name)
@@ -88,9 +88,9 @@ class Delete(object):
 
 ###############################################################################
 
-class Add(object):
-    def add(self, content_type='application/json', files=None, check_args=True, **kwargs):
-        if check_args:
+class Create(object):
+    def create(self, content_type='application/json', files=None, **kwargs):
+        if self._helper.check_query_parameters:
             for arg_name in kwargs:
                 if arg_name not in self.object_template or self.object_template[arg_name]._shoud_be_present_when_adding is False:
                     raise DeepomaticException("Unexpected keyword argument: " + arg_name)
@@ -101,9 +101,9 @@ class Add(object):
         if files is not None:
             content_type = 'multipart/mixed'
         promise = self._post(data=kwargs, content_type=content_type, files=files)
-        class AddResult(self.__class__, Result):
+        class CreateResult(self.__class__, Result):
             pass
-        return AddResult.as_object_ressource(self._helper, promise=promise, read_only=self._read_only)
+        return CreateResult.as_object_ressource(self._helper, promise=promise, read_only=self._read_only)
 
 
 ###############################################################################

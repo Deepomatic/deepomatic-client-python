@@ -36,7 +36,7 @@ from deepomatic.exceptions import DeepomaticException, BadStatus
 
 class HTTPHelper(object):
 
-    def __init__(self, app_id, api_key, verify, host, version):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters):
         """
         Init the HTTP helper with API key and secret
         """
@@ -56,6 +56,7 @@ class HTTPHelper(object):
         self.app_id = str(app_id)
         self.verify = verify
         self.host = host
+        self.check_query_parameters = check_query_parameters
 
     def setup_headers(self, headers=None, content_type=None):
         """

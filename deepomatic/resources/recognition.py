@@ -35,7 +35,7 @@ from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg, Edit
 class RecognitionSpec(mixins.Get,
                       mixins.Edit,
                       mixins.Delete,
-                      mixins.Add,
+                      mixins.Create,
                       mixins.List,
                       helpers.Inference,
                       Resource):
@@ -69,7 +69,7 @@ class RecognitionSpec(mixins.Get,
 
 class RecognitionVersion(mixins.Get,
                          mixins.Delete,
-                         mixins.Add,
+                         mixins.Create,
                          mixins.List,
                          helpers.Inference,
                          Resource):

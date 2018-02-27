@@ -39,8 +39,8 @@ API_HOST = 'https://api.deepomatic.com'
 
 class Client(object):
 
-    def __init__(self, app_id, api_key, verify=True, host=API_HOST, version=API_VERSION):
-        self.helper = HTTPHelper(app_id, api_key, verify, host, version)
+    def __init__(self, app_id, api_key, verify_ssl=True, check_query_parameters=True, host=API_HOST, version=API_VERSION):
+        self.helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
 
     # /tasks
 
