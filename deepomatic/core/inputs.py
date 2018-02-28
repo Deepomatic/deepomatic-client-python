@@ -88,7 +88,7 @@ class AbstractInput(object):
 ###############################################################################
 
 class ImageInput(AbstractInput):
-    content_type = b'image/*'
+    content_type = r'image/*'
     key = u'image'
 
     def __init__(self, source, encoding=None, bbox=None, polygon=None, crop_uniform_background=False):
