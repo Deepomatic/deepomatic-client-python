@@ -22,6 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.client import API_VERSION as __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from deepomatic.core.resource import Resource
+import deepomatic.core.mixins as mixins
+
+
+###############################################################################
+
+class Account(mixins.Get,
+              Resource):
+    base_uri = '/accounts/'
+
+###############################################################################

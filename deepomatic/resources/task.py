@@ -22,6 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.client import API_VERSION as __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from deepomatic.core.resource import Resource
+import deepomatic.core.mixins as mixins
+from deepomatic.core.result import TaskResult, TaskDataResult
+
+
+###############################################################################
+
+class Task(mixins.Get,
+           Resource):
+    base_uri = '/tasks/'
+
+    def wait(self, timeout=60):
+        """
+        Wait until task is completed. Expires after 'timeout' seconds.
+        """
+        return TaskResult(self._helper, self._uri(), timeout)
+
+    def wait_data(self, timeout=60):
+        """
+        Wait until task is completed. Expires after 'timeout' seconds.
+        """
+        return TaskDataResult(self._helper, self._uri(), timeout)
+
+###############################################################################

@@ -22,6 +22,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.client import API_VERSION as __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from six import string_types
+
+from deepomatic.core.resource import Resource
+import deepomatic.core.helpers as helpers
+import deepomatic.core.mixins as mixins
+from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
+
+
+###############################################################################
+
+class Network(mixins.Get,
+              mixins.Edit,
+              mixins.Delete,
+              mixins.Create,
+              mixins.List,
+              helpers.Inference,
+              Resource):
+    """
+    This is an helper to manipulate a 'Network' object.
+    """
+    object_template = {
+        'name':          RequiredArg(),
+
+        'description':   OptionnalArg(),
+        'metadata':      OptionnalArg(),
+
+        'framework':     ImmutableArg(),
+        'preprocessing': ImmutableArg(),
+    }
+
+    object_functions = ['inference']
+
+    def get_base_uri(self):
+        is_public = isinstance(self._pk, string_types) or self._read_only
+        return '/networks/public/' if is_public else '/networks'
+
