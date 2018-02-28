@@ -22,10 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import sys
 import time
-import urlparse
 
 from deepomatic.exceptions import TaskError, TaskTimeout
+
+if sys.version_info >= (3, 0):
+    import urllib.parse as urlparse
+else:
+    import urlparse
 
 
 ###############################################################################

@@ -28,6 +28,7 @@ from deepomatic.core.http_helper import HTTPHelper
 from deepomatic.resources.network import Network
 from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
+from deepomatic.resources.account import Account
 
 ###############################################################################
 
@@ -42,10 +43,15 @@ class Client(object):
     def __init__(self, app_id, api_key, verify_ssl=True, check_query_parameters=True, host=API_HOST, version=API_VERSION):
         self.helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
 
+    # /accounts
+
+    def my_account(self):
+        return Account.as_object_ressource(self.helper, 'me')
+
     # /tasks
 
     def task(self, task_id):
-        return Task(self.helper, task_id)
+        return Task.as_object_ressource(self.helper, task_id)
 
     # /networks
 

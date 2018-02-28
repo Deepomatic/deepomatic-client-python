@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import sys
 import copy
 
 from deepomatic.exceptions import DeepomaticException
@@ -52,17 +53,28 @@ class AbstractInput(object):
 
     def __init__(self, source, encoding=None):
         is_file = hasattr(source, 'read')
-        is_raw = not is_file and not any([source.startswith(p) for p in self.supported_protocols])
-        if is_raw:
-            if encoding is None:
-                raise DeepomaticException("You must specify 'encoding' when passing raw data")
-            if encoding not in self.supported_encodings:
-                raise DeepomaticException("Unknown 'encoding' type.")
+        if not is_file:
+            is_raw = (sys.version_info >= (3, 0) and isinstance(source, bytes)) or not any([source.startswith(p) for p in self.supported_protocols])
+            if is_raw:
+                if encoding is None:
+                    raise DeepomaticException("You must specify 'encoding' when passing raw data")
+                if encoding not in self.supported_encodings:
+                    raise DeepomaticException("Unknown 'encoding' type.")
 
-            prefix = 'data:{content_type};{encoding},'.format(
-                content_type=self.content_type,
-                encoding=encoding)
-            source = prefix + source
+                prefix = 'data:{content_type};{encoding},'.format(
+                    content_type=self.content_type,
+                    encoding=encoding)
+                if encoding == 'binary':
+                    # Prefix needs to be converted to bytes before concatenation with source
+                    if sys.version_info >= (3, 0):
+                        prefix = bytes(prefix, 'ascii')
+                    else:
+                        prefix = bytes(prefix)
+                elif encoding == 'base64':
+                    # Source needs to be converted to str to be JSON dumped
+                    source = source.decode("utf-8")
+                source = prefix + source
+
         self._source = source
         self._need_multipart = is_file or (is_raw and encoding == 'binary')
 
@@ -76,8 +88,8 @@ class AbstractInput(object):
 ###############################################################################
 
 class ImageInput(AbstractInput):
-    content_type = 'image/*'
-    key = 'image'
+    content_type = b'image/*'
+    key = u'image'
 
     def __init__(self, source, encoding=None, bbox=None, polygon=None, crop_uniform_background=False):
         super(ImageInput, self).__init__(source, encoding)
