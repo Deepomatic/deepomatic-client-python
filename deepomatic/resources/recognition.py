@@ -62,7 +62,7 @@ class RecognitionSpec(mixins.Get,
     def versions(self):
         if self._read_only:
             raise Exception("You cannot call 'versions' on a public recognition spec")
-        return RecognitionVersion.as_set_ressource(self._helper, self._get_pk(), read_only=True)
+        return RecognitionVersion.as_list_of_resources(self._helper, self._get_pk(), read_only=True)
 
 
 ###############################################################################
@@ -92,7 +92,7 @@ class RecognitionVersion(mixins.Get,
         return '/recognition/public/' if is_bound_to_spec else '/recognition/specs/'
 
     @classmethod
-    def as_set_ressource(cls, helper, spec_id=None, read_only=False):
-        resource = super(RecognitionVersion, cls).as_set_ressource(helper, read_only=read_only)
+    def as_list_of_resources(cls, helper, spec_id=None, read_only=False):
+        resource = super(RecognitionVersion, cls).as_list_of_resources(helper, read_only=read_only)
         resource._spec_id = spec_id
         return resource

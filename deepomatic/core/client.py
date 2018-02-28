@@ -56,10 +56,10 @@ class Client(object):
     # /networks
 
     def public_networks(self):
-        return Network.as_set_ressource(self.helper, read_only=True)
+        return Network.as_list_of_resources(self.helper, read_only=True)
 
     def networks(self):
-        return Network.as_set_ressource(self.helper)
+        return Network.as_list_of_resources(self.helper)
 
     def network(self, network_id):
         read_only = isinstance(network_id, string_types)
@@ -68,16 +68,16 @@ class Client(object):
     # /recognition
 
     def public_recognition_specs(self):
-        return RecognitionSpec.as_set_ressource(self.helper, read_only=True)
+        return RecognitionSpec.as_list_of_resources(self.helper, read_only=True)
 
     def recognition_specs(self):
-        return RecognitionSpec.as_set_ressource(self.helper)
+        return RecognitionSpec.as_list_of_resources(self.helper)
 
     def recognition_spec(self, spec_id):
         return RecognitionSpec.as_object_ressource(self.helper, spec_id)
 
     def recognition_versions(self):
-        return RecognitionVersion.as_set_ressource(self.helper)
+        return RecognitionVersion.as_list_of_resources(self.helper)
 
     def recognition_version(self, version_id):
         return RecognitionVersion.as_object_ressource(self.helper, version_id)

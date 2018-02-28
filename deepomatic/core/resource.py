@@ -116,7 +116,7 @@ class Resource(object):
         return resource
 
     @classmethod
-    def as_set_ressource(cls, helper, read_only=False):
+    def as_list_of_resources(cls, helper, read_only=False):
         resource = cls(helper, read_only=read_only)
         function_to_forbid = ['get', 'edit', 'delete'] + cls.object_functions
         if read_only:
