@@ -25,15 +25,15 @@ sudo pip install -r requirements.txt
 Initialize a client.
 Does not make any call to the server.
 ```python
-from deepomatic import deepomatic
+import deepomatic
 
-# You should find your appID and apiKey in your account on developpers.deepomatic.com
-client = deepomatic.Client(appID, apiKey)
+# You should find your app_id and api_key in your account on developpers.deepomatic.com
+client = deepomatic.Client(app_id, api_key)
 ```
 
 ### Client methods
 
-All client methods can be found in [deepomatic/deepomatic.py](/deepomatic/deepomatic.py)
+All client methods can be found in [deepomatic/core/client.py](/deepomatic/core/client.py) and detail for each type of resource is located in [deepomatic/resources](/deepomatic/resources)
 
 ### Examples
 
