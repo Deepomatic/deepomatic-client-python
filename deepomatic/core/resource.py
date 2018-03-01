@@ -74,7 +74,7 @@ class Resource(object):
         if self._pk is not None:
             return self._pk
         elif self._promise is not None:
-            obj = self._promise.result()
+            obj = self._promise.get()
             return obj['id']
         return None
 

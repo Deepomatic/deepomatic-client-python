@@ -100,10 +100,10 @@ class Create(object):
 
         if files is not None:
             content_type = 'multipart/mixed'
-        promise = self._post(data=kwargs, content_type=content_type, files=files)
+        result = self._post(data=kwargs, content_type=content_type, files=files)
         class CreateResult(self.__class__, Result):
             pass
-        return CreateResult.as_object_ressource(self._helper, promise=promise, read_only=self._read_only)
+        return CreateResult.as_object_ressource(self._helper, promise=result._promise, read_only=self._read_only)
 
 
 ###############################################################################

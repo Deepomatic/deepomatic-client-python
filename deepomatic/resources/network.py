@@ -23,8 +23,10 @@ THE SOFTWARE.
 """
 
 from six import string_types
+import numpy as np
 
 from deepomatic.core.resource import Resource
+from deepomatic.core.result import Result
 import deepomatic.core.helpers as helpers
 import deepomatic.core.mixins as mixins
 from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
@@ -57,4 +59,22 @@ class Network(mixins.Get,
     def get_base_uri(self):
         is_public = isinstance(self._pk, string_types) or self._read_only
         return '/networks/public/' if is_public else '/networks'
+
+    def inference(self, convert_to_numpy=True, return_task=False, **kwargs):
+        if convert_to_numpy:
+            return_task = False
+        promise = super(Network, self).inference(return_task=return_task, **kwargs)
+
+        def convert_result_to_numpy(result):
+            result = result["data"]
+            new_result = {}
+            for tensor in result['tensors']:
+                new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['dims'])
+            return new_result
+
+        if convert_to_numpy:
+            return promise.then(convert_result_to_numpy)
+        else:
+            return promise
+
 

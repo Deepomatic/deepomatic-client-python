@@ -332,8 +332,8 @@ def pretty_print_json(data):
 
 
 def display_inference_tensor(result):
-    for t in result['tensors']:
-        print_comment("tensor '{name}', dimensions: {dims}".format(name=t['name'], dims='x'.join(map(str, t['dims']))))
+    for tensor_name, numpy_array in result.items():
+        print_comment("tensor '{name}', dimensions: {dims}".format(name=tensor_name, dims='x'.join(map(str, numpy_array.shape))))
 
 
 if __name__ == '__main__':
