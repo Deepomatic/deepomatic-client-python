@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import sys
 import time
+from promise import Promise
 
 from deepomatic.exceptions import TaskError, TaskTimeout
 
@@ -37,10 +38,11 @@ else:
 
 class Result(object):
     def __init__(self, promise):
+        assert(isinstance(promise, Promise))
         self._promise = promise
 
     def then(self, did_fulfill, did_reject=None):
-        return self._promise.then(did_fulfill, did_reject)
+        return Result(self._promise.then(did_fulfill, did_reject))
 
     def result(self):
         def did_fulfill(result):
@@ -51,7 +53,7 @@ class Result(object):
                 raise Exception("Unexpected error: result should be an Exception in can of error")
             raise result
 
-        return self.then(did_fulfill, did_reject).get()
+        return self._promise.then(did_fulfill, did_reject).get()
 
 
 ###############################################################################
@@ -108,29 +110,28 @@ class TaskResult(Result):
         self._helper = helper
         self._uri = uri
         self._timeout = timeout
-        super(TaskResult, self).__init__(promise=self._helper.get(self._uri))
+        super(TaskResult, self).__init__(promise=Promise(self._wait_result))
 
-    def result(self):
+    def _wait_result(self, resolve, reject):
         start_time = time.time()
         last_time = start_time
         sleep_time = 0.2
         while True:
-            result = super(TaskResult, self).result()
+            result = self._helper.get(self._uri).get()
             status = result['status']
             if status != "pending":
                 if status == "error":
-                    raise TaskError(result)
-                return result
+                    return reject(TaskError(result))
+                return resolve(result)
 
             # Check for timeout
             if time.time() > start_time + self._timeout:
-                raise TaskTimeout(result)
+                return reject(TaskTimeout(result))
 
             # Wait 'sleep_time' second before re-querying
             sleep_time = time.time() - (last_time + sleep_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
-            self._promise = self._helper.get(self._uri)
 
 
 ###############################################################################
