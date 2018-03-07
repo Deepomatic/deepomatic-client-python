@@ -1,0 +1,25 @@
+dmake_version: 0.1
+app_name: deepomatic-client-python
+env:
+  default:
+    source: ${DEEPOMATIC_CONFIG_DIR}/dev.sh
+    variables:
+      DEEPOMATIC_APP_ID: ${TEST_CLIENTS_APP_ID}
+      DEEPOMATIC_API_KEY: ${TEST_CLIENTS_API_KEY}
+  branches:
+    master:
+      source: ${DEEPOMATIC_CONFIG_DIR}/prod.sh
+
+
+docker:
+  root_image:
+    name: ubuntu
+    tag: 16.04
+
+
+services:
+  - service_name: client
+    tests:
+      commands:
+        - tests/test_demo_with_specific_python.sh 2.7
+        - tests/test_demo_with_specific_python.sh 3
