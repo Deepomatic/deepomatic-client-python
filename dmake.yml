@@ -14,7 +14,7 @@ env:
 docker:
   base_image:
       name: deepomatic-client-python
-      root_image: ubuntu:16.04
+      root_image: ubuntu:17.10
       install_scripts:
         - tests/install_virtualenv.sh
 
