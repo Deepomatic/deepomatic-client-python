@@ -12,9 +12,14 @@ if sys.version_info >= (3, 0):
 else:
     from urllib import urlretrieve
 
+if len(sys.argv) < 2:
+    api_host = None
+else:
+    api_host = sys.argv[1]
+
 app_id = os.environ['DEEPOMATIC_APP_ID']
 api_key = os.environ['DEEPOMATIC_API_KEY']
-client = deepomatic.Client(app_id, api_key)
+client = deepomatic.Client(app_id, api_key, host=api_host)
 
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
