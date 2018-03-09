@@ -12,14 +12,28 @@ env:
 
 
 docker:
-  root_image:
-    name: ubuntu
-    tag: 16.04
+  base_image:
+    - &base_image_template
+      variant: python2
+      name: deepomatic-client-python
+      root_image: ubuntu:16.04
+      install_scripts:
+        - tests/install_python2.sh
+      copy_files:
+        - requirements.txt
+    - <<: *base_image_template
+      variant: python3
+      install_scripts:
+        - tests/install_python3.sh
 
 
 services:
   - service_name: client
+    config:
+      docker_image:
+        base_image_variant:
+          - python2
+          - python3
     tests:
       commands:
-        - tests/test_demo_with_specific_python.sh 2.7
-        - tests/test_demo_with_specific_python.sh 3
+        - tests/test_demo.sh
