@@ -1,7 +1,7 @@
 import os
 from setuptools import find_packages, setup
 from pip.req import parse_requirements
-from deepomatic.version import __VERSION__
+from version import __VERSION__
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
