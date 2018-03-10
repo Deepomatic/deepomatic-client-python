@@ -26,7 +26,8 @@ demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
 def demo():
     """
-    Our REST client works by exposing resources. A resource usually has the following methods:
+    Our REST client works by exposing resources. A resource usually has the following synchronous methods:
+
         - create(...): allow to create a new object. Please refere to documentation for a list
                      of arguments of each object resource.
         - list(offset=0, limit=100): return the list of objects, paginated by group of 'limit' objects.
@@ -35,12 +36,6 @@ def demo():
                        may not be able to modify all the fields. Please refere to documentation for a list
                        of arguments of each object resource.
         - delete():    allow to delete the object.
-
-
-    Each of those 5 methods get/edit/delete/create/list is asynchronous. To actually block until the API query
-    finished, you must call '.result()' on their returned value.
-    You can also chain API queries by calling '.then(lamba result: ...)'. The function passed as argument of
-    '.then(function)' will be called with the result of the previous query as soon as it is available.
     """
 
     ###################
@@ -49,11 +44,10 @@ def demo():
 
     print_header("Listing public networks")
     """
-    You can access the list of public networks with: 'client.public_networks().list()'
-    'public_networks()' returns a resource set that usually have two methods: '.list()' and '.create()'.
+    You can access the list of public networks with: 'client.PublicNetwork.list()'
     Here, public networks are read only so you can only call '.list()'.
     The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
-    By default, it return 100 object and gives your the URI at which you will find the next page.
+    By default, it returns 100 objects and gives your the URI at which you will find the next page.
     It takes two optionnal arguments:
       - 'offset': the index at which we should start iterating (defaut: 0)
       - 'limit': the number of element per page (default: 100)
@@ -62,17 +56,18 @@ def demo():
         print_comment("{network_id}: {name}".format(network_id=network['id'], name=network['name']))
 
     """
-    You may also query the list of object with '.result()' but it will only return the JSON associated with
+    You may also query the list of object with '.data()' but it will only return the JSON associated with
     the current page, unlike the iterator version above that will loop trough all the data.
     """
-    print(client.PublicNetwork.list())
+    result = client.PublicNetwork.list().data()
+    pretty_print_json(result)
 
     print_header("Getting network")
     """
-    You can get an object resource using the client. An object resource may have '.get()', '.edit()' or '.delete()'
-    methods. They respectively retrieve the object data, modifiy it or delete the object.
-    Depending of the object type, you may also invoke special actions like '.inference()' (see below).
-    Here, we retrieve a public network named 'imagenet-inception-v1'
+    You can get an object resource using the client with the '.retrieve(id)' method. It will
+    return an object resource which may have '.update(...)' and '.delete()' methods. They
+    respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
+    (see below). Here, we retrieve a public network named 'imagenet-inception-v1'
     """
     network = client.PublicNetwork.retrieve('imagenet-inception-v1')
     print(network)
@@ -123,7 +118,7 @@ def demo():
     A network by itself is not very usefull. It's more interesting when it's tied to some output labels !
     This is the role of a recognition specification: precisely describing some expected output.
     Those specifications will then be matched to a network via "specification versions".
-    Lets first see the list of public recognition models with 'client.public_recognition_specs()'
+    Lets first see the list of public recognition models with 'client.PublicRecognitionSpec.list()'
     """
     for spec in client.PublicRecognitionSpec.list():
         print_comment("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
@@ -132,10 +127,10 @@ def demo():
     """
     Let's now focus on what we can do with a recognition models.
     We get the output specifications of the Inception v1 (GoogLeNet) model with client.recognition_spec('imagenet-inception-v1')
-    We can see its spec with 'spec.get().result()'
+    We can see its spec with 'spec.data()'
     """
     spec = client.PublicRecognitionSpec.retrieve('imagenet-inception-v1')
-    print(spec)
+    pretty_print_json(spec.data())
 
     print_header("Infering an image on recognition spec current version")
     """
@@ -143,7 +138,7 @@ def demo():
     inference on it and use it to tag the content of images with their main category.
     """
     result = spec.inference(inputs=deepomatic.ImageInput(demo_url), show_discarded=True, max_predictions=3)
-    print(json.dumps(result, indent=4, separators=(',', ': ')))
+    pretty_print_json(result)
 
     """
     This model can recognize the 1000 official categories of imagenet, so it might not fit your use case.
@@ -205,17 +200,13 @@ def demo():
     }
 
     """
-    We now upload our new network via the 'client.networks().create()' network.
+    We now upload our new network via the 'client.Network().create(...)' network.
     Please refere to the documentation for a description of each parameter.
     """
     network = client.Network.create(name="My first network",
                                     framework='nv-caffe-0.x-mod',
                                     preprocessing=preprocessing,
                                     files=files)
-
-    """
-    We get the network JSON data via `network.get().result()`
-    """
     network_id = network['id']
     print_comment("Network ID = {}".format(network_id))
 
@@ -228,7 +219,7 @@ def demo():
 
     print_header("Editing network")
     """
-    If you realized you did a mistake on some object parameters, you may modify it with '.edit()'.
+    If you realized you did a mistake on some object parameters, you may modify it with '.update()'.
     This function takes some named parameters and sets their value. The name of parameters of course
     depends on the type of resource you are editing. Please refer to documentation to find out each
     which are the field of a given resource.
@@ -255,9 +246,8 @@ def demo():
     spec = client.RecognitionSpec.create(name="My recognition model", outputs=outputs)
 
     print_header("Getting the spec result")
-    # Good to know: when you use create(), its return value behave at the same time:
-    # - as a result: you can call 'spec.resut()'
-    # - as a resource: you can call 'spec.get().resut()' or 'spec.inference()'
+    # Good to know: when you use create(), its return value is a resource object:
+    # you can for example call 'spec.inference()' on it.
     print_comment("Spec ID = {}".format(spec['id']))
 
     print_header("Adding a version on a spec")
@@ -298,9 +288,26 @@ def demo():
     network.delete()
 
 
+
+
+
+
+
+
+
+
 ###########
 # Helpers #
 ###########
+
+def download(url, local_path):
+    if not os.path.isfile(local_path):
+        print_comment("Downloading {} to {}".format(url, local_path))
+        urlretrieve(url, local_path)
+    else:
+        print_comment("Skipping download of {} to {}: file already exist".format(url, local_path))
+    return local_path
+
 
 def print_header(text):
     print("\n{}".format(text))
@@ -310,13 +317,8 @@ def print_comment(text):
     print("--> " + text)
 
 
-def download(url, local_path):
-    if not os.path.isfile(local_path):
-        print_comment("Downloading {} to {}".format(url, local_path))
-        urlretrieve(url, local_path)
-    else:
-        print_comment("Skipping download of {} to {}: file already exist".format(url, local_path))
-    return local_path
+def pretty_print_json(data):
+    print(json.dumps(data, indent=4, separators=(',', ': ')))
 
 
 def display_inference_tensor(result):
