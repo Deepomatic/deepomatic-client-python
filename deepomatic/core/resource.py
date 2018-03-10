@@ -22,8 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.exceptions import DeepomaticException
-from deepomatic.core.result import Result
+from deepomatic.exceptions import DeepomaticException, NoData
+
+import json
+import sys
+if sys.version_info >= (3, 0):
+    import urllib.parse as urlparse
+else:
+    import urlparse
 
 
 ###############################################################################
@@ -32,12 +38,6 @@ class Resource(object):
     # Specify this template to define the list of arguments to create an object
     object_template = {}
 
-    # Specify here the list of function accesible to an object resource:
-    object_functions = []
-
-    # Specify here the list of function accesible to an object set resource:
-    object_set_functions = []
-
     # Specify this for your resource, it must be the base resource URI (without ID)
     base_uri = None
 
@@ -45,11 +45,40 @@ class Resource(object):
     def get_base_uri(self, pk=None):
         raise DeepomaticException('Unimplemented')
 
-    def __init__(self, helper, pk=None, promise=None, read_only=False):
+    def retrieve(self, pk):
+        result = self.__class__(self._helper, pk=pk)
+        return result.refresh()
+
+    def refresh(self):
+        assert(self._pk is not None)
+        self._data = self._helper.get(self._uri())
+        return self
+
+    def data(self, no_raise=False):
+        if self._data is None:
+            if self._pk is None:
+                if no_raise:
+                    return None
+                else:
+                    raise NoData()
+            else:
+                self.refresh()
+        return self._data
+
+    def __init__(self, helper, pk=None, data=None):
         self._helper = helper
         self._pk = pk
-        self._promise = promise
-        self._read_only = read_only
+        self._data = data
+
+    def __getitem__(self, key):
+        return self.data()[key]
+
+    def __str__(self):
+        pk = 'id={pk} '.format(pk=self._pk) if self._pk else ''
+        string = '<{classname} object {pk}at {addr}>'.format(classname=self.__class__.__name__, pk=pk, addr=hex(id(self)))
+        if self.data() is not None:
+            string += ' JSON: ' + json.dumps(self.data(), indent=4, separators=(',', ': '))
+        return string
 
     def _uri(self, suffix=None):
         base_uri = self.base_uri
@@ -59,9 +88,8 @@ class Resource(object):
         if not base_uri.endswith('/'):
             base_uri += '/'
 
-        pk = self._get_pk()
-        if pk is not None:
-            base_uri += str(pk) + '/'
+        if self._pk is not None:
+            base_uri += str(self._pk) + '/'
 
         if suffix is None:
             return base_uri
@@ -70,60 +98,45 @@ class Resource(object):
                 suffix = suffix[1:]
             return base_uri + suffix
 
-    def _get_pk(self):
-        if self._pk is not None:
-            return self._pk
-        elif self._promise is not None:
-            obj = self._promise.get()
-            return obj['id']
-        return None
-
-    def _get(self, suffix=None, *args, **kwargs):
-        return Result(self._helper.get(self._uri(suffix), *args, **kwargs))
-
-    def _delete(self, suffix=None, *args, **kwargs):
-        return Result(self._helper.delete(self._uri(suffix), *args, **kwargs))
-
-    def _post(self, suffix=None, *args, **kwargs):
-        return Result(self._helper.post(self._uri(suffix), *args, **kwargs))
-
-    def _put(self, suffix=None, *args, **kwargs):
-        return Result(self._helper.put(self._uri(suffix), *args, **kwargs))
-
-    def _patch(self, suffix=None, *args, **kwargs):
-        return Result(self._helper.patch(self._uri(suffix), *args, **kwargs))
-
-    @staticmethod
-    def _forbidden_on_object(*args, **kwargs):
-        raise DeepomaticException("You cannot call this method on this object resource.")
-
-    @staticmethod
-    def _forbidden_on_set(*args, **kwargs):
-        raise DeepomaticException("You cannot call this method on this object set resource.")
-
-    @classmethod
-    def as_object_ressource(cls, helper, pk=None, promise=None, read_only=False):
-        if pk is None and promise is None:
-            raise DeepomaticException("Both pk and promise cannot be None.")
-
-        resource = cls(helper, pk, promise, read_only=read_only)
-        function_to_forbid = ['create', 'list'] + cls.object_set_functions
-        if read_only:
-            function_to_forbid += ['edit', 'delete']
-        for attr in function_to_forbid:
-            if hasattr(resource, attr):
-                setattr(resource, attr, cls._forbidden_on_object)
-        return resource
-
-    @classmethod
-    def as_list_of_resources(cls, helper, read_only=False):
-        resource = cls(helper, read_only=read_only)
-        function_to_forbid = ['get', 'edit', 'delete'] + cls.object_functions
-        if read_only:
-            function_to_forbid = ['create']
-        for attr in function_to_forbid:
-            if hasattr(resource, attr):
-                setattr(resource, attr, cls._forbidden_on_set)
-        return resource
 
 ###############################################################################
+
+class ResourceList(Resource):
+    """
+    This is an helper to access a resource list.
+    """
+    def __init__(self, helper, uri, offset, limit):
+        params = {'offset': offset, 'limit': limit}
+        super(ResourceList, self).__init__(helper, data=helper.get(uri, params))
+
+    def __iter__(self):
+        results = self['results']
+        next_results = self.next()
+
+        while True:
+            for r in results:
+                yield r
+            if next_results is None:
+                break
+            results = next_results['results']
+            next_results = next_results.next()
+
+    def count(self):
+        return self['count']
+
+    def next(self):
+        return self._handle_prev_next(self['next'])
+
+    def prev(self):
+        return self._handle_prev_next(self['prev'])
+
+    def _handle_prev_next(self, url):
+        if url is None:
+            return None
+        else:
+            o = urlparse.urlparse(url)
+            params = urlparse.parse_qs(o.query)
+            offset = params.get('offset', 0)
+            limit = params.get('limit', 100)
+            uri = urlparse.urlunparse(o.scheme, o.netloc, o.path, o.params, '', o.fragment)
+            return ResourceList(self.helper, uri, offset, limit)

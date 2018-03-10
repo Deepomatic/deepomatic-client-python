@@ -22,59 +22,59 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six import string_types
 import numpy as np
 
 from deepomatic.core.resource import Resource
-from deepomatic.core.result import Result
-import deepomatic.core.helpers as helpers
-import deepomatic.core.mixins as mixins
+from deepomatic.core.utils import InferenceResource
+from deepomatic.core.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
 from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
 
 ###############################################################################
 
-class Network(mixins.Get,
-              mixins.Edit,
-              mixins.Delete,
-              mixins.Create,
-              mixins.List,
-              helpers.Inference,
-              Resource):
+class PublicNetwork(ListableResource,
+                    InferenceResource,
+                    Resource):
     """
-    This is an helper to manipulate a 'Network' object.
+    This is an helper to manipulate a public 'Network' object.
     """
-    object_template = {
-        'name':          RequiredArg(),
-
-        'description':   OptionnalArg(),
-        'metadata':      OptionnalArg(),
-
-        'framework':     ImmutableArg(),
-        'preprocessing': ImmutableArg(),
-    }
-
-    object_functions = ['inference']
-
-    def get_base_uri(self):
-        is_public = isinstance(self._pk, string_types) or self._read_only
-        return '/networks/public/' if is_public else '/networks'
+    base_uri = '/networks/public/'
 
     def inference(self, convert_to_numpy=True, return_task=False, **kwargs):
         if convert_to_numpy:
             return_task = False
-        promise = super(Network, self).inference(return_task=return_task, **kwargs)
-
-        def convert_result_to_numpy(result):
-            result = result["data"]
-            new_result = {}
-            for tensor in result['tensors']:
-                new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['dims'])
-            return new_result
+        result = super(PublicNetwork, self).inference(return_task=return_task, **kwargs)
 
         if convert_to_numpy:
-            return promise.then(convert_result_to_numpy)
+            return self._convert_result_to_numpy(result)
         else:
-            return promise
+            return result
+
+    @staticmethod
+    def _convert_result_to_numpy(result):
+        new_result = {}
+        for tensor in result['tensors']:
+            new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['dims'])
+        return new_result
+
+
+###############################################################################
+
+class Network(CreateableResource,
+              UpdatableResource,
+              DeletableResource,
+              PublicNetwork):
+    """
+    This is an helper to manipulate a 'Network' object.
+    """
+    base_uri = '/networks/'
+
+    object_template = {
+        'name':          RequiredArg(),
+        'description':   OptionnalArg(),
+        'metadata':      OptionnalArg(),
+        'framework':     ImmutableArg(),
+        'preprocessing': ImmutableArg(),
+    }
 
 

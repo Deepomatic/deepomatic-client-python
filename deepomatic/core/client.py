@@ -22,11 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six import string_types
-
 from deepomatic.core.http_helper import HTTPHelper
-from deepomatic.resources.network import Network
-from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
+from deepomatic.resources.network import PublicNetwork, Network
+from deepomatic.resources.recognition import PublicRecognitionSpec, RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
 from deepomatic.resources.account import Account
 
@@ -43,46 +41,28 @@ class Client(object):
     def __init__(self, app_id, api_key, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION):
         if host is None:
             host = API_HOST
-        self.helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
+        helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
 
-    # /accounts
+        # /accounts
 
-    def my_account(self):
-        return Account.as_object_ressource(self.helper, 'me')
+        self.Account = Account(helper)
 
-    # /tasks
+        # /tasks
 
-    def task(self, task_id):
-        return Task.as_object_ressource(self.helper, task_id)
+        self.Task = Task(helper)
 
-    # /networks
+        # /networks
 
-    def public_networks(self):
-        return Network.as_list_of_resources(self.helper, read_only=True)
+        self.PublicNetwork = PublicNetwork(helper)
 
-    def networks(self):
-        return Network.as_list_of_resources(self.helper)
+        self.Network = Network(helper)
 
-    def network(self, network_id):
-        read_only = isinstance(network_id, string_types)
-        return Network.as_object_ressource(self.helper, network_id, read_only=read_only)
+        # /recognition
 
-    # /recognition
+        self.PublicRecognitionSpec = PublicRecognitionSpec(helper)
 
-    def public_recognition_specs(self):
-        return RecognitionSpec.as_list_of_resources(self.helper, read_only=True)
+        self.RecognitionSpec = RecognitionSpec(helper)
 
-    def recognition_specs(self):
-        return RecognitionSpec.as_list_of_resources(self.helper)
-
-    def recognition_spec(self, spec_id):
-        return RecognitionSpec.as_object_ressource(self.helper, spec_id)
-
-    def recognition_versions(self):
-        return RecognitionVersion.as_list_of_resources(self.helper)
-
-    def recognition_version(self, version_id):
-        return RecognitionVersion.as_object_ressource(self.helper, version_id)
-
+        self.RecognitionVersion = RecognitionVersion(helper)
 
 

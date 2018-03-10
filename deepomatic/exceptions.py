@@ -34,14 +34,21 @@ class DeepomaticException(Exception):
 
 ###############################################################################
 
-class UnimplementedException(Exception):
+class UnimplementedException(DeepomaticException):
     def __init__(self, msg):
         super(UnimplementedException, self).__init__(msg)
 
 
 ###############################################################################
 
-class BadStatus(Exception):
+class NoData(DeepomaticException):
+    def __init__(self):
+        super(NoData, self).__init__("No data !! You may need to call '.retrieve()' ?")
+
+
+###############################################################################
+
+class BadStatus(DeepomaticException):
     def __init__(self, response):
         self.response = response
 
@@ -62,7 +69,7 @@ class BadStatus(Exception):
 
 ###############################################################################
 
-class TaskError(Exception):
+class TaskError(DeepomaticException):
     def __init__(self, task):
         self.task = task
 
@@ -75,7 +82,7 @@ class TaskError(Exception):
 
 ###############################################################################
 
-class TaskTimeout(Exception):
+class TaskTimeout(DeepomaticException):
     def __init__(self, task):
         self.task = task
 

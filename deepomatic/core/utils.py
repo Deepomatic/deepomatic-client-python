@@ -29,28 +29,21 @@ from deepomatic.core.inputs import format_inputs
 
 ###############################################################################
 
-def get_data_from_taked_promise(helper, promise, return_task):
-    result = promise.result()
-    task_id = result['task_id']
-    task = Task(helper, task_id)
-    if return_task:
-        return task.get()
-    else:
-        return task.wait_data()
-
-###############################################################################
-
-
-class Inference(object):
+class InferenceResource(object):
     def inference(self, return_task=False, **kwargs):
         inputs = kwargs.pop('inputs', None)
         if inputs is None:
             raise DeepomaticException("Missing keyword argument: inputs")
         content_type, data = format_inputs(inputs, kwargs)
-        return get_data_from_taked_promise(
-            self._helper,
-            self._post(suffix='/inference', content_type=content_type, data=data),
-            return_task
-        )
+        result = self._helper.post(self._uri('/inference'), content_type=content_type, data=data)
+        task_id = result['task_id']
+        task = Task(self._helper, pk=task_id)
+        task.wait()
+
+        if return_task:
+            return task
+        else:
+            return task['data']
+
 
 ###############################################################################

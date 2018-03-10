@@ -26,7 +26,6 @@ import os
 import json
 import requests
 from requests.structures import CaseInsensitiveDict
-from promise import Promise
 from six import string_types
 
 from deepomatic.exceptions import DeepomaticException, BadStatus
@@ -143,28 +142,22 @@ class HTTPHelper(object):
                 new_files[key] = file
             files = new_files
 
-        def execute_request(resolve, reject):
-            try:
-                response = func(self.host + resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
+        response = func(self.host + resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
 
-                # Close opened files
-                for file in opened_files:
-                    file.close()
+        # Close opened files
+        for file in opened_files:
+            file.close()
 
-                if response.status_code == 204:  # delete
-                    return resolve(None)
+        if response.status_code == 204:  # delete
+            return None
 
-                if response.status_code < 200 or response.status_code >= 300:
-                    return reject(BadStatus(response))
+        if response.status_code < 200 or response.status_code >= 300:
+            raise BadStatus(response)
 
-                if 'application/json' in response.headers['Content-Type']:
-                    return resolve(response.json())
-                else:
-                    return resolve(response.content)
-            except Exception as e:
-                return reject(e)
-
-        return Promise(execute_request)
+        if 'application/json' in response.headers['Content-Type']:
+            return response.json()
+        else:
+            return response.content
 
     def get(self, resource, params=None):
         """

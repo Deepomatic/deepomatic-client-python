@@ -21,28 +21,49 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+import time
 
 from deepomatic.core.resource import Resource
-import deepomatic.core.mixins as mixins
-from deepomatic.core.result import TaskResult, TaskDataResult
+from deepomatic.core.mixins import ListableResource
+from deepomatic.exceptions import TaskError, TaskTimeout
 
 
 ###############################################################################
 
-class Task(mixins.Get,
-           Resource):
+class Task(ListableResource, Resource):
     base_uri = '/tasks/'
+
+    def list(self, task_ids):
+        """
+        Returns a list of tasks
+        """
+        assert(isinstance(task_ids, list))
+        return super(Task, self).list(task_ids=task_ids)
 
     def wait(self, timeout=60):
         """
         Wait until task is completed. Expires after 'timeout' seconds.
         """
-        return TaskResult(self._helper, self._uri(), timeout)
+        self._wait_result(timeout)
+        return self
 
-    def wait_data(self, timeout=60):
-        """
-        Wait until task is completed. Expires after 'timeout' seconds.
-        """
-        return TaskDataResult(self._helper, self._uri(), timeout)
+    def _wait_result(self, timeout):
+        start_time = time.time()
+        last_time = start_time
+        sleep_time = 0.2
+        while self['status'] == "pending":
+            # Check for timeout
+            if time.time() > start_time + timeout:
+                raise TaskTimeout(self.data())
+
+            # Wait 'sleep_time' second before re-querying
+            sleep_time = time.time() - (last_time + sleep_time)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            self.refresh()
+
+        if self['status'] == "error":
+            raise TaskError(self.data())
+
 
 ###############################################################################

@@ -23,13 +23,11 @@ THE SOFTWARE.
 """
 
 from deepomatic.core.resource import Resource
-import deepomatic.core.mixins as mixins
 
 
 ###############################################################################
 
-class Account(mixins.Get,
-              Resource):
+class Account(Resource):
     base_uri = '/accounts/'
 
 ###############################################################################

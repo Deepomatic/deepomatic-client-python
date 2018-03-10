@@ -22,56 +22,52 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six import string_types
-
 from deepomatic.core.resource import Resource
-import deepomatic.core.helpers as helpers
-import deepomatic.core.mixins as mixins
+from deepomatic.core.utils import InferenceResource
+from deepomatic.core.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
 from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg, EditOnlyArg
 
 
 ###############################################################################
 
-class RecognitionSpec(mixins.Get,
-                      mixins.Edit,
-                      mixins.Delete,
-                      mixins.Create,
-                      mixins.List,
-                      helpers.Inference,
-                      Resource):
+class PublicRecognitionSpec(ListableResource,
+                            InferenceResource,
+                            Resource):
     """
-    This is an helper to manipulate a 'Network' object.
+    This is an helper to manipulate a public 'Recognition Specification' object.
     """
-    object_template = {
-        'name':        RequiredArg(),
-
-        'description': OptionnalArg(),
-        'metadata':    OptionnalArg(),
-
-        'outputs':     ImmutableArg(),
-
-        'current_version_id': EditOnlyArg()
-    }
-
-    object_functions = ['versions', 'inference']
-
-    def get_base_uri(self):
-        is_public = isinstance(self._pk, string_types) or self._read_only
-        return '/recognition/public/' if is_public else '/recognition/specs/'
-
-    def versions(self):
-        if self._read_only:
-            raise Exception("You cannot call 'versions' on a public recognition spec")
-        return RecognitionVersion.as_list_of_resources(self._helper, self._get_pk(), read_only=True)
+    base_uri = '/recognition/public/'
 
 
 ###############################################################################
 
-class RecognitionVersion(mixins.Get,
-                         mixins.Delete,
-                         mixins.Create,
-                         mixins.List,
-                         helpers.Inference,
+class RecognitionSpec(CreateableResource,
+                      UpdatableResource,
+                      DeletableResource,
+                      PublicRecognitionSpec):
+    """
+    This is an helper to manipulate a 'Network' object.
+    """
+    base_uri = '/recognition/specs/'
+
+    object_template = {
+        'name':        RequiredArg(),
+        'description': OptionnalArg(),
+        'metadata':    OptionnalArg(),
+        'outputs':     ImmutableArg(),
+        'current_version_id': EditOnlyArg()
+    }
+
+    def versions(self):
+        return RecognitionVersion(self._helper, spec_id=self._pk)
+
+
+###############################################################################
+
+class RecognitionVersion(CreateableResource,
+                         DeletableResource,
+                         ListableResource,
+                         InferenceResource,
                          Resource):
     """
     This is an helper to manipulate a 'Network' object.
@@ -83,16 +79,14 @@ class RecognitionVersion(mixins.Get,
         'post_processings': RequiredArg(),
     }
 
+    def __init__(self, helper, spec_id=None, *args, **kwargs):
+        super(RecognitionVersion, self).__init__(helper, *args, **kwargs)
+        self._spec_id = spec_id
+
     def get_base_uri(self):
-        is_bound_to_spec = hasattr(self, '_spec_id') and self._spec_id is not None
+        is_bound_to_spec = self._pk is None and self._spec_id is not None
         if is_bound_to_spec:
             return '/recognition/specs/{spec_id}/versions'.format(spec_id=self._spec_id)
         else:
             return '/recognition/versions/'
-        return '/recognition/public/' if is_bound_to_spec else '/recognition/specs/'
 
-    @classmethod
-    def as_list_of_resources(cls, helper, spec_id=None, read_only=False):
-        resource = super(RecognitionVersion, cls).as_list_of_resources(helper, read_only=read_only)
-        resource._spec_id = spec_id
-        return resource
