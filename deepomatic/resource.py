@@ -23,6 +23,7 @@ THE SOFTWARE.
 """
 
 import json
+import copy
 
 from deepomatic.exceptions import DeepomaticException, NoData
 
@@ -61,7 +62,7 @@ class Resource(object):
                 self.refresh()
         return self._data
 
-    def __init__(self, helper, pk=None, data=None, **kwargs):
+    def __init__(self, helper, pk=None, data=None):
         self._helper = helper
         self._pk = pk
         self._data = data
@@ -103,13 +104,13 @@ class ResourceList(Resource):
     This is an helper to access a resource list.
     """
     def __init__(self, resource_class, helper, uri, offset=None, limit=None, **kwargs):
-        params = {}
+        params = copy.deepcopy(kwargs)
         if offset is not None:
             params['offset'] = offset
         if limit is not None:
             params['limit'] = limit
         data = helper.get(uri, params=params)
-        super(ResourceList, self).__init__(helper, data=data, **kwargs)
+        super(ResourceList, self).__init__(helper, data=data)
         self._resource_class = resource_class
 
     def __iter__(self):

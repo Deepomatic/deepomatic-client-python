@@ -286,6 +286,13 @@ def demo():
     """
     print(spec.versions())
 
+    """
+    Test the possibility of getting multiple tasks at the same time
+    """
+    task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True)
+    task_id = task['id']
+    tasks = client.Task.list(task_ids=[task_id])
+    print(tasks)
 
     print_header("Delete networks and recognition models")
     """

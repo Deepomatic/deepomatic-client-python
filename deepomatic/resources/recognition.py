@@ -69,22 +69,11 @@ class RecognitionVersion(CreateableResource,
     """
     This is an helper to manipulate a 'Network' object.
     """
+    base_uri = '/recognition/versions/'
 
     object_template = {
         'spec_id':          RequiredArg(),
         'network_id':       RequiredArg(),
         'post_processings': RequiredArg(),
     }
-
-    def __init__(self, helper, spec_id=None, *args, **kwargs):
-        super(RecognitionVersion, self).__init__(helper, *args, **kwargs)
-        self._spec_id = spec_id
-
-    @classmethod
-    def get_base_uri(cls, pk, **kwargs):
-        is_bound_to_spec = pk is None and self._spec_id is not None
-        if is_bound_to_spec:
-            return '/recognition/specs/{spec_id}/versions'.format(spec_id=self._spec_id)
-        else:
-            return '/recognition/versions/'
 
