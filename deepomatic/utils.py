@@ -31,11 +31,13 @@ from deepomatic.inputs import format_inputs
 
 class InferenceResource(object):
     def inference(self, return_task=False, **kwargs):
+        assert(self._pk is not None)
+
         inputs = kwargs.pop('inputs', None)
         if inputs is None:
             raise DeepomaticException("Missing keyword argument: inputs")
         content_type, data = format_inputs(inputs, kwargs)
-        result = self._helper.post(self._uri('/inference'), content_type=content_type, data=data)
+        result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data)
         task_id = result['task_id']
         task = Task(self._helper, pk=task_id)
         task.wait()

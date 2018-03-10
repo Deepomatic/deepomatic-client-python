@@ -5,7 +5,7 @@ import base64
 import tarfile
 
 import deepomatic
-from deepomatic.exceptions import DeepomaticException
+from deepomatic import ImageInput
 
 if sys.version_info >= (3, 0):
     from urllib.request import urlretrieve
@@ -17,8 +17,8 @@ if len(sys.argv) < 2:
 else:
     api_host = sys.argv[1]
 
-app_id = os.environ['DEEPOMATIC_APP_ID']
-api_key = os.environ['DEEPOMATIC_API_KEY']
+app_id = os.getenv('DEEPOMATIC_APP_ID')
+api_key = os.getenv('DEEPOMATIC_API_KEY')
 client = deepomatic.Client(app_id, api_key, host=api_host)
 
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
@@ -44,7 +44,7 @@ def demo():
 
     print_header("Listing public networks")
     """
-    You can access the list of public networks with: 'client.PublicNetwork.list()'
+    You can access the list of public networks with: 'client.Network.list(public=True)'
     Here, public networks are read only so you can only call '.list()'.
     The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
     By default, it returns 100 objects and gives your the URI at which you will find the next page.
@@ -52,14 +52,14 @@ def demo():
       - 'offset': the index at which we should start iterating (defaut: 0)
       - 'limit': the number of element per page (default: 100)
     """
-    for network in client.PublicNetwork.list():
+    for network in client.Network.list(public=True):
         print_comment("{network_id}: {name}".format(network_id=network['id'], name=network['name']))
 
     """
     You may also query the list of object with '.data()' but it will only return the JSON associated with
     the current page, unlike the iterator version above that will loop trough all the data.
     """
-    result = client.PublicNetwork.list().data()
+    result = client.Network.list(public=True).data()
     pretty_print_json(result)
 
     print_header("Getting network")
@@ -69,17 +69,17 @@ def demo():
     respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
     (see below). Here, we retrieve a public network named 'imagenet-inception-v1'
     """
-    network = client.PublicNetwork.retrieve('imagenet-inception-v1')
+    network = client.Network.retrieve('imagenet-inception-v1')
     print(network)
 
     print_header("Inference from a URL")
     """
     As said above, you can call '.inference()' on a network, which will give you access on raw tensor output.
     Inference requests may take input image in various forms.
-    Here, it take an url as input via 'deepomatic.ImageInput(demo_url)'.
+    Here, it take an url as input via 'ImageInput(demo_url)'.
     Also we have used the generic form of inference which might take multiple inputs if your networks has multiple ones.
     """
-    result = network.inference(inputs=[deepomatic.ImageInput(demo_url)], output_tensors=["prob", "pool2/3x3_s2", "pool5/7x7_s1"])
+    result = network.inference(inputs=[ImageInput(demo_url)], output_tensors=["prob", "pool2/3x3_s2", "pool5/7x7_s1"])
     display_inference_tensor(result)
 
     print_header("Inference from a file")
@@ -88,7 +88,7 @@ def demo():
     Here, it takes a file pointer as input.
     """
     file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
-    result = network.inference(inputs=deepomatic.ImageInput(file), output_tensors=["prob"])
+    result = network.inference(inputs=[ImageInput(file)], output_tensors=["prob"])
     display_inference_tensor(result)
 
     print_header("Inference from binary data")
@@ -98,7 +98,7 @@ def demo():
     """
     file.seek(0)
     binary_data = file.read()
-    result = network.inference(inputs=deepomatic.ImageInput(binary_data, encoding="binary"), output_tensors=["prob"])
+    result = network.inference(inputs=[ImageInput(binary_data, encoding="binary")], output_tensors=["prob"])
     display_inference_tensor(result)
 
     print_header("Inference from base64 data")
@@ -106,7 +106,7 @@ def demo():
     If for some reasons you want to work with base64 encoded data, you also can ! Just specify base64 as encoding !
     """
     b64 = base64.b64encode(binary_data)
-    result = network.inference(inputs=deepomatic.ImageInput(b64, encoding="base64"), output_tensors=["prob"])
+    result = network.inference(inputs=[ImageInput(b64, encoding="base64")], output_tensors=["prob"])
     display_inference_tensor(result)
 
     #############################
@@ -118,9 +118,9 @@ def demo():
     A network by itself is not very usefull. It's more interesting when it's tied to some output labels !
     This is the role of a recognition specification: precisely describing some expected output.
     Those specifications will then be matched to a network via "specification versions".
-    Lets first see the list of public recognition models with 'client.PublicRecognitionSpec.list()'
+    Lets first see the list of public recognition models with 'client.RecognitionSpec.list(public=True)'
     """
-    for spec in client.PublicRecognitionSpec.list():
+    for spec in client.RecognitionSpec.list(public=True):
         print_comment("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
 
     print_header("Getting spec")
@@ -129,7 +129,7 @@ def demo():
     We get the output specifications of the Inception v1 (GoogLeNet) model with client.recognition_spec('imagenet-inception-v1')
     We can see its spec with 'spec.data()'
     """
-    spec = client.PublicRecognitionSpec.retrieve('imagenet-inception-v1')
+    spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
     pretty_print_json(spec.data())
 
     print_header("Infering an image on recognition spec current version")
@@ -137,7 +137,7 @@ def demo():
     This recognition model is already tied to a specific version managed by deepomatic, so we can directly perform
     inference on it and use it to tag the content of images with their main category.
     """
-    result = spec.inference(inputs=deepomatic.ImageInput(demo_url), show_discarded=True, max_predictions=3)
+    result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
     pretty_print_json(result)
 
     """
@@ -169,7 +169,7 @@ def demo():
     else:
         print_comment("Skipping download of mean file: {}".format(mean_file))
     """
-    Here, we specfic the network preprocessing. Please refer to the documentation to see what each
+    Here, we specify the network preprocessing. Please refer to the documentation to see what each
     field is used for.
     """
     preprocessing = {
@@ -191,7 +191,7 @@ def demo():
     }
 
     """
-    We now register the three file needed by our network
+    We now register the three files needed by our network
     """
     files = {
         'deploy.prototxt': deploy_prototxt,
@@ -238,7 +238,7 @@ def demo():
     able to recognize. Here we retrieve the list of labels of imagenet from the public imagenet model.
     Please refere to the documentation for the description of 'outputs'
     """
-    outputs = client.PublicRecognitionSpec.retrieve('imagenet-inception-v1')['outputs']
+    outputs = client.RecognitionSpec.retrieve('imagenet-inception-v1')['outputs']
 
     """
     We now create a recogntion specification with client.recognition_specs().create(...)
@@ -279,7 +279,13 @@ def demo():
     """
     And this current version can be used to run inference for the spec directly
     """
-    result = spec.inference(inputs=deepomatic.ImageInput(demo_url), show_discarded=True, max_predictions=3)
+    result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
+
+    """
+    Show all versions of a spec
+    """
+    print(spec.versions())
+
 
     print_header("Delete networks and recognition models")
     """
@@ -302,10 +308,14 @@ def demo():
 
 def download(url, local_path):
     if not os.path.isfile(local_path):
-        print_comment("Downloading {} to {}".format(url, local_path))
+        print("Downloading {} to {}".format(url, local_path))
         urlretrieve(url, local_path)
+        if url.endswith('.tar.gz'):
+            tar = tarfile.open(local_path, "r:gz")
+            tar.extractall(path='/tmp/')
+            tar.close()
     else:
-        print_comment("Skipping download of {} to {}: file already exist".format(url, local_path))
+        print("Skipping download of {} to {}: file already exist".format(url, local_path))
     return local_path
 
 

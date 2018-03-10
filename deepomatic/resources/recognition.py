@@ -22,44 +22,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.resource import Resource
+from six import string_types
+
+from deepomatic.resource import Resource, ResourceList
 from deepomatic.utils import InferenceResource
 from deepomatic.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
-from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg, EditOnlyArg
+from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg, UpdateOnlyArg
 
 
 ###############################################################################
 
-class PublicRecognitionSpec(ListableResource,
-                            InferenceResource,
-                            Resource):
-    """
-    This is an helper to manipulate a public 'Recognition Specification' object.
-    """
-    base_uri = '/recognition/public/'
-
-
-###############################################################################
-
-class RecognitionSpec(CreateableResource,
+class RecognitionSpec(ListableResource,
+                      CreateableResource,
                       UpdatableResource,
                       DeletableResource,
-                      PublicRecognitionSpec):
+                      InferenceResource,
+                      Resource):
     """
-    This is an helper to manipulate a 'Network' object.
+    This is an helper to manipulate a 'Recognition Specification' object.
     """
-    base_uri = '/recognition/specs/'
-
     object_template = {
         'name':        RequiredArg(),
         'description': OptionnalArg(),
         'metadata':    OptionnalArg(),
         'outputs':     ImmutableArg(),
-        'current_version_id': EditOnlyArg()
+        'current_version_id': UpdateOnlyArg()
     }
 
-    def versions(self):
-        return RecognitionVersion(self._helper, spec_id=self._pk)
+    @classmethod
+    def get_base_uri(cls, pk, public=False, **kwargs):
+        public = public or isinstance(pk, string_types)
+        return '/recognition/public/' if public else '/recognition/specs/'
+
+    def versions(self, offset=0, limit=100):
+        assert(self._pk is not None)
+        return ResourceList(RecognitionVersion, self._helper, self._uri(pk=self._pk, suffix='versions'), offset, limit)
 
 
 ###############################################################################
@@ -83,8 +80,9 @@ class RecognitionVersion(CreateableResource,
         super(RecognitionVersion, self).__init__(helper, *args, **kwargs)
         self._spec_id = spec_id
 
-    def get_base_uri(self):
-        is_bound_to_spec = self._pk is None and self._spec_id is not None
+    @classmethod
+    def get_base_uri(cls, pk, **kwargs):
+        is_bound_to_spec = pk is None and self._spec_id is not None
         if is_bound_to_spec:
             return '/recognition/specs/{spec_id}/versions'.format(spec_id=self._spec_id)
         else:

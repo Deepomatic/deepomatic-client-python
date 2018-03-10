@@ -23,8 +23,8 @@ THE SOFTWARE.
 """
 
 from deepomatic.http_helper import HTTPHelper
-from deepomatic.resources.network import PublicNetwork, Network
-from deepomatic.resources.recognition import PublicRecognitionSpec, RecognitionSpec, RecognitionVersion
+from deepomatic.resources.network import Network
+from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
 from deepomatic.resources.account import Account
 
@@ -38,7 +38,7 @@ API_HOST = 'https://api.deepomatic.com'
 
 class Client(object):
 
-    def __init__(self, app_id, api_key, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION):
         if host is None:
             host = API_HOST
         helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
@@ -53,13 +53,9 @@ class Client(object):
 
         # /networks
 
-        self.PublicNetwork = PublicNetwork(helper)
-
         self.Network = Network(helper)
 
         # /recognition
-
-        self.PublicRecognitionSpec = PublicRecognitionSpec(helper)
 
         self.RecognitionSpec = RecognitionSpec(helper)
 

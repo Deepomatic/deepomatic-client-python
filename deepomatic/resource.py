@@ -22,14 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.exceptions import DeepomaticException, NoData
-
 import json
-import sys
-if sys.version_info >= (3, 0):
-    import urllib.parse as urlparse
-else:
-    import urlparse
+
+from deepomatic.exceptions import DeepomaticException, NoData
 
 
 ###############################################################################
@@ -41,17 +36,18 @@ class Resource(object):
     # Specify this for your resource, it must be the base resource URI (without ID)
     base_uri = None
 
-    # Alternatively, you can implement get_base_uri(pk) to dynamically return the URI
-    def get_base_uri(self, pk=None):
+    # Alternatively, you can implement `get_base_uri(pk, **kwargs)` to dynamically return the URI
+    # The `kwargs` is any additionnal argument you pass to the `.list()` method
+    @classmethod
+    def get_base_uri(self, pk, **kwargs):
         raise DeepomaticException('Unimplemented')
 
     def retrieve(self, pk):
-        result = self.__class__(self._helper, pk=pk)
-        return result.refresh()
+        return self.__class__(self._helper, pk=pk)
 
     def refresh(self):
         assert(self._pk is not None)
-        self._data = self._helper.get(self._uri())
+        self._data = self._helper.get(self._uri(pk=self._pk))
         return self
 
     def data(self, no_raise=False):
@@ -65,7 +61,7 @@ class Resource(object):
                 self.refresh()
         return self._data
 
-    def __init__(self, helper, pk=None, data=None):
+    def __init__(self, helper, pk=None, data=None, **kwargs):
         self._helper = helper
         self._pk = pk
         self._data = data
@@ -73,23 +69,24 @@ class Resource(object):
     def __getitem__(self, key):
         return self.data()[key]
 
-    def __str__(self):
+    def __repr__(self):
         pk = 'id={pk} '.format(pk=self._pk) if self._pk else ''
         string = '<{classname} object {pk}at {addr}>'.format(classname=self.__class__.__name__, pk=pk, addr=hex(id(self)))
         if self.data() is not None:
             string += ' JSON: ' + json.dumps(self.data(), indent=4, separators=(',', ': '))
         return string
 
-    def _uri(self, suffix=None):
-        base_uri = self.base_uri
+    @classmethod
+    def _uri(cls, pk=None, suffix=None, **kwargs):
+        base_uri = cls.base_uri
         if base_uri is None:
-            base_uri = self.get_base_uri()
+            base_uri = cls.get_base_uri(pk=pk, **kwargs)
 
         if not base_uri.endswith('/'):
             base_uri += '/'
 
-        if self._pk is not None:
-            base_uri += str(self._pk) + '/'
+        if pk is not None:
+            base_uri += str(pk) + '/'
 
         if suffix is None:
             return base_uri
@@ -105,17 +102,23 @@ class ResourceList(Resource):
     """
     This is an helper to access a resource list.
     """
-    def __init__(self, helper, uri, offset, limit):
-        params = {'offset': offset, 'limit': limit}
-        super(ResourceList, self).__init__(helper, data=helper.get(uri, params))
+    def __init__(self, resource_class, helper, uri, offset=None, limit=None, **kwargs):
+        params = {}
+        if offset is not None:
+            params['offset'] = offset
+        if limit is not None:
+            params['limit'] = limit
+        data = helper.get(uri, params=params)
+        super(ResourceList, self).__init__(helper, data=data, **kwargs)
+        self._resource_class = resource_class
 
     def __iter__(self):
         results = self['results']
         next_results = self.next()
 
         while True:
-            for r in results:
-                yield r
+            for resource in results:
+                yield self._resource_class(self._helper, resource['id'], resource)
             if next_results is None:
                 break
             results = next_results['results']
@@ -130,13 +133,8 @@ class ResourceList(Resource):
     def prev(self):
         return self._handle_prev_next(self['prev'])
 
-    def _handle_prev_next(self, url):
-        if url is None:
+    def _handle_prev_next(self, uri):
+        if uri is None:
             return None
         else:
-            o = urlparse.urlparse(url)
-            params = urlparse.parse_qs(o.query)
-            offset = params.get('offset', 0)
-            limit = params.get('limit', 100)
-            uri = urlparse.urlunparse(o.scheme, o.netloc, o.path, o.params, '', o.fragment)
-            return ResourceList(self.helper, uri, offset, limit)
+            return ResourceList(self._resource_class, self._helper, uri)

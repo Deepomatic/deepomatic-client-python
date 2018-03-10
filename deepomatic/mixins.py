@@ -49,15 +49,17 @@ class ImmutableArg(Arg):
         super(ImmutableArg, self).__init__(True, False)
 
 
-class EditOnlyArg(Arg):
+class UpdateOnlyArg(Arg):
     def __init__(self):
-        super(EditOnlyArg, self).__init__(False, True)
+        super(UpdateOnlyArg, self).__init__(False, True)
 
 
 ###############################################################################
 
 class UpdatableResource(object):
     def update(self, replace=False, content_type='application/json', files=None, **kwargs):
+        assert(self._pk is not None)
+
         if self._helper.check_query_parameters:
             for arg_name in kwargs:
                 if arg_name not in self.object_template:
@@ -67,16 +69,17 @@ class UpdatableResource(object):
                     raise DeepomaticException("Immutable keyword argument: " + arg_name)
 
         if replace:
-            self._data = self._helper.put(self._uri(), data=kwargs, content_type=content_type, files=files)
+            self._data = self._helper.put(self._uri(pk=self._pk), data=kwargs, content_type=content_type, files=files)
         else:
-            self._data = self._helper.patch(self._uri(), data=kwargs, content_type=content_type, files=files)
+            self._data = self._helper.patch(self._uri(pk=self._pk), data=kwargs, content_type=content_type, files=files)
 
 
 ###############################################################################
 
 class DeletableResource(object):
     def delete(self):
-        return self._helper.delete(self._uri())
+        assert(self._pk is not None)
+        return self._helper.delete(self._uri(pk=self._pk))
 
 
 ###############################################################################
@@ -100,8 +103,8 @@ class CreateableResource(object):
 ###############################################################################
 
 class ListableResource(object):
-    def list(self, offset=0, limit=100, *args, **kwargs):
-        return ResourceList(self._helper, self._uri(), offset, limit, *args, **kwargs)
+    def list(self, offset=0, limit=100, **kwargs):
+        return ResourceList(self.__class__, self._helper, self._uri(**kwargs), offset, limit, **kwargs)
 
 
 ###############################################################################

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+from six import string_types
 import numpy as np
 
 from deepomatic.resource import Resource
@@ -32,18 +33,32 @@ from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
 ###############################################################################
 
-class PublicNetwork(ListableResource,
-                    InferenceResource,
-                    Resource):
+class Network(ListableResource,
+              CreateableResource,
+              UpdatableResource,
+              DeletableResource,
+              InferenceResource,
+              Resource):
     """
-    This is an helper to manipulate a public 'Network' object.
+    This is an helper to manipulate a 'Network' object.
     """
-    base_uri = '/networks/public/'
+    object_template = {
+        'name':          RequiredArg(),
+        'description':   OptionnalArg(),
+        'metadata':      OptionnalArg(),
+        'framework':     ImmutableArg(),
+        'preprocessing': ImmutableArg(),
+    }
+
+    @classmethod
+    def get_base_uri(self, pk, public=False, **kwargs):
+        public = public or isinstance(pk, string_types)
+        return '/networks/public/' if public else '/networks/'
 
     def inference(self, convert_to_numpy=True, return_task=False, **kwargs):
         if convert_to_numpy:
             return_task = False
-        result = super(PublicNetwork, self).inference(return_task=return_task, **kwargs)
+        result = super(Network, self).inference(return_task=return_task, **kwargs)
 
         if convert_to_numpy:
             return self._convert_result_to_numpy(result)
@@ -56,25 +71,3 @@ class PublicNetwork(ListableResource,
         for tensor in result['tensors']:
             new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['dims'])
         return new_result
-
-
-###############################################################################
-
-class Network(CreateableResource,
-              UpdatableResource,
-              DeletableResource,
-              PublicNetwork):
-    """
-    This is an helper to manipulate a 'Network' object.
-    """
-    base_uri = '/networks/'
-
-    object_template = {
-        'name':          RequiredArg(),
-        'description':   OptionnalArg(),
-        'metadata':      OptionnalArg(),
-        'framework':     ImmutableArg(),
-        'preprocessing': ImmutableArg(),
-    }
-
-
