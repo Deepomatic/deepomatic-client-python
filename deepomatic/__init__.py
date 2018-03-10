@@ -23,5 +23,5 @@ THE SOFTWARE.
 """
 
 from deepomatic.version import __VERSION__
-from deepomatic.core.client import Client
-from deepomatic.core.inputs import ImageInput
+from deepomatic.client import Client
+from deepomatic.inputs import ImageInput

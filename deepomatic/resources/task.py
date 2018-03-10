@@ -23,8 +23,8 @@ THE SOFTWARE.
 """
 import time
 
-from deepomatic.core.resource import Resource
-from deepomatic.core.mixins import ListableResource
+from deepomatic.resource import Resource
+from deepomatic.mixins import ListableResource
 from deepomatic.exceptions import TaskError, TaskTimeout
 
 

@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 from deepomatic.exceptions import DeepomaticException
 from deepomatic.resources.task import Task
-from deepomatic.core.inputs import format_inputs
+from deepomatic.inputs import format_inputs
 
 
 ###############################################################################

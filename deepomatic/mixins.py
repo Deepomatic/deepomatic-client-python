@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 from deepomatic.exceptions import DeepomaticException
-from deepomatic.core.resource import ResourceList
+from deepomatic.resource import ResourceList
 
 
 ###############################################################################

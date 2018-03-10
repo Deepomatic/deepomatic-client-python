@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 import numpy as np
 
-from deepomatic.core.resource import Resource
-from deepomatic.core.utils import InferenceResource
-from deepomatic.core.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
-from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg
+from deepomatic.resource import Resource
+from deepomatic.utils import InferenceResource
+from deepomatic.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
+from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
 
 ###############################################################################

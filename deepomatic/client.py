@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.core.http_helper import HTTPHelper
+from deepomatic.http_helper import HTTPHelper
 from deepomatic.resources.network import PublicNetwork, Network
 from deepomatic.resources.recognition import PublicRecognitionSpec, RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
