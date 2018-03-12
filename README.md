@@ -34,7 +34,7 @@ client = deepomatic.Client(app_id, api_key)
 
 ### Client methods
 
-All client methods can be found in [deepomatic/core/client.py](core/client.py) and detail for each type of resource is located in [deepomatic/resources](deepomatic/resources).
+All client methods can be found in [deepomatic/client.py](deepomatic/client.py) and detail for each type of resource is located in [deepomatic/resources](deepomatic/resources).
 
 ### Examples
 
