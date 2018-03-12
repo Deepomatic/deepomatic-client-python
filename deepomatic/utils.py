@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright (c) 2017 Deepomatic SAS
+Copyright (c) 2018 Deepomatic SAS
 http://www.deepomatic.com/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,12 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.resource import Resource
+from deepomatic.exceptions import DeepomaticException
+from deepomatic.resources.task import Task
+from deepomatic.inputs import format_inputs
 
 
 ###############################################################################
 
-class Account(Resource):
-    base_uri = '/accounts/'
+class InferenceResource(object):
+    def inference(self, return_task=False, **kwargs):
+        assert(self._pk is not None)
+
+        inputs = kwargs.pop('inputs', None)
+        if inputs is None:
+            raise DeepomaticException("Missing keyword argument: inputs")
+        content_type, data = format_inputs(inputs, kwargs)
+        result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data)
+        task_id = result['task_id']
+        task = Task(self._helper, pk=task_id)
+        task.wait()
+
+        if return_task:
+            return task
+        else:
+            return task['data']
+
 
 ###############################################################################

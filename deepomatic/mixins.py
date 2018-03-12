@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 from deepomatic.exceptions import DeepomaticException
-from deepomatic.core.result import Result, ResultList
+from deepomatic.resource import ResourceList
 
 
 ###############################################################################
@@ -49,22 +49,17 @@ class ImmutableArg(Arg):
         super(ImmutableArg, self).__init__(True, False)
 
 
-class EditOnlyArg(Arg):
+class UpdateOnlyArg(Arg):
     def __init__(self):
-        super(EditOnlyArg, self).__init__(False, True)
+        super(UpdateOnlyArg, self).__init__(False, True)
 
 
 ###############################################################################
 
-class Get(object):
-    def get(self):
-        return self._get()
+class UpdatableResource(object):
+    def update(self, replace=False, content_type='application/json', files=None, **kwargs):
+        assert(self._pk is not None)
 
-
-###############################################################################
-
-class Edit(object):
-    def edit(self, replace=False, content_type='application/json', files=None, **kwargs):
         if self._helper.check_query_parameters:
             for arg_name in kwargs:
                 if arg_name not in self.object_template:
@@ -74,21 +69,22 @@ class Edit(object):
                     raise DeepomaticException("Immutable keyword argument: " + arg_name)
 
         if replace:
-            return self._put(data=kwargs, content_type=content_type, files=files)
+            self._data = self._helper.put(self._uri(pk=self._pk), data=kwargs, content_type=content_type, files=files)
         else:
-            return self._patch(data=kwargs, content_type=content_type, files=files)
+            self._data = self._helper.patch(self._uri(pk=self._pk), data=kwargs, content_type=content_type, files=files)
 
 
 ###############################################################################
 
-class Delete(object):
+class DeletableResource(object):
     def delete(self):
-        return self._delete()
+        assert(self._pk is not None)
+        return self._helper.delete(self._uri(pk=self._pk))
 
 
 ###############################################################################
 
-class Create(object):
+class CreateableResource(object):
     def create(self, content_type='application/json', files=None, **kwargs):
         if self._helper.check_query_parameters:
             for arg_name in kwargs:
@@ -100,17 +96,17 @@ class Create(object):
 
         if files is not None:
             content_type = 'multipart/mixed'
-        result = self._post(data=kwargs, content_type=content_type, files=files)
-        class CreateResult(self.__class__, Result):
-            pass
-        return CreateResult.as_object_ressource(self._helper, promise=result._promise, read_only=self._read_only)
+        data = self._helper.post(self._uri(), data=kwargs, content_type=content_type, files=files)
+        return self.__class__(self._helper, pk=data['id'], data=data)
 
 
 ###############################################################################
 
-class List(object):
-    def list(self, offset=0, limit=100):
-        return ResultList(self._helper, self._uri(), offset, limit)
+class ListableResource(object):
+    def list(self, offset=0, limit=100, **kwargs):
+        return ResourceList(self.__class__, self._helper, self._uri(**kwargs), offset, limit, **kwargs)
 
 
 ###############################################################################
+
+

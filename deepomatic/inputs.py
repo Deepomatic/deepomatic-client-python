@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import sys
 import copy
+import base64
 
 from deepomatic.exceptions import DeepomaticException
 
@@ -31,8 +32,7 @@ from deepomatic.exceptions import DeepomaticException
 ###############################################################################
 
 def format_inputs(inputs, data):
-    if not isinstance(inputs, list):
-        inputs = [inputs]
+    assert(isinstance(inputs, list))
 
     data = copy.deepcopy(data)
     data['inputs'] = [input_data.get_input() for input_data in inputs]
@@ -61,6 +61,13 @@ class AbstractInput(object):
                 if encoding not in self.supported_encodings:
                     raise DeepomaticException("Unknown 'encoding' type.")
 
+                # Send binary directly to minimize load
+                if encoding == 'base64':
+                    # Source needs to be converted to str to be JSON dumped
+                    # source = source.decode("utf-8")
+                    source = base64.b64decode(source)
+                    encoding = 'binary'
+
                 prefix = 'data:{content_type};{encoding},'.format(
                     content_type=self.content_type,
                     encoding=encoding)
@@ -70,9 +77,8 @@ class AbstractInput(object):
                         prefix = bytes(prefix, 'ascii')
                     else:
                         prefix = bytes(prefix)
-                elif encoding == 'base64':
-                    # Source needs to be converted to str to be JSON dumped
-                    source = source.decode("utf-8")
+                else:
+                    raise Exception('Unexpected encoding')
                 source = prefix + source
 
         self._source = source

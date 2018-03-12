@@ -26,7 +26,6 @@ import os
 import json
 import requests
 from requests.structures import CaseInsensitiveDict
-from promise import Promise
 from six import string_types
 
 from deepomatic.exceptions import DeepomaticException, BadStatus
@@ -40,8 +39,12 @@ class HTTPHelper(object):
         """
         Init the HTTP helper with API key and secret
         """
+        if app_id is None:
+            app_id = os.getenv('DEEPOMATIC_APP_ID')
+        if api_key is None:
+            api_key = os.getenv('DEEPOMATIC_API_KEY')
         if app_id is None or api_key is None:
-            raise Exception("Please specify APP_ID and API_KEY.")
+            raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
@@ -50,12 +53,11 @@ class HTTPHelper(object):
 
         if not host.endswith('/'):
             host += '/'
-        host += version
 
         self.api_key = str(api_key)
         self.app_id = str(app_id)
         self.verify = verify
-        self.host = host
+        self.resource_prefix = host + version
         self.check_query_parameters = check_query_parameters
 
     def setup_headers(self, headers=None, content_type=None):
@@ -143,28 +145,24 @@ class HTTPHelper(object):
                 new_files[key] = file
             files = new_files
 
-        def execute_request(resolve, reject):
-            try:
-                response = func(self.host + resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
+        if not resource.startswith('http'):
+            resource = self.resource_prefix + resource
+        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
 
-                # Close opened files
-                for file in opened_files:
-                    file.close()
+        # Close opened files
+        for file in opened_files:
+            file.close()
 
-                if response.status_code == 204:  # delete
-                    return resolve(None)
+        if response.status_code == 204:  # delete
+            return None
 
-                if response.status_code < 200 or response.status_code >= 300:
-                    return reject(BadStatus(response))
+        if response.status_code < 200 or response.status_code >= 300:
+            raise BadStatus(response)
 
-                if 'application/json' in response.headers['Content-Type']:
-                    return resolve(response.json())
-                else:
-                    return resolve(response.content)
-            except Exception as e:
-                return reject(e)
-
-        return Promise(execute_request)
+        if 'application/json' in response.headers['Content-Type']:
+            return response.json()
+        else:
+            return response.content
 
     def get(self, resource, params=None):
         """

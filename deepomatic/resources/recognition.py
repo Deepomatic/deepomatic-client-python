@@ -24,58 +24,52 @@ THE SOFTWARE.
 
 from six import string_types
 
-from deepomatic.core.resource import Resource
-import deepomatic.core.helpers as helpers
-import deepomatic.core.mixins as mixins
-from deepomatic.core.mixins import RequiredArg, OptionnalArg, ImmutableArg, EditOnlyArg
+from deepomatic.resource import Resource, ResourceList
+from deepomatic.utils import InferenceResource
+from deepomatic.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
+from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg, UpdateOnlyArg
 
 
 ###############################################################################
 
-class RecognitionSpec(mixins.Get,
-                      mixins.Edit,
-                      mixins.Delete,
-                      mixins.Create,
-                      mixins.List,
-                      helpers.Inference,
+class RecognitionSpec(ListableResource,
+                      CreateableResource,
+                      UpdatableResource,
+                      DeletableResource,
+                      InferenceResource,
                       Resource):
     """
-    This is an helper to manipulate a 'Network' object.
+    This is an helper to manipulate a 'Recognition Specification' object.
     """
     object_template = {
         'name':        RequiredArg(),
-
         'description': OptionnalArg(),
         'metadata':    OptionnalArg(),
-
         'outputs':     ImmutableArg(),
-
-        'current_version_id': EditOnlyArg()
+        'current_version_id': UpdateOnlyArg()
     }
 
-    object_functions = ['versions', 'inference']
+    @classmethod
+    def get_base_uri(cls, pk, public=False, **kwargs):
+        public = public or isinstance(pk, string_types)
+        return '/recognition/public/' if public else '/recognition/specs/'
 
-    def get_base_uri(self):
-        is_public = isinstance(self._pk, string_types) or self._read_only
-        return '/recognition/public/' if is_public else '/recognition/specs/'
-
-    def versions(self):
-        if self._read_only:
-            raise Exception("You cannot call 'versions' on a public recognition spec")
-        return RecognitionVersion.as_list_of_resources(self._helper, self._get_pk(), read_only=True)
+    def versions(self, offset=0, limit=100):
+        assert(self._pk is not None)
+        return ResourceList(RecognitionVersion, self._helper, self._uri(pk=self._pk, suffix='versions'), offset, limit)
 
 
 ###############################################################################
 
-class RecognitionVersion(mixins.Get,
-                         mixins.Delete,
-                         mixins.Create,
-                         mixins.List,
-                         helpers.Inference,
+class RecognitionVersion(CreateableResource,
+                         DeletableResource,
+                         ListableResource,
+                         InferenceResource,
                          Resource):
     """
     This is an helper to manipulate a 'Network' object.
     """
+    base_uri = '/recognition/versions/'
 
     object_template = {
         'spec_id':          RequiredArg(),
@@ -83,16 +77,3 @@ class RecognitionVersion(mixins.Get,
         'post_processings': RequiredArg(),
     }
 
-    def get_base_uri(self):
-        is_bound_to_spec = hasattr(self, '_spec_id') and self._spec_id is not None
-        if is_bound_to_spec:
-            return '/recognition/specs/{spec_id}/versions'.format(spec_id=self._spec_id)
-        else:
-            return '/recognition/versions/'
-        return '/recognition/public/' if is_bound_to_spec else '/recognition/specs/'
-
-    @classmethod
-    def as_list_of_resources(cls, helper, spec_id=None, read_only=False):
-        resource = super(RecognitionVersion, cls).as_list_of_resources(helper, read_only=read_only)
-        resource._spec_id = spec_id
-        return resource

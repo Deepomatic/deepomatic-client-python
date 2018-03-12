@@ -22,35 +22,43 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.exceptions import DeepomaticException
+from deepomatic.http_helper import HTTPHelper
+from deepomatic.resources.network import Network
+from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
 from deepomatic.resources.task import Task
-from deepomatic.core.inputs import format_inputs
+from deepomatic.resources.account import Account
+
+###############################################################################
+
+API_VERSION = 0.7
+API_HOST = 'https://api.deepomatic.com'
 
 
 ###############################################################################
 
-def get_data_from_taked_promise(helper, promise, return_task):
-    result = promise.result()
-    task_id = result['task_id']
-    task = Task(helper, task_id)
-    if return_task:
-        return task.get()
-    else:
-        return task.wait_data()
+class Client(object):
 
-###############################################################################
+    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION):
+        if host is None:
+            host = API_HOST
+        helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
+
+        # /accounts
+
+        self.Account = Account(helper)
+
+        # /tasks
+
+        self.Task = Task(helper)
+
+        # /networks
+
+        self.Network = Network(helper)
+
+        # /recognition
+
+        self.RecognitionSpec = RecognitionSpec(helper)
+
+        self.RecognitionVersion = RecognitionVersion(helper)
 
 
-class Inference(object):
-    def inference(self, return_task=False, **kwargs):
-        inputs = kwargs.pop('inputs', None)
-        if inputs is None:
-            raise DeepomaticException("Missing keyword argument: inputs")
-        content_type, data = format_inputs(inputs, kwargs)
-        return get_data_from_taked_promise(
-            self._helper,
-            self._post(suffix='/inference', content_type=content_type, data=data),
-            return_task
-        )
-
-###############################################################################
