@@ -57,6 +57,7 @@ class HTTPHelper(object):
         self.api_key = str(api_key)
         self.app_id = str(app_id)
         self.verify = verify
+        self.host = host
         self.resource_prefix = host + version
         self.check_query_parameters = check_query_parameters
 
