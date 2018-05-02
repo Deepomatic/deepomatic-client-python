@@ -38,27 +38,26 @@ API_HOST = 'https://api.deepomatic.com'
 
 class Client(object):
 
-    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix=''):
         if host is None:
             host = API_HOST
-        helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters)
+
+        self.http_helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters, user_agent_suffix)
 
         # /accounts
 
-        self.Account = Account(helper)
+        self.Account = Account(self.http_helper)
 
         # /tasks
 
-        self.Task = Task(helper)
+        self.Task = Task(self.http_helper)
 
         # /networks
 
-        self.Network = Network(helper)
+        self.Network = Network(self.http_helper)
 
         # /recognition
 
-        self.RecognitionSpec = RecognitionSpec(helper)
+        self.RecognitionSpec = RecognitionSpec(self.http_helper)
 
-        self.RecognitionVersion = RecognitionVersion(helper)
-
-
+        self.RecognitionVersion = RecognitionVersion(self.http_helper)
