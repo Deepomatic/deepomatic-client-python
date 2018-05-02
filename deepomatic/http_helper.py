@@ -25,17 +25,19 @@ THE SOFTWARE.
 import os
 import json
 import requests
+import sys
+import platform
 from requests.structures import CaseInsensitiveDict
 from six import string_types
 
 from deepomatic.exceptions import DeepomaticException, BadStatus
-
+from deepomatic.version import __VERSION__
 
 ###############################################################################
 
-class HTTPHelper(object):
 
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters):
+class HTTPHelper(object):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix=''):
         """
         Init the HTTP helper with API key and secret
         """
@@ -53,6 +55,20 @@ class HTTPHelper(object):
 
         if not host.endswith('/'):
             host += '/'
+
+        python_version = "{0}.{1}.{2}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+
+        user_agent_params = {
+            'package_version': __VERSION__,
+            'requests_version': requests.__version__,
+            'python_version': python_version,
+            'platform': platform.platform()
+        }
+
+        self.user_agent = 'deepomatic-client-python/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
+            '.format(**user_agent_params)
+        if user_agent_suffix:
+            self.user_agent += ' ' + user_agent_suffix
 
         self.api_key = str(api_key)
         self.app_id = str(app_id)
@@ -75,6 +91,7 @@ class HTTPHelper(object):
             if 'Accept' not in headers:
                 headers['Accept'] = content_type
 
+        headers['User-Agent'] = self.user_agent
         headers['X-APP-ID'] = self.app_id
         headers['X-API-KEY'] = self.api_key
 
@@ -119,7 +136,7 @@ class HTTPHelper(object):
             files = None
         return new_data, files
 
-    def make_request(self, func, resource, params, data=None, content_type=None, files=None):
+    def make_request(self, func, resource, params, data=None, content_type=None, files=None, stream=False):
         if isinstance(data, dict) or isinstance(data, list):
             if content_type.strip() == 'application/json':
                 data = json.dumps(data)
@@ -148,7 +165,7 @@ class HTTPHelper(object):
 
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
-        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify)
+        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream)
 
         # Close opened files
         for file in opened_files:
@@ -160,7 +177,11 @@ class HTTPHelper(object):
         if response.status_code < 200 or response.status_code >= 300:
             raise BadStatus(response)
 
-        if 'application/json' in response.headers['Content-Type']:
+        if stream:
+            # we asked for a stream, we let the user download it as he wants or it will load everything in RAM
+            # not good for big files
+            return response
+        elif 'application/json' in response.headers['Content-Type']:
             return response.json()
         else:
             return response.content
