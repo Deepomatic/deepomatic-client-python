@@ -82,7 +82,7 @@ class HTTPHelper(object):
             'X-APP-ID': self.app_id,
             'X-API-KEY': self.api_key,
         }
-        self.session = requests.session()
+        self.session = requests.Session()
         self.session.headers.update(headers)
         # Use pool_maxsize to cache connections for the same host
         adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
