@@ -37,7 +37,7 @@ from deepomatic.version import __VERSION__
 
 
 class HTTPHelper(object):
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=100):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=50):
         """
         Init the HTTP helper with API key and secret
         """
