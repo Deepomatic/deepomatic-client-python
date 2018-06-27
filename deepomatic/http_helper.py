@@ -88,7 +88,7 @@ class HTTPHelper(object):
 
     def setup_headers(self, headers=None, content_type=None):
         """
-        Build additional headers header
+        Build additional headers
         """
         if headers is None:
             headers = CaseInsensitiveDict()
