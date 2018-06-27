@@ -172,7 +172,7 @@ class HTTPHelper(object):
 
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
-        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, *args, **kwargs)
+        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream, *args, **kwargs)
 
         # Close opened files
         for file in opened_files:
