@@ -2,3 +2,4 @@ numpy>=1.10
 promise==2.1
 six==1.10.0
 requests==2.11.1
+tenacity==4.12.0

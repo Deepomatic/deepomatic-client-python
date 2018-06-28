@@ -22,13 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 import time
+from tenacity import Retrying, wait_random_exponential, stop_after_delay, retry_if_result, before_log, after_log, RetryError
 
 from deepomatic.resource import Resource
 from deepomatic.mixins import ListableResource
 from deepomatic.exceptions import TaskError, TaskTimeout
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 ###############################################################################
+
+
+def is_pending_status(status):
+    return status == 'pending'
+
 
 class Task(ListableResource, Resource):
     base_uri = '/tasks/'
@@ -40,30 +50,29 @@ class Task(ListableResource, Resource):
         assert(isinstance(task_ids, list))
         return super(Task, self).list(task_ids=task_ids)
 
-    def wait(self, timeout=60):
+    def wait(self, timeout=60, wait_exp_multiplier=0.1, wait_exp_max=1.0):
         """
         Wait until task is completed. Expires after 'timeout' seconds.
         """
-        self._wait_result(timeout)
+        try:
+            retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier, max=wait_exp_max),
+                               stop=stop_after_delay(timeout),
+                               retry=retry_if_result(is_pending_status),
+                               before=before_log(logger, logging.DEBUG),
+                               after=after_log(logger, logging.DEBUG))
+            retryer(self._refresh_status)
+        except RetryError:
+            raise TaskTimeout(self.data())
+
+        if self['status'] == 'error':
+            raise TaskError(self.data())
+
         return self
 
-    def _wait_result(self, timeout):
-        start_time = time.time()
-        last_time = start_time
-        sleep_time = 0.2
-        while self['status'] == "pending":
-            # Check for timeout
-            if time.time() > start_time + timeout:
-                raise TaskTimeout(self.data())
-
-            # Wait 'sleep_time' second before re-querying
-            sleep_time = time.time() - (last_time + sleep_time)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            self.refresh()
-
-        if self['status'] == "error":
-            raise TaskError(self.data())
+    def _refresh_status(self):
+        logger.debug("Refreshing Task {}".format(self))
+        self.refresh()
+        return self['status']
 
 
 ###############################################################################
