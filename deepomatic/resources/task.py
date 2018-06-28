@@ -27,12 +27,10 @@ from tenacity import Retrying, wait_random_exponential, stop_after_delay, retry_
 from deepomatic.resource import Resource
 from deepomatic.mixins import ListableResource
 from deepomatic.exceptions import TaskError, TaskTimeout
-
 import logging
 
-logging.basicConfig(level='DEBUG')
-
 logger = logging.getLogger(__name__)
+
 
 ###############################################################################
 
