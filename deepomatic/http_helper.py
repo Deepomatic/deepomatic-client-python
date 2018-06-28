@@ -37,7 +37,7 @@ from deepomatic.version import __VERSION__
 
 
 class HTTPHelper(object):
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix=''):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=20):
         """
         Init the HTTP helper with API key and secret
         """
@@ -77,9 +77,21 @@ class HTTPHelper(object):
         self.resource_prefix = host + version
         self.check_query_parameters = check_query_parameters
 
+        headers = {
+            'User-Agent': self.user_agent,
+            'X-APP-ID': self.app_id,
+            'X-API-KEY': self.api_key,
+        }
+        self.session = requests.Session()
+        self.session.headers.update(headers)
+        # Use pool_maxsize to cache connections for the same host
+        adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+
     def setup_headers(self, headers=None, content_type=None):
         """
-        Build authentification header
+        Build additional headers
         """
         if headers is None:
             headers = CaseInsensitiveDict()
@@ -90,10 +102,6 @@ class HTTPHelper(object):
             headers['Content-Type'] = content_type
             if 'Accept' not in headers:
                 headers['Accept'] = content_type
-
-        headers['User-Agent'] = self.user_agent
-        headers['X-APP-ID'] = self.app_id
-        headers['X-API-KEY'] = self.api_key
 
         return headers
 
@@ -136,7 +144,7 @@ class HTTPHelper(object):
             files = None
         return new_data, files
 
-    def make_request(self, func, resource, params, data=None, content_type=None, files=None, stream=False):
+    def make_request(self, func, resource, params, data=None, content_type=None, files=None, stream=False, *args, **kwargs):
         if isinstance(data, dict) or isinstance(data, list):
             if content_type.strip() == 'application/json':
                 data = json.dumps(data)
@@ -165,7 +173,7 @@ class HTTPHelper(object):
 
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
-        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream)
+        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream, *args, **kwargs)
 
         # Close opened files
         for file in opened_files:
@@ -190,31 +198,31 @@ class HTTPHelper(object):
         """
         Perform a GET request
         """
-        return self.make_request(requests.get, resource, params)
+        return self.make_request(self.session.get, resource, params)
 
     def delete(self, resource, params=None):
         """
         Perform a DELETE request
         """
-        return self.make_request(requests.delete, resource, params)
+        return self.make_request(self.session.delete, resource, params)
 
     def post(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a POST request
         """
-        return self.make_request(requests.post, resource, params, data, content_type, files)
+        return self.make_request(self.session.post, resource, params, data, content_type, files)
 
     def put(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a PUT request
         """
-        return self.make_request(requests.put, resource, params, data, content_type, files)
+        return self.make_request(self.session.put, resource, params, data, content_type, files)
 
     def patch(self, resource, params=None, data=None, content_type='application/json', files=None):
         """
         Perform a PATCH request
         """
-        return self.make_request(requests.patch, resource, params, data, content_type, files)
+        return self.make_request(self.session.patch, resource, params, data, content_type, files)
 
 
 ###############################################################################
