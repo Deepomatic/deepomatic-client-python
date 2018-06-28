@@ -49,7 +49,7 @@ class Task(ListableResource, Resource):
         assert(isinstance(task_ids, list))
         return super(Task, self).list(task_ids=task_ids)
 
-    def wait(self, timeout=0, wait_exp_multiplier=0.1, wait_exp_max=1.0):
+    def wait(self, timeout=60, wait_exp_multiplier=0.1, wait_exp_max=1.0):
         """
         Wait until task is completed. Expires after 'timeout' seconds.
         """
