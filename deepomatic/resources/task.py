@@ -62,10 +62,10 @@ class Task(ListableResource, Resource):
                                after=after_log(logger, logging.DEBUG))
             retryer(self._refresh_status)
         except RetryError:
-            if self['status'] == 'pending':
-                raise TaskTimeout(self.data())
-            elif self['status'] == 'error':
-                raise TaskError(self.data())
+            raise TaskTimeout(self.data())
+
+        if self['status'] == 'error':
+            raise TaskError(self.data())
 
         return self
 
