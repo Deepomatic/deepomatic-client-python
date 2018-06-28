@@ -37,7 +37,7 @@ from deepomatic.version import __VERSION__
 
 
 class HTTPHelper(object):
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=50):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=20):
         """
         Init the HTTP helper with API key and secret
         """
@@ -86,7 +86,8 @@ class HTTPHelper(object):
         self.session.headers.update(headers)
         # Use pool_maxsize to cache connections for the same host
         adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
-        self.session.mount('http', adapter)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
 
     def setup_headers(self, headers=None, content_type=None):
         """

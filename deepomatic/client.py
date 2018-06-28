@@ -38,7 +38,7 @@ API_HOST = 'https://api.deepomatic.com'
 
 class Client(object):
 
-    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix='', pool_maxsize=50):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix='', pool_maxsize=20):
         if host is None:
             host = API_HOST
 
