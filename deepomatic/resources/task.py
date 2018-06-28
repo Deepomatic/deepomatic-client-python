@@ -29,6 +29,7 @@ from deepomatic.mixins import ListableResource
 from deepomatic.exceptions import TaskError, TaskTimeout
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -69,6 +70,7 @@ class Task(ListableResource, Resource):
         return self
 
     def _refresh_status(self):
+        logger.debug("Refreshing Task {}".format(self))
         self.refresh()
         return self['status']
 
