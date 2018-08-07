@@ -301,7 +301,7 @@ def demo():
     network.delete()
 
 
-def demo_batch():
+def demo_batch_tasks():
     """
     Wait tasks per batch
     """
@@ -371,4 +371,4 @@ def display_inference_tensor(result):
 
 if __name__ == '__main__':
     demo()
-    demo_batch()
+    demo_batch_tasks()
