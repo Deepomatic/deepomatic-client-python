@@ -30,7 +30,7 @@ from deepomatic.inputs import format_inputs
 ###############################################################################
 
 class InferenceResource(object):
-    def inference(self, return_task=False, **kwargs):
+    def inference(self, return_task=False, wait_task=True, **kwargs):
         assert(self._pk is not None)
 
         inputs = kwargs.pop('inputs', None)
@@ -40,7 +40,8 @@ class InferenceResource(object):
         result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data)
         task_id = result['task_id']
         task = Task(self._helper, pk=task_id)
-        task.wait()
+        if wait_task:
+            task.wait()
 
         if return_task:
             return task
