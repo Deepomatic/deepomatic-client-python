@@ -12,19 +12,10 @@ if sys.version_info >= (3, 0):
 else:
     from urllib import urlretrieve
 
-if len(sys.argv) < 2:
-    api_host = None
-else:
-    api_host = sys.argv[1]
-
-app_id = os.getenv('DEEPOMATIC_APP_ID')
-api_key = os.getenv('DEEPOMATIC_API_KEY')
-client = deepomatic.Client(app_id, api_key, host=api_host)
-
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
 
-def demo():
+def demo(client):
     """
     Our REST client works by exposing resources. A resource usually has the following synchronous methods:
 
@@ -344,4 +335,12 @@ def display_inference_tensor(result):
 
 
 if __name__ == '__main__':
-    demo()
+    if len(sys.argv) < 2:
+        api_host = None
+    else:
+        api_host = sys.argv[1]
+
+    app_id = os.getenv('DEEPOMATIC_APP_ID')
+    api_key = os.getenv('DEEPOMATIC_API_KEY')
+    client = deepomatic.Client(app_id, api_key, host=api_host)
+    demo(client)
