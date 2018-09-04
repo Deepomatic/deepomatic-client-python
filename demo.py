@@ -280,8 +280,8 @@ def demo(client):
     """
     Test the possibility of getting multiple tasks at the same time
     """
-    task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True)
-    task_id = task['id']
+    task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
+    task_id = task.pk
     tasks = client.Task.list(task_ids=[task_id])
     print(tasks)
 
@@ -292,10 +292,36 @@ def demo(client):
     network.delete()
 
 
+def demo_batch_tasks():
+    """
+    Wait tasks per batch
+    """
+    print_header("Run multiple inferences and wait for them per batch")
+    spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+    tasks = []
+    timeout = 30
+    nb_inference = 20
+    print("Pushing %d inferences" % nb_inference)
+    for i in range(nb_inference):
+        task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
+        tasks.append(task)
+    print("Waiting for the results")
+    pending_tasks, success_tasks, error_tasks = client.Task.batch_wait(tasks=tasks, timeout=timeout)
+    if pending_tasks:
+        print("Warning: %d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
+    if error_tasks:
+        print("Warning: %d tasks are in error" % len(error_tasks))
+    print(pending_tasks)
+    print(error_tasks)
+    print(success_tasks)
 
-
-
-
+    # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
+    for pos, pending in pending_tasks:
+        assert(tasks[pos].pk == pending.pk)
+    for pos, err in error_tasks:
+        assert(tasks[pos].pk == err.pk)
+    for pos, success in success_tasks:
+        assert(tasks[pos].pk == success.pk)
 
 
 
@@ -344,3 +370,4 @@ if __name__ == '__main__':
     api_key = os.getenv('DEEPOMATIC_API_KEY')
     client = deepomatic.Client(app_id, api_key, host=api_host)
     demo(client)
+    demo_batch_tasks(client)

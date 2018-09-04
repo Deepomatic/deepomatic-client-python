@@ -51,7 +51,7 @@ class Resource(object):
         self._data = self._helper.get(self._uri(pk=self._pk))
         return self
 
-    def data(self, no_raise=False):
+    def data(self, no_raise=False, no_refresh=False):
         if self._data is None:
             if self._pk is None:
                 if no_raise:
@@ -59,8 +59,13 @@ class Resource(object):
                 else:
                     raise NoData()
             else:
-                self.refresh()
+                if not no_refresh:
+                    self.refresh()
         return self._data
+
+    @property
+    def pk(self):
+        return self._pk
 
     def __init__(self, helper, pk=None, data=None):
         self._helper = helper
@@ -73,8 +78,8 @@ class Resource(object):
     def __repr__(self):
         pk = 'id={pk} '.format(pk=self._pk) if self._pk else ''
         string = '<{classname} object {pk}at {addr}>'.format(classname=self.__class__.__name__, pk=pk, addr=hex(id(self)))
-        if self.data() is not None:
-            string += ' JSON: ' + json.dumps(self.data(), indent=4, separators=(',', ': '))
+        if self._data is not None:
+            string += ' JSON: ' + json.dumps(self._data, indent=4, separators=(',', ': '))
         return string
 
     @classmethod

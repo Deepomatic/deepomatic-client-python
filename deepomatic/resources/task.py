@@ -21,14 +21,36 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
-import time
+
+from tenacity import Retrying, wait_random_exponential, stop_after_delay, retry_if_result, before_log, after_log, RetryError
 
 from deepomatic.resource import Resource
 from deepomatic.mixins import ListableResource
 from deepomatic.exceptions import TaskError, TaskTimeout
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 ###############################################################################
+
+
+def is_pending_status(status):
+    return status == 'pending'
+
+
+def is_error_status(status):
+    return status == 'error'
+
+
+def is_success_status(status):
+    return status == 'success'
+
+
+def has_pending_tasks(pending_tasks):
+    return len(pending_tasks) > 0
+
 
 class Task(ListableResource, Resource):
     base_uri = '/tasks/'
@@ -40,30 +62,78 @@ class Task(ListableResource, Resource):
         assert(isinstance(task_ids, list))
         return super(Task, self).list(task_ids=task_ids)
 
-    def wait(self, timeout=60):
+    def wait(self, timeout=60, wait_exp_multiplier=0.05, wait_exp_max=1.0):
         """
         Wait until task is completed. Expires after 'timeout' seconds.
         """
-        self._wait_result(timeout)
+        try:
+            retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier, max=wait_exp_max),
+                               stop=stop_after_delay(timeout),
+                               retry=retry_if_result(is_pending_status),
+                               before=before_log(logger, logging.DEBUG),
+                               after=after_log(logger, logging.DEBUG))
+            retryer(self._refresh_status)
+        except RetryError:
+            raise TaskTimeout(self.data())
+
+        if is_error_status(self['status']):
+            raise TaskError(self.data())
+
         return self
 
-    def _wait_result(self, timeout):
-        start_time = time.time()
-        last_time = start_time
-        sleep_time = 0.2
-        while self['status'] == "pending":
-            # Check for timeout
-            if time.time() > start_time + timeout:
-                raise TaskTimeout(self.data())
+    def _refresh_status(self):
+        logger.debug("Refreshing Task {}".format(self))
+        self.refresh()
+        return self['status']
 
-            # Wait 'sleep_time' second before re-querying
-            sleep_time = time.time() - (last_time + sleep_time)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            self.refresh()
+    def _refresh_tasks_status(self, pending_tasks, success_tasks, error_tasks, positions):
+        logger.debug("Refreshing batch of Task {}".format(pending_tasks))
+        task_ids = [task.pk for idx, task in pending_tasks]
+        refreshed_tasks = self.list(task_ids=task_ids)
+        pending_tasks[:] = []  # clear the list (we have to keep the reference)
+        for task in refreshed_tasks:
+            status = task['status']
+            pos = positions[task.pk]
 
-        if self['status'] == "error":
-            raise TaskError(self.data())
+            if is_pending_status(status):
+                pending_tasks.append((pos, task))
+            elif is_error_status(status):
+                error_tasks.append((pos, task))
+            elif is_success_status(status):
+                success_tasks.append((pos, task))
+            else:
+                raise Exception("Unknown task status %s" % status)
+
+        return pending_tasks
+
+    def batch_wait(self, tasks, timeout=300, wait_exp_multiplier=0.05, wait_exp_max=1.0):
+        """
+        Wait until a list of task are completed. Expires after 'timeout' seconds.
+
+        Returns a tuple of list (pending_tasks, success_tasks, error_tasks).
+        Each list contains a couple (original_position, task) sorted by original_position asc
+        original_position gives the original index in the input tasks list parameter. This helps to keep the order.
+        """
+        try:
+            positions = {}
+            pending_tasks = []
+            for pos, task in enumerate(tasks):
+                positions[task.pk] = pos
+                pending_tasks.append((pos, task))
+            success_tasks = []
+            error_tasks = []
+            retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier, max=wait_exp_max),
+                               stop=stop_after_delay(timeout),
+                               retry=retry_if_result(has_pending_tasks),
+                               before=before_log(logger, logging.DEBUG),
+                               after=after_log(logger, logging.DEBUG))
+            retryer(self._refresh_tasks_status, pending_tasks, success_tasks, error_tasks, positions)
+        except RetryError:
+            pass
+
+        return (sorted(pending_tasks, key=lambda v: v[0]),
+                sorted(success_tasks, key=lambda v: v[0]),
+                sorted(error_tasks, key=lambda v: v[0]))
 
 
 ###############################################################################
