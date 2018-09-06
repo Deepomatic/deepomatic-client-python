@@ -292,7 +292,7 @@ def demo(client):
     network.delete()
 
 
-def demo_batch_tasks():
+def demo_batch_tasks(client):
     """
     Wait tasks per batch
     """
@@ -360,6 +360,11 @@ def display_inference_tensor(result):
         print_comment("tensor '{name}', dimensions: {dims}".format(name=tensor_name, dims='x'.join(map(str, numpy_array.shape))))
 
 
+def run_demos(client):
+    demo(client)
+    demo_batch_tasks(client)
+
+
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         api_host = None
@@ -369,5 +374,4 @@ if __name__ == '__main__':
     app_id = os.getenv('DEEPOMATIC_APP_ID')
     api_key = os.getenv('DEEPOMATIC_API_KEY')
     client = deepomatic.Client(app_id, api_key, host=api_host)
-    demo(client)
-    demo_batch_tasks(client)
+    run_demos(client)
