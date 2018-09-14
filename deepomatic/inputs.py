@@ -104,18 +104,17 @@ class ImageInput(AbstractInput):
         self.crop_uniform_background = crop_uniform_background
 
     def get_input(self):
-        data = {
-            'image': {
-                'source': self._source,
-                'crop_uniform_background': self.crop_uniform_background
-            }
+        image = {
+            'source': self._source,
+            'crop_uniform_background': self.crop_uniform_background
         }
         if self.bbox is not None:
-            data['bbox'] = self.bbox
+            image['bbox'] = self.bbox
         if self.polygon is not None:
-            data['polygon'] = self.polygon
-        return data
+            image['polygon'] = self.polygon
+        return {
+            'image': image
+        }
 
 
 ###############################################################################
-
