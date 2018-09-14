@@ -280,6 +280,11 @@ def demo():
     And this current version can be used to run inference for the spec directly
     """
     result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
+    print(result)
+
+    print_header("Run inference on specific version with a bounding box")
+    result = version.inference(inputs=[ImageInput(demo_url, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
+    print(result)
 
     """
     Show all versions of a spec
