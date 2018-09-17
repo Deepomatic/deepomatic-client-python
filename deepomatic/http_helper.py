@@ -144,15 +144,16 @@ class HTTPHelper(object):
             files = None
         return new_data, files
 
-    def make_request(self, func, resource, params, data=None, content_type=None, files=None, stream=False, *args, **kwargs):
+    def make_request(self, func, resource, params=None, data=None, content_type=None, files=None, stream=False, *args, **kwargs):
         if isinstance(data, dict) or isinstance(data, list):
-            if content_type.strip() == 'application/json':
-                data = json.dumps(data)
-            elif content_type.strip() == 'multipart/mixed':
-                content_type = None  # will be automatically set to multipart
-                data, files = self.dump_json_for_multipart(data, files)
-            else:
-                raise DeepomaticException("Unsupported Content-Type")
+            if content_type is not None:
+                if content_type.strip() == 'application/json':
+                    data = json.dumps(data)
+                elif content_type.strip() == 'multipart/mixed':
+                    content_type = None  # will be automatically set to multipart
+                    data, files = self.dump_json_for_multipart(data, files)
+                else:
+                    raise DeepomaticException("Unsupported Content-Type")
 
         headers = self.setup_headers(content_type=content_type)
         params = self.format_params(params)
@@ -194,35 +195,40 @@ class HTTPHelper(object):
         else:
             return response.content
 
-    def get(self, resource, params=None):
+    def get(self, resource, *args, **kwargs):
         """
         Perform a GET request
         """
-        return self.make_request(self.session.get, resource, params)
+        kwargs['content_type'] = kwargs.get('content_type', 'application/json')
+        return self.make_request(self.session.get, resource, *args, **kwargs)
 
-    def delete(self, resource, params=None):
+    def delete(self, resource, *args, **kwargs):
         """
         Perform a DELETE request
         """
-        return self.make_request(self.session.delete, resource, params)
+        kwargs['content_type'] = kwargs.get('content_type', 'application/json')
+        return self.make_request(self.session.delete, resource, *args, **kwargs)
 
-    def post(self, resource, params=None, data=None, content_type='application/json', files=None):
+    def post(self, resource, *args, **kwargs):
         """
         Perform a POST request
         """
-        return self.make_request(self.session.post, resource, params, data, content_type, files)
+        kwargs['content_type'] = kwargs.get('content_type', 'application/json')
+        return self.make_request(self.session.post, resource, *args, **kwargs)
 
-    def put(self, resource, params=None, data=None, content_type='application/json', files=None):
+    def put(self, resource, *args, **kwargs):
         """
         Perform a PUT request
         """
-        return self.make_request(self.session.put, resource, params, data, content_type, files)
+        kwargs['content_type'] = kwargs.get('content_type', 'application/json')
+        return self.make_request(self.session.put, resource, *args, **kwargs)
 
-    def patch(self, resource, params=None, data=None, content_type='application/json', files=None):
+    def patch(self, resource, *args, **kwargs):
         """
         Perform a PATCH request
         """
-        return self.make_request(self.session.patch, resource, params, data, content_type, files)
+        kwargs['content_type'] = kwargs.get('content_type', 'application/json')
+        return self.make_request(self.session.patch, resource, *args, **kwargs)
 
 
 ###############################################################################
