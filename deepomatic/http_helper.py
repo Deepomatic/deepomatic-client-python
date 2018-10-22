@@ -151,7 +151,7 @@ class HTTPHelper(object):
                     data = json.dumps(data)
                 elif content_type.strip() == 'multipart/mixed':
                     content_type = None  # will be automatically set to multipart
-                    # data = self.dump_json_for_multipart(data, False)
+                    data = self.dump_json_for_multipart(data, False)
                     files = self.dump_json_for_multipart(files, True)
                 else:
                     raise DeepomaticException("Unsupported Content-Type")
