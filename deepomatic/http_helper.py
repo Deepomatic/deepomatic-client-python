@@ -176,7 +176,11 @@ class HTTPHelper(object):
                 else:
                     new_files[key] = file
             files = new_files
-
+        import logging
+        logging.basicConfig(level='INFO')
+        logging.info(str(data))
+        logging.info(str(files))
+        logging.info(str(content_type))
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
         response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream, *args, **kwargs)
