@@ -89,7 +89,6 @@ class AbstractInput(object):
 
         self._source = source
         self._need_multipart = is_file or (is_raw and encoding == 'binary')
-        print(self._need_multipart)
 
     def get_input(self):
         raise Exception("Unimplemented")
