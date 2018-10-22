@@ -114,7 +114,7 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
-    def dump_json_for_multipart(self, dic, is_files):
+    def dump_json_for_multipart(self, dic):
         if dic is None:
             return None
 
@@ -133,10 +133,7 @@ class HTTPHelper(object):
             else:
                 if prefix in new_dic:
                     raise DeepomaticException("Duplicate key: " + prefix)
-                if is_files and not hasattr(obj, 'read') and not isinstance(obj, bytes):
-                    dic[prefix] = (None, obj, 'application/json')
-                else:
-                    dic[prefix] = obj
+                dic[prefix] = obj
 
         new_dic = {}
 
@@ -145,16 +142,16 @@ class HTTPHelper(object):
         return new_dic
 
     def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
-        if isinstance(data, dict) or isinstance(data, list):
-            if content_type is not None:
-                if content_type.strip() == 'application/json':
-                    data = json.dumps(data)
-                elif content_type.strip() == 'multipart/mixed':
-                    content_type = None  # will be automatically set to multipart
-                    data = self.dump_json_for_multipart(data, False)
-                    files = self.dump_json_for_multipart(files, True)
-                else:
-                    raise DeepomaticException("Unsupported Content-Type")
+
+        if content_type is not None:
+            if content_type.strip() == 'application/json':
+                data = json.dumps(data)
+            elif content_type.strip() == 'multipart/mixed':
+                content_type = None  # will be automatically set to multipart
+                data = self.dump_json_for_multipart(data)
+                files = self.dump_json_for_multipart(files)
+            else:
+                raise DeepomaticException("Unsupported Content-Type")
 
         headers = self.setup_headers(content_type=content_type)
         params = self.format_params(params)
@@ -173,7 +170,11 @@ class HTTPHelper(object):
                         pass
                 elif hasattr(file, 'seek'):
                     file.seek(0)
-                new_files[key] = file
+
+                if not hasattr(file, 'read') and not isinstance(file, bytes):
+                    new_files[key] = (None, file, 'application/json')
+                else:
+                    new_files[key] = file
             files = new_files
 
         if not resource.startswith('http'):
