@@ -114,35 +114,35 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
-    def dump_json_for_multipart(self, data, files):
-        def recursive_json_dump(prefix, obj, data, files, omit_dot=False):
+    def dump_json_for_multipart(self, dic, is_files):
+        if dic is None:
+            return None
+
+        def recursive_json_dump(prefix, obj, dic, omit_dot=False):
             if isinstance(obj, dict):
                 if not omit_dot:  # see comment below
                     prefix += '.'
                 for key, value in obj.items():
-                    recursive_json_dump(prefix + key, value, data, files)
+                    recursive_json_dump(prefix + key, value, dic)
             elif isinstance(obj, list):
                 for i, value in enumerate(obj):
                     # omit_dot is True as DRF parses list of dictionnaries like this:
                     # {"parent": [{"subfield": 0}]} would be:
                     # 'parent[0]subfield': 0
-                    recursive_json_dump(prefix + '[{}]'.format(i), value, data, files, omit_dot=True)
-            elif hasattr(obj, 'read'):  # if is file:
-                if prefix in files:
-                    raise DeepomaticException("Duplicate key: " + prefix)
-                files[prefix] = obj
+                    recursive_json_dump(prefix + '[{}]'.format(i), value, dic, omit_dot=True)
             else:
-                data[prefix] = obj
+                if prefix in new_dic:
+                    raise DeepomaticException("Duplicate key: " + prefix)
+                if is_files and not hasattr(obj, 'read') and not isinstance(obj, bytes):
+                    dic[prefix] = (None, obj, 'application/json')
+                else:
+                    dic[prefix] = obj
 
-        if files is None:
-            files = {}
-        new_data = {}
+        new_dic = {}
 
-        recursive_json_dump('', data, new_data, files, omit_dot=True)
+        recursive_json_dump('', dic, new_dic, omit_dot=True)
 
-        if len(files) == 0:
-            files = None
-        return new_data, files
+        return new_dic
 
     def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
         if isinstance(data, dict) or isinstance(data, list):
@@ -151,7 +151,8 @@ class HTTPHelper(object):
                     data = json.dumps(data)
                 elif content_type.strip() == 'multipart/mixed':
                     content_type = None  # will be automatically set to multipart
-                    data, files = self.dump_json_for_multipart(data, files)
+                    # data = self.dump_json_for_multipart(data, False)
+                    files = self.dump_json_for_multipart(files, True)
                 else:
                     raise DeepomaticException("Unsupported Content-Type")
 
@@ -163,11 +164,14 @@ class HTTPHelper(object):
             new_files = {}
             for key, file in files.items():
                 if isinstance(file, string_types):
-                    if not os.path.isfile(file):
-                        raise DeepomaticException("Does not refer to a file: {}".format(file))
-                    file = open(file, 'rb')
-                    opened_files.append(file)
-                else:
+                    try:
+                        # this may raise if file is a string containing bytes
+                        if os.path.exists(file):
+                            file = open(file, 'rb')
+                            opened_files.append(file)
+                    except TypeError:
+                        pass
+                elif hasattr(file, 'seek'):
                     file.seek(0)
                 new_files[key] = file
             files = new_files

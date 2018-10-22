@@ -36,8 +36,8 @@ class InferenceResource(object):
         inputs = kwargs.pop('inputs', None)
         if inputs is None:
             raise DeepomaticException("Missing keyword argument: inputs")
-        content_type, data = format_inputs(inputs, kwargs)
-        result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data)
+        content_type, data, files = format_inputs(inputs, kwargs)
+        result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data, files=files)
         task_id = result['task_id']
         task = Task(self._helper, pk=task_id)
         if wait_task:
