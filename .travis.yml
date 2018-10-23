@@ -7,9 +7,10 @@ python:
 
 # command to install dependencies
 install:
-  - pip install .
+  - python setup.py bdist_wheel
+  - pip install dist/deepomatic-*.whl
+  - cp demo.py /samples/demo.py
 
 # command to run tests
 script:
-  - cp demo.py /tmp/demo.py
-  - python /tmp/demo.py
+  - python /samples/demo.py
