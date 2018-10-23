@@ -38,8 +38,10 @@ def format_inputs(inputs, data):
     files = {}
     need_multipart = any([input_data.need_multipart() for input_data in inputs])
     inputs_data = [input_data.get_input() for input_data in inputs]
-
-    data['inputs'] = inputs_data
+    if need_multipart:
+        files['inputs'] = inputs_data
+    else:
+        data['inputs'] = inputs_data
 
     content_type = 'multipart/mixed' if need_multipart else 'application/json'
     return content_type, data, files
