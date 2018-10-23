@@ -11,6 +11,5 @@ install:
 
 # command to run tests
 script:
-  - echo "Testing with $(python --version)"
   - cp demo.py /tmp/demo.py
   - python /tmp/demo.py
