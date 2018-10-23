@@ -13,14 +13,35 @@ env:
 
 docker:
   base_image:
+    # This first item is a YAML template named "base_image"
+    # You can reuse it and override just some values with
+    # "- <<: *base_image" as used below.
+    - &base_image
       name: deepomatic-client-python
-      root_image: ubuntu:17.10
-      install_scripts:
-        - tests/install_virtualenv.sh
-
+      variant: 2.7
+      root_image: python:2.7
+    # Nothing changes comparing to above, except 'variant' and 'root_image'
+    - <<: *base_image
+      variant: 3.4
+      root_image: python:3.4
+    - <<: *base_image
+      variant: 3.5
+      root_image: python:3.5
+    - <<: *base_image
+      variant: 3.6
+      root_image: python:3.6
 
 services:
   - service_name: client
+    config:
+      docker_image:
+        build: .
+        base_image_variant:
+          - 2.7
+          - 3.4
+          - 3.5
+          - 3.6
+
     tests:
       commands:
-        - tests/test_demo.sh
+        - python /samples/demo.py
