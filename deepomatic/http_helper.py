@@ -147,7 +147,12 @@ class HTTPHelper(object):
             if content_type.strip() == 'application/json':
                 data = json.dumps(data)
             elif content_type.strip() == 'multipart/mixed':
-                content_type = None  # will be automatically set to multipart
+                # If no files are provided, requests will default to form-urlencoded content type
+                # But the API doesn't support it.
+                if not files:
+                    raise Exception("Cannot send the request as multipart without files provided.")
+                # requests will build the good multipart content types with the boundaries
+                content_type = None
                 data = self.dump_json_for_multipart(data)
                 files = self.dump_json_for_multipart(files)
             else:
