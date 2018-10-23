@@ -1,2 +1,5 @@
 *.pyc
 /venv*
+
+build/
+dist/

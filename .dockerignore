@@ -1,0 +1,10 @@
+Dockerfile
+.git
+.dockerignore
+Jenkinsfile
+
+build/
+dist/
+
+**/*~
+**/.#*
