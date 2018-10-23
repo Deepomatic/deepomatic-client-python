@@ -114,32 +114,32 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
-    def dump_json_for_multipart(self, dic):
-        if dic is None:
+    def dump_json_for_multipart(self, data_dict):
+        if data_dict is None:
             return None
 
-        def recursive_json_dump(prefix, obj, dic, omit_dot=False):
+        def recursive_json_dump(prefix, obj, data_dict, omit_dot=False):
             if isinstance(obj, dict):
                 if not omit_dot:  # see comment below
                     prefix += '.'
                 for key, value in obj.items():
-                    recursive_json_dump(prefix + key, value, dic)
+                    recursive_json_dump(prefix + key, value, data_dict)
             elif isinstance(obj, list):
                 for i, value in enumerate(obj):
                     # omit_dot is True as DRF parses list of dictionnaries like this:
                     # {"parent": [{"subfield": 0}]} would be:
                     # 'parent[0]subfield': 0
-                    recursive_json_dump(prefix + '[{}]'.format(i), value, dic, omit_dot=True)
+                    recursive_json_dump(prefix + '[{}]'.format(i), value, data_dict, omit_dot=True)
             else:
-                if prefix in new_dic:
+                if prefix in data_dict:
                     raise DeepomaticException("Duplicate key: " + prefix)
-                dic[prefix] = obj
+                data_dict[prefix] = obj
 
-        new_dic = {}
+        new_dict = {}
 
-        recursive_json_dump('', dic, new_dic, omit_dot=True)
+        recursive_json_dump('', data_dict, new_dict, omit_dot=True)
 
-        return new_dic
+        return new_dict
 
     def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
 
