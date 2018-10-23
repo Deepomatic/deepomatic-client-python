@@ -314,7 +314,7 @@ def demo_batch_tasks():
     spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
     tasks = []
     timeout = 30
-    nb_inference = 1
+    nb_inference = 20
     print("Pushing %d inferences" % nb_inference)
     for i in range(nb_inference):
         task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
@@ -375,28 +375,5 @@ def display_inference_tensor(result):
 
 
 if __name__ == '__main__':
-
-    # try: # for Python 3
-    #     from http.client import HTTPConnection
-    # except ImportError:
-    #     from httplib import HTTPConnection
-
-    # import logging
-    # HTTPConnection.debuglevel = 1
-    # logging.getLogger().setLevel(logging.DEBUG)
-    # requests_log = logging.getLogger("urllib3")
-    # requests_log.setLevel(logging.DEBUG)
-    # requests_log.propagate = True
-
-    # api_host = 'http://0.0.0.0:32884'
-    # app_id = '424242424242'
-    # api_key = '1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a'
-    # client = deepomatic.Client(app_id, api_key, host=api_host)
-    # network = client.Network.retrieve('imagenet-inception-v1')
-    # file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
-    # binary_data = file.read()
-    # file.seek(0)
-    # result = network.inference(inputs=[ImageInput(binary_data, encoding='binary'), ImageInput("https://deepomatic.com")], output_tensors=["prob", "data"], wait_task=False)
-
     demo()
     demo_batch_tasks()
