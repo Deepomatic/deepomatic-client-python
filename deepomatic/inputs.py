@@ -69,23 +69,8 @@ class AbstractInput(object):
 
                 # Send binary directly to minimize load
                 if encoding == 'base64':
-                    # Source needs to be converted to str to be JSON dumped
-                    # source = source.decode("utf-8")
                     source = base64.b64decode(source)
                     encoding = 'binary'
-
-                prefix = 'data:{content_type};{encoding},'.format(
-                    content_type=self.content_type,
-                    encoding=encoding)
-                if encoding == 'binary':
-                    # Prefix needs to be converted to bytes before concatenation with source
-                    if sys.version_info >= (3, 0):
-                        prefix = bytes(prefix, 'ascii')
-                    else:
-                        prefix = bytes(prefix)
-                else:
-                    raise Exception('Unexpected encoding')
-                source = prefix + source
 
         self._source = source
         self._need_multipart = is_file or (is_raw and encoding == 'binary')

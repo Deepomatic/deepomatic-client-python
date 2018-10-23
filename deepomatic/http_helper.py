@@ -145,7 +145,8 @@ class HTTPHelper(object):
 
         if content_type is not None:
             if content_type.strip() == 'application/json':
-                data = json.dumps(data)
+                if data is not None:
+                    data = json.dumps(data)
             elif content_type.strip() == 'multipart/mixed':
                 # If no files are provided, requests will default to form-urlencoded content type
                 # But the API doesn't support it.
@@ -182,7 +183,6 @@ class HTTPHelper(object):
                     new_files[key] = file
                 else:
                     new_files[key] = (None, file, 'application/json')
-
 
             files = new_files
 
