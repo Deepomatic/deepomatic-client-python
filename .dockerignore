@@ -6,5 +6,6 @@ Jenkinsfile
 build/
 dist/
 
+**/*.pyc
 **/*~
 **/.#*
