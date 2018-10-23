@@ -1,0 +1,17 @@
+language: python
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+# command to install dependencies
+install:
+  - python setup.py bdist_wheel
+  - pip install dist/deepomatic-*.whl
+  - mkdir samples
+  - cp demo.py samples/demo.py
+
+# command to run tests
+script:
+  - python samples/demo.py

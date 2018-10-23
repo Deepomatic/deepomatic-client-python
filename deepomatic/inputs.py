@@ -35,11 +35,16 @@ def format_inputs(inputs, data):
     assert(isinstance(inputs, list))
 
     data = copy.deepcopy(data)
-    data['inputs'] = [input_data.get_input() for input_data in inputs]
+    files = {}
     need_multipart = any([input_data.need_multipart() for input_data in inputs])
+    inputs_data = [input_data.get_input() for input_data in inputs]
+    if need_multipart:
+        files['inputs'] = inputs_data
+    else:
+        data['inputs'] = inputs_data
 
     content_type = 'multipart/mixed' if need_multipart else 'application/json'
-    return content_type, data
+    return content_type, data, files
 
 
 ###############################################################################
@@ -53,6 +58,7 @@ class AbstractInput(object):
 
     def __init__(self, source, encoding=None):
         is_file = hasattr(source, 'read')
+        is_raw = False
         if not is_file:
             is_raw = (sys.version_info >= (3, 0) and isinstance(source, bytes)) or not any([source.startswith(p) for p in self.supported_protocols])
             if is_raw:
@@ -63,23 +69,8 @@ class AbstractInput(object):
 
                 # Send binary directly to minimize load
                 if encoding == 'base64':
-                    # Source needs to be converted to str to be JSON dumped
-                    # source = source.decode("utf-8")
                     source = base64.b64decode(source)
                     encoding = 'binary'
-
-                prefix = 'data:{content_type};{encoding},'.format(
-                    content_type=self.content_type,
-                    encoding=encoding)
-                if encoding == 'binary':
-                    # Prefix needs to be converted to bytes before concatenation with source
-                    if sys.version_info >= (3, 0):
-                        prefix = bytes(prefix, 'ascii')
-                    else:
-                        prefix = bytes(prefix)
-                else:
-                    raise Exception('Unexpected encoding')
-                source = prefix + source
 
         self._source = source
         self._need_multipart = is_file or (is_raw and encoding == 'binary')

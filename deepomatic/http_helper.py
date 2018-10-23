@@ -114,46 +114,50 @@ class HTTPHelper(object):
                     data[key] = json.dumps(value)
         return data
 
-    def dump_json_for_multipart(self, data, files):
-        def recursive_json_dump(prefix, obj, data, files, omit_dot=False):
+    def dump_json_for_multipart(self, data_dict):
+        if data_dict is None:
+            return None
+
+        def recursive_json_dump(prefix, obj, data_dict, omit_dot=False):
             if isinstance(obj, dict):
                 if not omit_dot:  # see comment below
                     prefix += '.'
                 for key, value in obj.items():
-                    recursive_json_dump(prefix + key, value, data, files)
+                    recursive_json_dump(prefix + key, value, data_dict)
             elif isinstance(obj, list):
                 for i, value in enumerate(obj):
                     # omit_dot is True as DRF parses list of dictionnaries like this:
                     # {"parent": [{"subfield": 0}]} would be:
                     # 'parent[0]subfield': 0
-                    recursive_json_dump(prefix + '[{}]'.format(i), value, data, files, omit_dot=True)
-            elif hasattr(obj, 'read'):  # if is file:
-                if prefix in files:
-                    raise DeepomaticException("Duplicate key: " + prefix)
-                files[prefix] = obj
+                    recursive_json_dump(prefix + '[{}]'.format(i), value, data_dict, omit_dot=True)
             else:
-                data[prefix] = obj
+                if prefix in data_dict:
+                    raise DeepomaticException("Duplicate key: " + prefix)
+                data_dict[prefix] = obj
 
-        if files is None:
-            files = {}
-        new_data = {}
+        new_dict = {}
 
-        recursive_json_dump('', data, new_data, files, omit_dot=True)
+        recursive_json_dump('', data_dict, new_dict, omit_dot=True)
 
-        if len(files) == 0:
-            files = None
-        return new_data, files
+        return new_dict
 
     def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
-        if isinstance(data, dict) or isinstance(data, list):
-            if content_type is not None:
-                if content_type.strip() == 'application/json':
+
+        if content_type is not None:
+            if content_type.strip() == 'application/json':
+                if data is not None:
                     data = json.dumps(data)
-                elif content_type.strip() == 'multipart/mixed':
-                    content_type = None  # will be automatically set to multipart
-                    data, files = self.dump_json_for_multipart(data, files)
-                else:
-                    raise DeepomaticException("Unsupported Content-Type")
+            elif content_type.strip() == 'multipart/mixed':
+                # If no files are provided, requests will default to form-urlencoded content type
+                # But the API doesn't support it.
+                if not files:
+                    raise Exception("Cannot send the request as multipart without files provided.")
+                # requests will build the good multipart content types with the boundaries
+                content_type = None
+                data = self.dump_json_for_multipart(data)
+                files = self.dump_json_for_multipart(files)
+            else:
+                raise DeepomaticException("Unsupported Content-Type")
 
         headers = self.setup_headers(content_type=content_type)
         params = self.format_params(params)
@@ -163,13 +167,23 @@ class HTTPHelper(object):
             new_files = {}
             for key, file in files.items():
                 if isinstance(file, string_types):
-                    if not os.path.isfile(file):
-                        raise DeepomaticException("Does not refer to a file: {}".format(file))
-                    file = open(file, 'rb')
-                    opened_files.append(file)
-                else:
+                    try:
+                        # this may raise if file is a string containing bytes
+                        if os.path.exists(file):
+                            file = open(file, 'rb')
+                            opened_files.append(file)
+                    except TypeError:
+                        pass
+                elif hasattr(file, 'seek'):
                     file.seek(0)
-                new_files[key] = file
+
+                if hasattr(file, 'read') or \
+                   isinstance(file, bytes) or \
+                   (isinstance(file, tuple) and len(file) == 3):
+                    new_files[key] = file
+                else:
+                    new_files[key] = (None, file, 'application/json')
+
             files = new_files
 
         if not resource.startswith('http'):
