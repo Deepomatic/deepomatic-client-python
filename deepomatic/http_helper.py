@@ -176,10 +176,14 @@ class HTTPHelper(object):
                 elif hasattr(file, 'seek'):
                     file.seek(0)
 
-                if not hasattr(file, 'read') and not isinstance(file, bytes):
-                    new_files[key] = (None, file, 'application/json')
-                else:
+                if hasattr(file, 'read') or \
+                   isinstance(file, bytes) or \
+                   (isinstance(file, tuple) and len(file) == 3):
                     new_files[key] = file
+                else:
+                    new_files[key] = (None, file, 'application/json')
+
+
             files = new_files
 
         if not resource.startswith('http'):
