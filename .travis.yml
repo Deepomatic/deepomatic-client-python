@@ -9,9 +9,9 @@ python:
 install:
   - python setup.py bdist_wheel
   - pip install dist/deepomatic-*.whl
-  - mkdir /samples
-  - cp demo.py /samples/demo.py
+  - mkdir samples
+  - cp demo.py samples/demo.py
 
 # command to run tests
 script:
-  - python /samples/demo.py
+  - python samples/demo.py
