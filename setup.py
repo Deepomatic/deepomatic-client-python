@@ -4,7 +4,8 @@ try: # for pip >= 10
     from pip._internal.req import parse_requirements
 except ImportError: # for pip <= 9.0.3
     from pip.req import parse_requirements
-from version import __VERSION__
+
+from deepomatic import __version__
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
@@ -17,7 +18,7 @@ install_reqs = parse_requirements('requirements.txt', session='hack')
 
 setup(
     name='deepomatic',
-    version=__VERSION__,
+    version=__version__,
     packages=find_packages(),
     include_package_data=True,
     description='Deepomatic API client',
