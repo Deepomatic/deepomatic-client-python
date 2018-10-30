@@ -22,6 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.version import __VERSION__
+from deepomatic.version import __version__
 from deepomatic.client import Client
 from deepomatic.inputs import ImageInput
