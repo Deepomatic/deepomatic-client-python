@@ -31,6 +31,7 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
+    project_urls=about['__project_urls__'],
     license=about['__license__'],
     packages=find_packages(),
     include_package_data=True,

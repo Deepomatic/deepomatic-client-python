@@ -1,30 +1,26 @@
 # deepomatic-client-python
 
-Deepomatic API Client for Python.
+[Deepomatic](https://www.deepomatic.com) API Client for Python.
 
 This client have been made in order to help you integrating our services within your apps in python.
 
 Tested on python 2.7 & 3.5.
 
-<br/>
-
 # API Documentation
 
 https://developers.deepomatic.com/docs/v0.7
-<br/>
 
 # Installation
 
+```bash
+pip install deepomatic
 ```
-git clone https://github.com/Deepomatic/deepomatic-client-python.git
-pip install ./deepomatic-client-python
-```
-<br/>
 
 # Client
 
 Initialize a client.
 Does not make any call to the server.
+
 ```python
 import deepomatic
 
@@ -42,4 +38,4 @@ You will find examples of usage in [demo.py](demo.py).
 
 # Bugs
 
-Please send bug reports to support@deepomatic.com
+Please send bug reports to support@deepomatic.com or open an issue here.

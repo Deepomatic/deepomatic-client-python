@@ -1,7 +1,12 @@
 __title__ = 'deepomatic'
 __description__ = 'Deepomatic API client',
-__version__ = '0.7.8'
+__version__ = '0.7.9'
 __author__ = 'deepomatic'
 __author_email__ = 'support@deepomatic.com'
-__url__ = 'https://www.deepomatic.com'
+__url__ = 'https://github.com/deepomatic/deepomatic-client-python'
 __license__ = 'MIT License'
+__project_urls__ = {
+    'Documentation': 'https://developers.deepomatic.com/docs/v0.7',
+    'Source': 'https://github.com/deepomatic/deepomatic-client-python',
+    'Tracker': 'https://github.com/deepomatic/deepomatic-client-python/issues',
+}
