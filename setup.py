@@ -22,7 +22,7 @@ with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Read requirements
-install_reqs = parse_requirements('requirements.txt', session='hack')
+install_reqs = parse_requirements(os.path.join(here, 'requirements.txt'), session='hack')
 
 setup(
     name=about['__title__'],
@@ -35,6 +35,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     long_description=README,
+    data_files=[('', ['requirements.txt'])],
     install_requires=[str(ir.req) for ir in install_reqs],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     classifiers=[
