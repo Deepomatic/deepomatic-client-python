@@ -1,8 +1,10 @@
 all: release
 
-release:
-		rm -rf build dist *.egg-info
+release: clean
 		python3 setup.py sdist bdist_wheel
+
+clean:
+		rm -rf build dist *.egg-info
 
 publish-test: release
 		# For testing, note that once one version is uploaded, you have to increment the version number or make a post release to re-upload
