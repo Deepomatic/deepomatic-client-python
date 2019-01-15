@@ -72,43 +72,6 @@ def demo():
     network = client.Network.retrieve('imagenet-inception-v1')
     print(network)
 
-    print_header("Inference from a URL")
-    """
-    As said above, you can call '.inference()' on a network, which will give you access on raw tensor output.
-    Inference requests may take input image in various forms.
-    Here, it take an url as input via 'ImageInput(demo_url)'.
-    Also we have used the generic form of inference which might take multiple inputs if your networks has multiple ones.
-    """
-    result = network.inference(inputs=[ImageInput(demo_url)], output_tensors=["prob", "pool2/3x3_s2", "pool5/7x7_s1"])
-    display_inference_tensor(result)
-
-    print_header("Inference from a file")
-    """
-    '.inference()' also support when you pass a single input instead of a list of inputs.
-    Here, it takes a file pointer as input.
-    """
-    file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
-    result = network.inference(inputs=[ImageInput(file)], output_tensors=["prob"])
-    display_inference_tensor(result)
-
-    print_header("Inference from binary data")
-    """
-    It also support raw data, in which case you must specify how it is encoded.
-    'binary' means you are passing raw binary data.
-    """
-    file.seek(0)
-    binary_data = file.read()
-    result = network.inference(inputs=[ImageInput(binary_data, encoding="binary")], output_tensors=["prob"])
-    display_inference_tensor(result)
-
-    print_header("Inference from base64 data")
-    """
-    If for some reasons you want to work with base64 encoded data, you also can ! Just specify base64 as encoding !
-    """
-    b64 = base64.b64encode(binary_data)
-    result = network.inference(inputs=[ImageInput(b64, encoding="base64")], output_tensors=["prob"])
-    display_inference_tensor(result)
-
     #############################
     # Public recognition models #
     #############################
@@ -132,12 +95,41 @@ def demo():
     spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
     pretty_print_json(spec.data())
 
-    print_header("Infering an image on recognition spec current version")
+    print_header("Inference from a URL")
     """
-    This recognition model is already tied to a specific version managed by deepomatic, so we can directly perform
-    inference on it and use it to tag the content of images with their main category.
+    You can call '.inference()' on a spec, which will give you access on raw tensor output.
+    Inference requests may take input image in various forms.
+    Here, it take an url as input via 'ImageInput(demo_url)'.
+    Also we have used the generic form of inference which might take multiple inputs if your networks has multiple ones.
     """
     result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
+    pretty_print_json(result)
+
+    print_header("Inference from a file")
+    """
+    '.inference()' also support when you pass a single input instead of a list of inputs.
+    Here, it takes a file pointer as input.
+    """
+    file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
+    result = spec.inference(inputs=[ImageInput(file)], show_discarded=True, max_predictions=3)
+    pretty_print_json(result)
+
+    print_header("Inference from binary data")
+    """
+    It also support raw data, in which case you must specify how it is encoded.
+    'binary' means you are passing raw binary data.
+    """
+    file.seek(0)
+    binary_data = file.read()
+    result = spec.inference(inputs=[ImageInput(binary_data, encoding="binary")], show_discarded=True, max_predictions=3)
+    pretty_print_json(result)
+
+    print_header("Inference from base64 data")
+    """
+    If for some reasons you want to work with base64 encoded data, you also can ! Just specify base64 as encoding !
+    """
+    b64 = base64.b64encode(binary_data)
+    result = spec.inference(inputs=[ImageInput(b64, encoding="base64")], show_discarded=True, max_predictions=3)
     pretty_print_json(result)
 
     """
@@ -210,13 +202,6 @@ def demo():
     network_id = network['id']
     print_comment("Network ID = {}".format(network_id))
 
-    print_header("Wait for network deployment")
-    """
-    When creating a new network, a worker will be created in our back-end to serve your request.
-    Let's wait a few seconds until it boots.
-    """
-    client.Task.retrieve(network['task_id']).wait()
-
     print_header("Editing network")
     """
     If you realized you did a mistake on some object parameters, you may modify it with '.update()'.
@@ -274,6 +259,13 @@ def demo():
     After attaching a first version to a spec, the current_version_id of the spec is automatically set
     """
     print_comment("Current version ID = {}".format(spec['current_version_id']))
+
+    print_header("Wait for network deployment")
+    """
+    When creating a new recognition version, a worker will be created in our back-end to serve your request.
+    Let's wait a few seconds until it boots.
+    """
+    client.Task.retrieve(network['task_id']).wait()
 
     print_header("Run inference on spec (using the current version)")
     """
