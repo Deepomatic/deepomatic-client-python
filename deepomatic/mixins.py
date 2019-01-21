@@ -40,8 +40,8 @@ class RequiredArg(Arg):
 
 
 class OptionnalArg(Arg):
-    def __init__(self):
-        super(OptionnalArg, self).__init__(None, True)
+    def __init__(self, mutable=True):
+        super(OptionnalArg, self).__init__(None, mutable)
 
 
 class ImmutableArg(Arg):
