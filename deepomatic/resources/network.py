@@ -48,7 +48,7 @@ class Network(ListableResource,
         'metadata':      OptionnalArg(),
         'framework':     ImmutableArg(),
         'preprocessing': ImmutableArg(),
-        'postprocessing': ImmutableArg(),
+        'postprocessings': OptionnalArg(mutable=False),
     }
 
     @classmethod
