@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 from six import string_types
 
-from deepomatic.resource import Resource, ResourceList
-from deepomatic.utils import InferenceResource
-from deepomatic.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
-from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg, UpdateOnlyArg
+from deepomatic.api.api.resource import Resource, ResourceList
+from deepomatic.api.api.utils import InferenceResource
+from deepomatic.api.api.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
+from deepomatic.api.api.mixins import RequiredArg, OptionnalArg, ImmutableArg, UpdateOnlyArg
 
 
 ###############################################################################

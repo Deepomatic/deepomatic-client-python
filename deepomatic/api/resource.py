@@ -25,7 +25,7 @@ THE SOFTWARE.
 import json
 import copy
 
-from deepomatic.exceptions import DeepomaticException, NoData
+from deepomatic.api.exceptions import DeepomaticException, NoData
 
 
 ###############################################################################
