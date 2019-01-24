@@ -13,7 +13,7 @@ https://developers.deepomatic.com/docs/v0.7
 # Installation
 
 ```bash
-pip install deepomatic
+pip install deepomatic-api
 ```
 
 # Client
