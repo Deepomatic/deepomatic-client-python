@@ -36,7 +36,7 @@ setup(
     project_urls=about['__project_urls__'],
     license=about['__license__'],
     packages=find_packages(),
-    namespaces=namespaces,
+    namespace_packages=namespaces,
     include_package_data=True,
     long_description=README,
     data_files=[('', ['requirements.txt'])],
