@@ -1,1 +1,1 @@
-from deepomatic.version import __version__
+from deepomatic.api.version import __version__
