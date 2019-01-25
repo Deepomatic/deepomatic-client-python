@@ -1,5 +1,5 @@
 __title__ = 'deepomatic-api'
-__description__ = 'Deepomatic API client',
+__description__ = 'Deepomatic API client'
 __version__ = '0.7.10'
 __author__ = 'deepomatic'
 __author_email__ = 'support@deepomatic.com'
