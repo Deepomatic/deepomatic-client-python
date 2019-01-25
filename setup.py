@@ -39,6 +39,7 @@ setup(
     namespace_packages=namespaces,
     include_package_data=True,
     long_description=README,
+    long_description_content_type='text/markdown',
     data_files=[('', ['requirements.txt'])],
     install_requires=[str(ir.req) for ir in install_reqs],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
