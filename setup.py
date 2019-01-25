@@ -12,7 +12,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 
 about = {}
-with io.open(os.path.join(here, 'deepomatic', 'version.py'), 'r', encoding='utf-8') as f:
+with io.open(os.path.join(here, 'deepomatic', 'api', 'version.py'), 'r', encoding='utf-8') as f:
     exec(f.read(), about)
 
 with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as readme:
@@ -22,7 +22,9 @@ with io.open(os.path.join(here, 'README.md'), 'r', encoding='utf-8') as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 # Read requirements
-install_reqs = parse_requirements('requirements.txt', session='hack')
+install_reqs = parse_requirements(os.path.join(here, 'requirements.txt'), session='hack')
+
+namespaces = ['deepomatic']
 
 setup(
     name=about['__title__'],
@@ -31,10 +33,14 @@ setup(
     author=about['__author__'],
     author_email=about['__author_email__'],
     url=about['__url__'],
+    project_urls=about['__project_urls__'],
     license=about['__license__'],
     packages=find_packages(),
+    namespace_packages=namespaces,
     include_package_data=True,
     long_description=README,
+    long_description_content_type='text/markdown',
+    data_files=[('', ['requirements.txt'])],
     install_requires=[str(ir.req) for ir in install_reqs],
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*",
     classifiers=[

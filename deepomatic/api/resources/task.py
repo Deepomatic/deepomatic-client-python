@@ -24,9 +24,9 @@ THE SOFTWARE.
 
 from tenacity import Retrying, wait_random_exponential, stop_after_delay, retry_if_result, before_log, after_log, RetryError
 
-from deepomatic.resource import Resource
-from deepomatic.mixins import ListableResource
-from deepomatic.exceptions import TaskError, TaskTimeout
+from deepomatic.api.resource import Resource
+from deepomatic.api.mixins import ListableResource
+from deepomatic.api.exceptions import TaskError, TaskTimeout
 import logging
 
 

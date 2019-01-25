@@ -30,8 +30,8 @@ import platform
 from requests.structures import CaseInsensitiveDict
 from six import string_types
 
-from deepomatic.exceptions import DeepomaticException, BadStatus
-from deepomatic.version import __version__
+from deepomatic.api.exceptions import DeepomaticException, BadStatus
+from deepomatic.api.version import __version__
 
 ###############################################################################
 

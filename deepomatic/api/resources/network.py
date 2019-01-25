@@ -25,10 +25,10 @@ THE SOFTWARE.
 from six import string_types
 import numpy as np
 
-from deepomatic.resource import Resource
-from deepomatic.utils import InferenceResource
-from deepomatic.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
-from deepomatic.mixins import RequiredArg, OptionnalArg, ImmutableArg
+from deepomatic.api.resource import Resource
+from deepomatic.api.utils import InferenceResource
+from deepomatic.api.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
+from deepomatic.api.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
 
 ###############################################################################

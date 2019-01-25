@@ -4,8 +4,8 @@ import json
 import base64
 import tarfile
 
-import deepomatic
-from deepomatic import ImageInput
+from deepomatic.api.client import Client
+from deepomatic.api.inputs import ImageInput
 
 if sys.version_info >= (3, 0):
     from urllib.request import urlretrieve
@@ -19,7 +19,7 @@ else:
 
 app_id = os.getenv('DEEPOMATIC_APP_ID')
 api_key = os.getenv('DEEPOMATIC_API_KEY')
-client = deepomatic.Client(app_id, api_key, host=api_host)
+client = Client(app_id, api_key, host=api_host)
 
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 

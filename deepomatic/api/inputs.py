@@ -26,7 +26,7 @@ import sys
 import copy
 import base64
 
-from deepomatic.exceptions import DeepomaticException
+from deepomatic.api.exceptions import DeepomaticException
 
 
 ###############################################################################

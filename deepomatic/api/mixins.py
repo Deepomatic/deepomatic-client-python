@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.exceptions import DeepomaticException
-from deepomatic.resource import ResourceList
+from deepomatic.api.exceptions import DeepomaticException
+from deepomatic.api.resource import ResourceList
 
 
 ###############################################################################

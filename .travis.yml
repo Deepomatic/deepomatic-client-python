@@ -8,7 +8,7 @@ python:
 # command to install dependencies
 install:
   - python setup.py bdist_wheel
-  - pip install dist/deepomatic-*.whl
+  - pip install dist/deepomatic_api-*.whl
   - mkdir samples
   - cp demo.py samples/demo.py
 

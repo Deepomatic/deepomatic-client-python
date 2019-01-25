@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.http_helper import HTTPHelper
-from deepomatic.resources.network import Network
-from deepomatic.resources.recognition import RecognitionSpec, RecognitionVersion
-from deepomatic.resources.task import Task
-from deepomatic.resources.account import Account
+from deepomatic.api.http_helper import HTTPHelper
+from deepomatic.api.resources.network import Network
+from deepomatic.api.resources.recognition import RecognitionSpec, RecognitionVersion
+from deepomatic.api.resources.task import Task
+from deepomatic.api.resources.account import Account
 
 ###############################################################################
 
