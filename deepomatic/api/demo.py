@@ -15,7 +15,7 @@ else:
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
 
-def demo():
+def demo(client=None):
     """
     Our REST client works by exposing resources. A resource usually has the following synchronous methods:
 
@@ -39,9 +39,10 @@ def demo():
     #                 and just call `client = Client()`
     #
     # Here we actually use a mix of those two methods to illustrate:
-    app_id = os.getenv('DEEPOMATIC_APP_ID')
-    api_key = os.getenv('DEEPOMATIC_API_KEY')
-    client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
+    if client is None:
+        app_id = os.getenv('DEEPOMATIC_APP_ID')
+        api_key = os.getenv('DEEPOMATIC_API_KEY')
+        client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
 
     ###################
     # Public networks #
@@ -328,9 +329,6 @@ def demo():
         assert(tasks[pos].pk == err.pk)
     for pos, success in success_tasks:
         assert(tasks[pos].pk == success.pk)
-
-    # Return the client to perform assertions on e2e tests
-    return client
 
 ###########
 # Helpers #
