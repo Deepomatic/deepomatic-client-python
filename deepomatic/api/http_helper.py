@@ -33,6 +33,8 @@ from six import string_types
 from deepomatic.api.exceptions import DeepomaticException, BadStatus
 from deepomatic.api.version import __version__
 
+API_HOST = 'https://api.deepomatic.com'
+
 ###############################################################################
 
 
@@ -41,6 +43,8 @@ class HTTPHelper(object):
         """
         Init the HTTP helper with API key and secret
         """
+        if host is None:
+            host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
