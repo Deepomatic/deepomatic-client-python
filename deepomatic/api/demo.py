@@ -329,6 +329,9 @@ def demo():
     for pos, success in success_tasks:
         assert(tasks[pos].pk == success.pk)
 
+    # Return the client to perform assertions on e2e tests
+    return client
+
 ###########
 # Helpers #
 ###########
