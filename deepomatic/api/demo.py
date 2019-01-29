@@ -12,15 +12,6 @@ if sys.version_info >= (3, 0):
 else:
     from urllib import urlretrieve
 
-if len(sys.argv) < 2:
-    api_host = None
-else:
-    api_host = sys.argv[1]
-
-app_id = os.getenv('DEEPOMATIC_APP_ID')
-api_key = os.getenv('DEEPOMATIC_API_KEY')
-client = Client(app_id, api_key, host=api_host)
-
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
 
@@ -37,6 +28,20 @@ def demo():
                        of arguments of each object resource.
         - delete():    allow to delete the object.
     """
+
+    #########
+    # Setup #
+    #########
+
+    # You can create a client in two ways:
+    # i) explicitly: you pass your APP_ID and API_KEY by calling `client = Client(app_id, api_key)`
+    # ii) implicitly: you define environment variables `DEEPOMATIC_APP_ID` and `DEEPOMATIC_API_KEY`
+    #                 and just call `client = Client()`
+    #
+    # Here we actually use a mix of those two methods to illustrate:
+    app_id = os.getenv('DEEPOMATIC_APP_ID')
+    api_key = os.getenv('DEEPOMATIC_API_KEY')
+    client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
 
     ###################
     # Public networks #
@@ -291,20 +296,21 @@ def demo():
     """
     network.delete()
 
+    #########################
+    # Batched wait on tasks #
+    #########################
 
-def demo_batch_tasks():
-    """
-    Wait tasks per batch
-    """
     print_header("Run multiple inferences and wait for them per batch")
     spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
     tasks = []
     timeout = 30
     nb_inference = 20
+
     print("Pushing %d inferences" % nb_inference)
     for i in range(nb_inference):
         task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
         tasks.append(task)
+
     print("Waiting for the results")
     pending_tasks, success_tasks, error_tasks = client.Task.batch_wait(tasks=tasks, timeout=timeout)
     if pending_tasks:
@@ -322,9 +328,6 @@ def demo_batch_tasks():
         assert(tasks[pos].pk == err.pk)
     for pos, success in success_tasks:
         assert(tasks[pos].pk == success.pk)
-
-
-
 
 ###########
 # Helpers #
@@ -362,4 +365,3 @@ def display_inference_tensor(result):
 
 if __name__ == '__main__':
     demo()
-    demo_batch_tasks()
