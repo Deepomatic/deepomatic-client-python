@@ -42,28 +42,9 @@ def demo():
     # Public networks #
     ###################
 
-    print_header("Listing public networks")
-    """
-    You can access the list of public networks with: 'client.Network.list(public=True)'
-    Here, public networks are read only so you can only call '.list()'.
-    The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
-    By default, it returns 100 objects and gives your the URI at which you will find the next page.
-    It takes two optionnal arguments:
-      - 'offset': the index at which we should start iterating (defaut: 0)
-      - 'limit': the number of element per page (default: 100)
-    """
-    for network in client.Network.list(public=True):
-        print_comment("{network_id}: {name}".format(network_id=network['id'], name=network['name']))
-
-    """
-    You may also query the list of object with '.data()' but it will only return the JSON associated with
-    the current page, unlike the iterator version above that will loop trough all the data.
-    """
-    result = client.Network.list(public=True).data()
-    pretty_print_json(result)
-
     print_header("Getting network")
     """
+    Let's start by getting some public neural network.
     You can get an object resource using the client with the '.retrieve(id)' method. It will
     return an object resource which may have '.update(...)' and '.delete()' methods. They
     respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
@@ -82,9 +63,22 @@ def demo():
     This is the role of a recognition specification: precisely describing some expected output.
     Those specifications will then be matched to a network via "specification versions".
     Lets first see the list of public recognition models with 'client.RecognitionSpec.list(public=True)'
+    Here, public recognition models are read only so you can only call '.list()'.
+    The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
+    By default, it returns 100 objects and gives your the URI at which you will find the next page.
+    It takes two optionnal arguments:
+      - 'offset': the index at which we should start iterating (defaut: 0)
+      - 'limit': the number of element per page (default: 100)
     """
     for spec in client.RecognitionSpec.list(public=True):
         print_comment("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
+
+    """
+    You may also query the list of object with '.data()' but it will only return the JSON associated with
+    the current page, unlike the iterator version above that will loop trough all the data.
+    """
+    result = client.RecognitionSpec.list(public=True).data()
+    pretty_print_json(result)
 
     print_header("Getting spec")
     """
