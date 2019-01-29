@@ -44,4 +44,4 @@ services:
 
     tests:
       commands:
-        - python /samples/demo.py
+        - python -c "from deepomatic.api.demo import demo; demo()"

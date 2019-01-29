@@ -9,9 +9,7 @@ python:
 install:
   - python setup.py bdist_wheel
   - pip install dist/deepomatic_api-*.whl
-  - mkdir samples
-  - cp demo.py samples/demo.py
 
 # command to run tests
 script:
-  - python samples/demo.py
+  - python -c "from deepomatic.api.demo import demo; demo()"
