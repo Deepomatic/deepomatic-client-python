@@ -41,7 +41,9 @@ services:
   - service_name: client
     config:
       docker_image:
-        build: .
+        build:
+          context: .
+          dockerfile: deploy/Dockerfile
         base_image_variant:
           - 2.7
           - 3.4
@@ -49,6 +51,7 @@ services:
           - 3.6
     tests:
       commands:
-        - python -m /samples/pytest --junit-xml=junit.xml -vv
+        - pytest --junit-xml=junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report html:cover -vv /samples/tests
         - python /samples/demo.py
-      junit_report: junit.xml
+      # junit_report: junit.xml
+      # cobertura_report: coverage.xml

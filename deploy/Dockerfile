@@ -11,6 +11,7 @@ FROM ${BASE_IMAGE} as runtime
 
 # copy egg
 COPY --from=builder /app/dist/deepomatic_api-*.whl /tmp/
-COPY --from=builder /app/demo.py /app/tests /samples/
+COPY --from=builder /app/demo.py /samples/
+COPY --from=builder /app/tests /samples/tests
 
 RUN pip install /tmp/deepomatic_api-*.whl
