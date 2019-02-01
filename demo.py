@@ -353,7 +353,7 @@ def download_file(url):
     return filename
 
 def print_header(text):
-    logger.info("\n{}".format(text))
+    logger.info("**** {} ****".format(text))
 
 
 def print_comment(text):
