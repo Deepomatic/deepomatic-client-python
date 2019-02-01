@@ -49,5 +49,6 @@ services:
           - 3.6
     tests:
       commands:
-        - python -m pytest --junit-xml=junit.xml -vv
+        - python -m /samples/pytest --junit-xml=junit.xml -vv
+        - python /samples/demo.py
       junit_report: junit.xml
