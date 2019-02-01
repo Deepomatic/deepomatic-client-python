@@ -9,7 +9,7 @@ import requests
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 from pytest_voluptuous import S
-from voluptuous.validators import All, Length, Range, Any
+from voluptuous.validators import All, Length, Any
 import six
 
 import logging
@@ -39,7 +39,7 @@ def download_file(url):
 
 @pytest.fixture(scope='session')
 def client():
-    api_host = os.environ['DEEPOMATIC_API_URL']
+    api_host = os.getenv('DEEPOMATIC_API_URL')
     app_id = os.environ['DEEPOMATIC_APP_ID']
     api_key = os.environ['DEEPOMATIC_API_KEY']
     yield Client(app_id, api_key, host=api_host)

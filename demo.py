@@ -1,18 +1,21 @@
 import os
-import sys
 import json
 import base64
 import tarfile
+import logging
+import tempfile
+import shutil
+import hashlib
+import requests
 
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 
-if sys.version_info >= (3, 0):
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
-
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+
+logging.basicConfig(level='INFO',
+                    format='[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s')
+logger = logging.getLogger(__name__)
 
 
 def demo(client=None):
@@ -57,7 +60,7 @@ def demo(client=None):
     (see below). Here, we retrieve a public network named 'imagenet-inception-v1'
     """
     network = client.Network.retrieve('imagenet-inception-v1')
-    print(network)
+    logger.info(network)
 
     #############################
     # Public recognition models #
@@ -110,7 +113,7 @@ def demo(client=None):
     '.inference()' also support when you pass a single input instead of a list of inputs.
     Here, it takes a file pointer as input.
     """
-    file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
+    file = open(download_file(demo_url), 'rb')
     result = spec.inference(inputs=[ImageInput(file)], show_discarded=True, max_predictions=3)
     pretty_print_json(result)
 
@@ -150,13 +153,13 @@ def demo(client=None):
     - snapshot_caffemodel: the file that describe the learned parameters of the model
     - mean_file: the file that stores the mean image that needs to be substracted from the input
     """
-    deploy_prototxt = download('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt', '/tmp/deploy.prototxt')
-    snapshot_caffemodel = download('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel', '/tmp/snapshot.caffemodel')
-    mean_file = '/tmp/imagenet_mean.binaryproto'
+    deploy_prototxt = download_file('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt')
+    snapshot_caffemodel = download_file('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel')
+    mean_file = os.path.join(tempfile.gettempdir(), 'imagenet_mean.binaryproto')
     if not os.path.exists(mean_file):
-        archive = download('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz', '/tmp/caffe_ilsvrc12.tar.gz')
+        archive = download_file('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz')
         tar = tarfile.open(archive, "r:gz")
-        tar.extractall(path='/tmp/')
+        tar.extractall(path=tempfile.gettempdir())
         tar.close()
     else:
         print_comment("Skipping download of mean file: {}".format(mean_file))
@@ -272,16 +275,16 @@ def demo(client=None):
     And this current version can be used to run inference for the spec directly
     """
     result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
-    print(result)
+    logger.info(result)
 
     print_header("Run inference on specific version with a bounding box")
     result = version.inference(inputs=[ImageInput(demo_url, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
-    print(result)
+    logger.info(result)
 
     """
     Show all versions of a spec
     """
-    print(spec.versions())
+    logger.info(spec.versions())
 
     """
     Test the possibility of getting multiple tasks at the same time
@@ -289,7 +292,7 @@ def demo(client=None):
     task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
     task_id = task.pk
     tasks = client.Task.list(task_ids=[task_id])
-    print(tasks)
+    logger.info(tasks)
 
     print_header("Delete networks and recognition models")
     """
@@ -307,20 +310,20 @@ def demo(client=None):
     timeout = 30
     nb_inference = 20
 
-    print("Pushing %d inferences" % nb_inference)
+    logger.info("Pushing %d inferences" % nb_inference)
     for i in range(nb_inference):
         task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
         tasks.append(task)
 
-    print("Waiting for the results")
+    logger.info("Waiting for the results")
     pending_tasks, success_tasks, error_tasks = client.Task.batch_wait(tasks=tasks, timeout=timeout)
     if pending_tasks:
-        print("Warning: %d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
+        logger.warning("%d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
     if error_tasks:
-        print("Warning: %d tasks are in error" % len(error_tasks))
-    print(pending_tasks)
-    print(error_tasks)
-    print(success_tasks)
+        logger.warning("%d tasks are in error" % len(error_tasks))
+    logger.info(pending_tasks)
+    logger.info(error_tasks)
+    logger.info(success_tasks)
 
     # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
     for pos, pending in pending_tasks:
@@ -334,29 +337,31 @@ def demo(client=None):
 # Helpers #
 ###########
 
-def download(url, local_path):
-    if not os.path.isfile(local_path):
-        print("Downloading {} to {}".format(url, local_path))
-        urlretrieve(url, local_path)
-        if url.endswith('.tar.gz'):
-            tar = tarfile.open(local_path, "r:gz")
-            tar.extractall(path='/tmp/')
-            tar.close()
-    else:
-        print("Skipping download of {} to {}: file already exist".format(url, local_path))
-    return local_path
 
+def download_file(url):
+    _, ext = os.path.splitext(url)
+    filename = os.path.join(tempfile.gettempdir(),
+                            hashlib.sha1(url.encode()).hexdigest() + ext)
+    if os.path.exists(filename):  # avoid redownloading
+        logger.info("Skipping download of {}: file already exist in ".format(url, filename))
+        return filename
+    r = requests.get(url, stream=True)
+    r.raise_for_status()
+    with open(filename, 'wb') as f:
+        r.raw.decode_content = True
+        shutil.copyfileobj(r.raw, f)
+    return filename
 
 def print_header(text):
-    print("\n{}".format(text))
+    logger.info("\n{}".format(text))
 
 
 def print_comment(text):
-    print("--> " + text)
+    logger.info("--> " + text)
 
 
 def pretty_print_json(data):
-    print(json.dumps(data, indent=4, separators=(',', ': ')))
+    logger.info(json.dumps(data, indent=4, separators=(',', ': ')))
 
 
 def display_inference_tensor(result):
