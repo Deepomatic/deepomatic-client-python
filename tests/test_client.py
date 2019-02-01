@@ -86,9 +86,12 @@ def custom_network(client):
                                     preprocessing=preprocessing,
                                     files=files)
     assert network['id']
-    assert network['name'] == 'My first network'
     data = network.data()
+    assert network['name'] == 'My first network'
+    assert 'description' in data
+    assert 'create_date' in data
     assert 'update_date' in data
+
     yield network
     network.delete()
 
@@ -134,15 +137,6 @@ def inference_schema(predicted_len, discarded_len, first_label, first_score):
 
 
 class TestClient(object):
-    def test_retrieve_network(self, client):
-        network = client.Network.retrieve('imagenet-inception-v1')
-        assert network['id']
-        data = network.data()
-        assert 'name' in data
-        assert 'description' in data
-        assert 'create_date' in data
-        assert 'update_date' in data
-
     def test_list_specs(self, client):
         specs = client.RecognitionSpec.list(public=True)
         assert specs.count() > 0
@@ -167,6 +161,7 @@ class TestClient(object):
 
     def test_inference_spec(self, client):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+
         first_result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=True, max_predictions=3)
 
         assert inference_schema(1, 2, 'golden retriever', 0.9) == first_result
@@ -185,6 +180,11 @@ class TestClient(object):
         assert result == first_result
 
     def test_create_custom_reco_and_infer(self, client, custom_network):
+
+        # test query by id
+        network = client.Network.retrieve(custom_network['id'])
+        assert network['name']
+
         custom_network.update(description="I had forgotten the description")
 
         outputs = client.RecognitionSpec.retrieve('imagenet-inception-v1')['outputs']
