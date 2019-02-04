@@ -155,7 +155,6 @@ class TestClient(object):
             'Accept': 'application/json'
         }
 
-
     def test_list_specs(self, client):
         specs = client.RecognitionSpec.list(public=True)
         assert specs.count() > 0
