@@ -69,7 +69,7 @@ class HTTPHelper(object):
             'platform': platform.platform()
         }
 
-        self.user_agent = 'deepomatic-client-python/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
+        self.user_agent = 'deepomatic-api/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
             '.format(**user_agent_params)
         if user_agent_suffix:
             self.user_agent += ' ' + user_agent_suffix

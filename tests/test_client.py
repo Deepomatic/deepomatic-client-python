@@ -137,6 +137,25 @@ def inference_schema(predicted_len, discarded_len, first_label, first_score):
 
 
 class TestClient(object):
+
+    def test_headers(self, client):
+        http_helper = client.http_helper
+        session_headers = http_helper.session.headers
+        assert session_headers['User-Agent'].startswith('deepomatic-api/')
+        assert 'platform/' in session_headers['User-Agent']
+        assert 'python/' in session_headers['User-Agent']
+        assert session_headers['X-APP-ID']
+        assert session_headers['X-API-KEY']
+
+        headers = http_helper.setup_headers(headers={'Hello': 'World'},
+                                            content_type='application/json')
+        assert headers == {
+            'Hello': 'World',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+
+
     def test_list_specs(self, client):
         specs = client.RecognitionSpec.list(public=True)
         assert specs.count() > 0
