@@ -120,7 +120,7 @@ def prediction_schema(exact_len, *args):
         'threshold': float,
         'label_id': int,
         'score': float,
-        'label_name': All(Any(*six.string_types)),
+        'label_name': Any(*six.string_types),
     }], ExactLen(exact_len), *args)
 
 
