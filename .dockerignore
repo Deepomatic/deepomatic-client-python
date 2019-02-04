@@ -10,6 +10,8 @@ Jenkinsfile
 build/
 dist/
 
+**/*coverage.xml
+**/*junit.xml
 **/*.pyc
 **/*~
 **/.#*

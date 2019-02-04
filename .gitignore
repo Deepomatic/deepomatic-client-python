@@ -1,6 +1,8 @@
 .dmake/
 DMakefile
 
+*coverage.xml
+*junit.xml
 *.pyc
 *~
 .#*

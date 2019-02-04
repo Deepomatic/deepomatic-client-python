@@ -1,30 +1,24 @@
 import os
-import sys
 import json
 import base64
 import tarfile
+import logging
+import tempfile
+import shutil
+import hashlib
+import requests
 
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 
-if sys.version_info >= (3, 0):
-    from urllib.request import urlretrieve
-else:
-    from urllib import urlretrieve
-
-if len(sys.argv) < 2:
-    api_host = None
-else:
-    api_host = sys.argv[1]
-
-app_id = os.getenv('DEEPOMATIC_APP_ID')
-api_key = os.getenv('DEEPOMATIC_API_KEY')
-client = Client(app_id, api_key, host=api_host)
-
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'),
+                    format='[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s')
+logger = logging.getLogger(__name__)
 
-def demo():
+
+def demo(client=None):
     """
     Our REST client works by exposing resources. A resource usually has the following synchronous methods:
 
@@ -38,39 +32,35 @@ def demo():
         - delete():    allow to delete the object.
     """
 
+    #########
+    # Setup #
+    #########
+
+    # You can create a client in two ways:
+    # i) explicitly: you pass your APP_ID and API_KEY by calling `client = Client(app_id, api_key)`
+    # ii) implicitly: you define environment variables `DEEPOMATIC_APP_ID` and `DEEPOMATIC_API_KEY`
+    #                 and just call `client = Client()`
+    #
+    # Here we actually use a mix of those two methods to illustrate:
+    if client is None:
+        app_id = os.getenv('DEEPOMATIC_APP_ID')
+        api_key = os.getenv('DEEPOMATIC_API_KEY')
+        client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
+
     ###################
     # Public networks #
     ###################
 
-    print_header("Listing public networks")
-    """
-    You can access the list of public networks with: 'client.Network.list(public=True)'
-    Here, public networks are read only so you can only call '.list()'.
-    The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
-    By default, it returns 100 objects and gives your the URI at which you will find the next page.
-    It takes two optionnal arguments:
-      - 'offset': the index at which we should start iterating (defaut: 0)
-      - 'limit': the number of element per page (default: 100)
-    """
-    for network in client.Network.list(public=True):
-        print_comment("{network_id}: {name}".format(network_id=network['id'], name=network['name']))
-
-    """
-    You may also query the list of object with '.data()' but it will only return the JSON associated with
-    the current page, unlike the iterator version above that will loop trough all the data.
-    """
-    result = client.Network.list(public=True).data()
-    pretty_print_json(result)
-
     print_header("Getting network")
     """
+    Let's start by getting some public neural network.
     You can get an object resource using the client with the '.retrieve(id)' method. It will
     return an object resource which may have '.update(...)' and '.delete()' methods. They
     respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
     (see below). Here, we retrieve a public network named 'imagenet-inception-v1'
     """
     network = client.Network.retrieve('imagenet-inception-v1')
-    print(network)
+    logger.info(network)
 
     #############################
     # Public recognition models #
@@ -82,9 +72,22 @@ def demo():
     This is the role of a recognition specification: precisely describing some expected output.
     Those specifications will then be matched to a network via "specification versions".
     Lets first see the list of public recognition models with 'client.RecognitionSpec.list(public=True)'
+    Here, public recognition models are read only so you can only call '.list()'.
+    The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
+    By default, it returns 100 objects and gives your the URI at which you will find the next page.
+    It takes two optionnal arguments:
+      - 'offset': the index at which we should start iterating (defaut: 0)
+      - 'limit': the number of element per page (default: 100)
     """
     for spec in client.RecognitionSpec.list(public=True):
         print_comment("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
+
+    """
+    You may also query the list of object with '.data()' but it will only return the JSON associated with
+    the current page, unlike the iterator version above that will loop trough all the data.
+    """
+    result = client.RecognitionSpec.list(public=True).data()
+    pretty_print_json(result)
 
     print_header("Getting spec")
     """
@@ -110,7 +113,7 @@ def demo():
     '.inference()' also support when you pass a single input instead of a list of inputs.
     Here, it takes a file pointer as input.
     """
-    file = open(download(demo_url, '/tmp/img.jpg'), 'rb')
+    file = open(download_file(demo_url), 'rb')
     result = spec.inference(inputs=[ImageInput(file)], show_discarded=True, max_predictions=3)
     pretty_print_json(result)
 
@@ -150,13 +153,13 @@ def demo():
     - snapshot_caffemodel: the file that describe the learned parameters of the model
     - mean_file: the file that stores the mean image that needs to be substracted from the input
     """
-    deploy_prototxt = download('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt', '/tmp/deploy.prototxt')
-    snapshot_caffemodel = download('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel', '/tmp/snapshot.caffemodel')
-    mean_file = '/tmp/imagenet_mean.binaryproto'
+    deploy_prototxt = download_file('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt')
+    snapshot_caffemodel = download_file('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel')
+    mean_file = os.path.join(tempfile.gettempdir(), 'imagenet_mean.binaryproto')
     if not os.path.exists(mean_file):
-        archive = download('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz', '/tmp/caffe_ilsvrc12.tar.gz')
+        archive = download_file('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz')
         tar = tarfile.open(archive, "r:gz")
-        tar.extractall(path='/tmp/')
+        tar.extractall(path=tempfile.gettempdir())
         tar.close()
     else:
         print_comment("Skipping download of mean file: {}".format(mean_file))
@@ -272,16 +275,16 @@ def demo():
     And this current version can be used to run inference for the spec directly
     """
     result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
-    print(result)
+    logger.info(result)
 
     print_header("Run inference on specific version with a bounding box")
     result = version.inference(inputs=[ImageInput(demo_url, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
-    print(result)
+    logger.info(result)
 
     """
     Show all versions of a spec
     """
-    print(spec.versions())
+    logger.info(spec.versions())
 
     """
     Test the possibility of getting multiple tasks at the same time
@@ -289,7 +292,7 @@ def demo():
     task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
     task_id = task.pk
     tasks = client.Task.list(task_ids=[task_id])
-    print(tasks)
+    logger.info(tasks)
 
     print_header("Delete networks and recognition models")
     """
@@ -297,29 +300,30 @@ def demo():
     """
     network.delete()
 
+    #########################
+    # Batched wait on tasks #
+    #########################
 
-def demo_batch_tasks():
-    """
-    Wait tasks per batch
-    """
     print_header("Run multiple inferences and wait for them per batch")
     spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
     tasks = []
     timeout = 30
     nb_inference = 20
-    print("Pushing %d inferences" % nb_inference)
+
+    logger.info("Pushing %d inferences" % nb_inference)
     for i in range(nb_inference):
         task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
         tasks.append(task)
-    print("Waiting for the results")
+
+    logger.info("Waiting for the results")
     pending_tasks, success_tasks, error_tasks = client.Task.batch_wait(tasks=tasks, timeout=timeout)
     if pending_tasks:
-        print("Warning: %d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
+        logger.warning("%d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
     if error_tasks:
-        print("Warning: %d tasks are in error" % len(error_tasks))
-    print(pending_tasks)
-    print(error_tasks)
-    print(success_tasks)
+        logger.warning("%d tasks are in error" % len(error_tasks))
+    logger.info(pending_tasks)
+    logger.info(error_tasks)
+    logger.info(success_tasks)
 
     # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
     for pos, pending in pending_tasks:
@@ -329,36 +333,35 @@ def demo_batch_tasks():
     for pos, success in success_tasks:
         assert(tasks[pos].pk == success.pk)
 
-
-
-
 ###########
 # Helpers #
 ###########
 
-def download(url, local_path):
-    if not os.path.isfile(local_path):
-        print("Downloading {} to {}".format(url, local_path))
-        urlretrieve(url, local_path)
-        if url.endswith('.tar.gz'):
-            tar = tarfile.open(local_path, "r:gz")
-            tar.extractall(path='/tmp/')
-            tar.close()
-    else:
-        print("Skipping download of {} to {}: file already exist".format(url, local_path))
-    return local_path
 
+def download_file(url):
+    _, ext = os.path.splitext(url)
+    filename = os.path.join(tempfile.gettempdir(),
+                            hashlib.sha1(url.encode()).hexdigest() + ext)
+    if os.path.exists(filename):  # avoid redownloading
+        logger.info("Skipping download of {}: file already exist in ".format(url, filename))
+        return filename
+    r = requests.get(url, stream=True)
+    r.raise_for_status()
+    with open(filename, 'wb') as f:
+        r.raw.decode_content = True
+        shutil.copyfileobj(r.raw, f)
+    return filename
 
 def print_header(text):
-    print("\n{}".format(text))
+    logger.info("**** {} ****".format(text))
 
 
 def print_comment(text):
-    print("--> " + text)
+    logger.info("--> " + text)
 
 
 def pretty_print_json(data):
-    print(json.dumps(data, indent=4, separators=(',', ': ')))
+    logger.info(json.dumps(data, indent=4, separators=(',', ': ')))
 
 
 def display_inference_tensor(result):
@@ -368,4 +371,3 @@ def display_inference_tensor(result):
 
 if __name__ == '__main__':
     demo()
-    demo_batch_tasks()
