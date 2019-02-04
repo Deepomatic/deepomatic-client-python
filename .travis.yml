@@ -9,11 +9,11 @@ python:
 install:
   - python setup.py bdist_wheel
   - pip install dist/deepomatic_api-*.whl
-  - mkdir samples
-  - cp -r tests demo.py samples/
+  - mkdir app
+  - cp -r tests demo.py app/
 
 # command to run tests
 script:
   - pip install pytest==4.0.2 pytest-voluptuous==1.1.0 # for testing
-  - python -m pytest --junit-xml=junit.xml -vv samples/tests
-  - python samples/demo.py
+  - python -m pytest --junit-xml=junit.xml -vv app/tests
+  - python app/demo.py
