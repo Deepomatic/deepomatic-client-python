@@ -13,7 +13,7 @@ from voluptuous.validators import All, Length, Any
 import six
 
 import logging
-logging.basicConfig(level='INFO')
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 logger = logging.getLogger(__name__)
 
 DEMO_URL = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"

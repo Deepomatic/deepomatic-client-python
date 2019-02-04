@@ -13,7 +13,7 @@ from deepomatic.api.inputs import ImageInput
 
 demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
 
-logging.basicConfig(level='INFO',
+logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'),
                     format='[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s')
 logger = logging.getLogger(__name__)
 
