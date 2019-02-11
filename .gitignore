@@ -1,12 +1,15 @@
 .dmake/
 DMakefile
 
-*coverage.xml
-*junit.xml
 *.pyc
+__pycache__/
 *~
 .#*
 /venv*
 
 build/
 dist/
+
+*-coverage.xml
+*-junit.xml
+*-cover/
