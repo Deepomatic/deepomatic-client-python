@@ -55,3 +55,6 @@ services:
         - LOG_LEVEL=DEBUG python /app/demo.py
       junit_report: junit.xml
       cobertura_report: coverage.xml
+      html_report:
+        directory: cover
+        title: HTML coverage report
