@@ -4,14 +4,19 @@ DMakefile
 
 Dockerfile
 .git
+**/.gitignore
 .dockerignore
 Jenkinsfile
+
+**/*.pyc
+**/__pycache__/
+**/*~
+**/.#*
+venv*
 
 build/
 dist/
 
-**/*coverage.xml
-**/*junit.xml
-**/*.pyc
-**/*~
-**/.#*
+*-coverage.xml
+*-junit.xml
+*-cover/
