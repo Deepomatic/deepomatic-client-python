@@ -7,7 +7,7 @@ __url__ = 'https://github.com/deepomatic/deepomatic-client-python'
 __license__ = 'MIT License'
 __project_urls__ = {
     'Product': 'https://www.deepomatic.com',
-    'Documentation': 'https://developers.deepomatic.com/docs/v0.7',
+    'Documentation': 'https://docs.deepomatic.com/deepomatic-api-v0-7',
     'Source': 'https://github.com/deepomatic/deepomatic-client-python',
     'Tracker': 'https://github.com/deepomatic/deepomatic-client-python/issues',
 }
