@@ -8,7 +8,7 @@ Tested on python 2.7, 3.4, 3.5, 3.6.
 
 # API Documentation
 
-https://developers.deepomatic.com/docs/v0.7
+https://docs.deepomatic.com/deepomatic-api-v0-7
 
 # Installation
 
@@ -24,7 +24,7 @@ Does not make any call to the server.
 ```python
 from deepomatic.api.client import Client
 
-# You should find your app_id and api_key in your account on https://developers.deepomatic.com/dashboard
+# If you don't have your credentials, contact us at support@deepomatic.com
 client = Client(app_id, api_key)
 ```
 
