@@ -36,7 +36,7 @@ API_VERSION = 0.7
 
 class Client(object):
 
-    def __init__(self, app_id=None, api_key=None, verify_ssl=True, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix='', pool_maxsize=20):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=None, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix='', pool_maxsize=20):
         self.http_helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters, user_agent_suffix, pool_maxsize)
 
         # /accounts
