@@ -56,7 +56,7 @@ class Client(object):
            :type user_agent_prefix: string
            :param user_agent_suffix (optional): Allow to suffix the user agent.
            :type user_agent_suffix: string
-           :param pool_maxsize (optional): Allow to set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
+           :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
 
