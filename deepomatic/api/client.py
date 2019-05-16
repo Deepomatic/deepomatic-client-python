@@ -33,7 +33,7 @@ class Client(object):
 
     def __init__(self, *args, **kwargs):
         """
-           Constructs a Client class that will allow to send requests to Deepomatic API.
+           Constructs a Client to send requests to the Deepomatic API.
 
            :param app_id: App id for authentication. Defaults to `None`.
                If `None` try to retrieve it from the env var `DEEPOMATIC_APP_ID`.
