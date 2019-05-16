@@ -40,7 +40,7 @@ class Client(object):
                If it fails raise a `DeepomaticException`.
            :type app_id: string
            :param api_key: API key for authentication. Defaults to `None`.
-               If `None` try to retrieve it from the env var `DEEPOMATIC_API_KEY`.
+               If `None` try to retrieve it from the `DEEPOMATIC_API_KEY` environment variable.
                If it fails raise a `DeepomaticException`.
            :type api_key: string
            :param verify_ssl (optional): whether to ask requests to verify the SSL certificate.
