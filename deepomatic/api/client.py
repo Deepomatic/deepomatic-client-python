@@ -36,7 +36,7 @@ class Client(object):
            Constructs a Client to send requests to the Deepomatic API.
 
            :param app_id: App ID for authentication. Defaults to `None`.
-               If `None` try to retrieve it from the env var `DEEPOMATIC_APP_ID`.
+               If `None`, try to retrieve it from the `DEEPOMATIC_APP_ID` environment variable.
                If it fails raise a `DeepomaticException`.
            :type app_id: string
            :param api_key: API key for authentication. Defaults to `None`.
