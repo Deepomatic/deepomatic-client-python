@@ -32,6 +32,36 @@ from deepomatic.api.resources.account import Account
 class Client(object):
 
     def __init__(self, *args, **kwargs):
+           """
+           Constructs a Client class that will allow to send requests to Deepomatic API.
+
+           :param app_id: App id for authentication. Defaults to `None`.
+               If `None` try to retrieve it from the env var `DEEPOMATIC_APP_ID`.
+               If it fails raise a `DeepomaticException`.
+           :type app_id: string
+           :param api_key: API key for authentication. Defaults to `None`.
+               If `None` try to retrieve it from the env var `DEEPOMATIC_API_KEY`.
+               If it fails raise a `DeepomaticException`.
+           :type api_key: string
+           :param verify_ssl (optional): whether to ask requests to verify the SSL certificate.
+               Defaults to `None`. If `None` try to get it from the env var `DEEPOMATIC_API_VERIFY_TLS`.
+               If not found it is set to True.
+           :type verify_ssl: bool
+           :param host (optional): API root URL
+           :type host: string
+           :param version (optional): API version
+           :type version: string
+           :param user_agent_prefix (optional): Allow to prefix the user agent
+           :type user_agent_prefix: string
+           :param user_agent_suffix (optional): Allow to suffix the user agent
+           :type user_agent_suffix: string
+           :param pool_maxsize (optional): Allow to set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
+               Defaults to 20.
+           :type pool_maxsize: int
+
+           :return: :class:`Client` object
+           :rtype: deepomatic.api.client.Client
+           """
         self.http_helper = HTTPHelper(*args, **kwargs)
 
         # /accounts
