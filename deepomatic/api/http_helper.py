@@ -39,7 +39,7 @@ API_HOST = 'https://api.deepomatic.com'
 
 
 class HTTPHelper(object):
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_suffix='', pool_maxsize=20):
+    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_prefix='', user_agent_suffix='', pool_maxsize=20):
         """
         Init the HTTP helper with API key and secret
         """
@@ -71,8 +71,14 @@ class HTTPHelper(object):
             'platform': platform.platform()
         }
 
-        self.user_agent = 'deepomatic-api/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
+        if user_agent_prefix:
+            self.user_agent = user_agent_prefix + ' '
+        else:
+            self.user_agent = ''
+
+        self.user_agent += 'deepomatic-api/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
             '.format(**user_agent_params)
+
         if user_agent_suffix:
             self.user_agent += ' ' + user_agent_suffix
 
