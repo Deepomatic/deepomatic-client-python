@@ -31,7 +31,7 @@ from requests.structures import CaseInsensitiveDict
 from six import string_types
 
 from deepomatic.api.exceptions import DeepomaticException, BadStatus
-from deepomatic.api.version import __version__
+from deepomatic.api.version import __title__, __version__
 
 API_HOST = 'https://api.deepomatic.com'
 API_VERSION = 0.7
@@ -66,6 +66,7 @@ class HTTPHelper(object):
         python_version = "{0}.{1}.{2}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
 
         user_agent_params = {
+            'package_title': __title__,
             'package_version': __version__,
             'requests_version': requests.__version__,
             'python_version': python_version,
@@ -77,7 +78,7 @@ class HTTPHelper(object):
         else:
             self.user_agent = ''
 
-        self.user_agent += 'deepomatic-api/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
+        self.user_agent += '{package_title}/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
             '.format(**user_agent_params)
 
         if user_agent_suffix:
