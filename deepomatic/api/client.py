@@ -28,16 +28,43 @@ from deepomatic.api.resources.recognition import RecognitionSpec, RecognitionVer
 from deepomatic.api.resources.task import Task
 from deepomatic.api.resources.account import Account
 
-###############################################################################
-
-API_VERSION = 0.7
-
-###############################################################################
 
 class Client(object):
 
-    def __init__(self, app_id=None, api_key=None, verify_ssl=None, check_query_parameters=True, host=None, version=API_VERSION, user_agent_suffix='', pool_maxsize=20):
-        self.http_helper = HTTPHelper(app_id, api_key, verify_ssl, host, version, check_query_parameters, user_agent_suffix, pool_maxsize)
+    def __init__(self, *args, **kwargs):
+        """
+           Constructs a Client to send requests to the Deepomatic API.
+
+           :param app_id: App ID for authentication. Defaults to `None`.
+               If `None`, try to retrieve it from the `DEEPOMATIC_APP_ID` environment variable.
+               If it fails raise a `DeepomaticException`.
+           :type app_id: string
+           :param api_key: API key for authentication. Defaults to `None`.
+               If `None` try to retrieve it from the `DEEPOMATIC_API_KEY` environment variable.
+               If it fails raise a `DeepomaticException`.
+           :type api_key: string
+           :param verify_ssl (optional): whether to ask `requests` to verify the TLS/SSL certificates.
+               Defaults to `None`. 
+               If `None` try to get it from the `DEEPOMATIC_API_VERIFY_TLS` environment variable (`0`: False, `1`: True).
+               If not found it is set to True.
+           :type verify_ssl: bool
+           :param host (optional): API root URL.
+           :type host: string
+           :param version (optional): API version.
+           :type version: string
+           :param user_agent_prefix (optional): Prefix the HTTP User-Agent.
+               It is recommended to declare your client via this parameter. Example: 'my-app/1.0.0'.
+           :type user_agent_prefix: string
+           :param user_agent_suffix (optional): Suffix the HTTP User-Agent.
+           :type user_agent_suffix: string
+           :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
+               Defaults to 20.
+           :type pool_maxsize: int
+
+           :return: :class:`Client` object
+           :rtype: deepomatic.api.client.Client
+        """
+        self.http_helper = HTTPHelper(*args, **kwargs)
 
         # /accounts
 
