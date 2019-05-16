@@ -34,18 +34,19 @@ from deepomatic.api.exceptions import DeepomaticException, BadStatus
 from deepomatic.api.version import __version__
 
 API_HOST = 'https://api.deepomatic.com'
+API_VERSION = 0.7
 
 ###############################################################################
 
 
 class HTTPHelper(object):
-    def __init__(self, app_id, api_key, verify, host, version, check_query_parameters, user_agent_prefix='', user_agent_suffix='', pool_maxsize=20):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=None, host=None, version=API_VERSION, check_query_parameters=True, user_agent_prefix='', user_agent_suffix='', pool_maxsize=20):
         """
         Init the HTTP helper with API key and secret
         """
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
-        if verify is None:
+        if verify_ssl is None:
             verify = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '0'
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
@@ -87,6 +88,8 @@ class HTTPHelper(object):
         self.verify = verify
         self.host = host
         self.resource_prefix = host + version
+
+        # This is only used in mixins, this should not stay here
         self.check_query_parameters = check_query_parameters
 
         headers = {

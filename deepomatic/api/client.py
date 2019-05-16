@@ -28,12 +28,6 @@ from deepomatic.api.resources.recognition import RecognitionSpec, RecognitionVer
 from deepomatic.api.resources.task import Task
 from deepomatic.api.resources.account import Account
 
-###############################################################################
-
-API_VERSION = 0.7
-
-###############################################################################
-
 
 class Client(object):
 
