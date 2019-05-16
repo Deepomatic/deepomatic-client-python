@@ -32,7 +32,7 @@ from deepomatic.api.resources.account import Account
 class Client(object):
 
     def __init__(self, *args, **kwargs):
-           """
+        """
            Constructs a Client class that will allow to send requests to Deepomatic API.
 
            :param app_id: App id for authentication. Defaults to `None`.
@@ -61,7 +61,7 @@ class Client(object):
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client
-           """
+        """
         self.http_helper = HTTPHelper(*args, **kwargs)
 
         # /accounts
