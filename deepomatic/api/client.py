@@ -47,13 +47,13 @@ class Client(object):
                Defaults to `None`. If `None` try to get it from the env var `DEEPOMATIC_API_VERIFY_TLS`.
                If not found it is set to True.
            :type verify_ssl: bool
-           :param host (optional): API root URL
+           :param host (optional): API root URL.
            :type host: string
-           :param version (optional): API version
+           :param version (optional): API version.
            :type version: string
-           :param user_agent_prefix (optional): Allow to prefix the user agent
+           :param user_agent_prefix (optional): Allow to prefix the user agent.
            :type user_agent_prefix: string
-           :param user_agent_suffix (optional): Allow to suffix the user agent
+           :param user_agent_suffix (optional): Allow to suffix the user agent.
            :type user_agent_suffix: string
            :param pool_maxsize (optional): Allow to set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
