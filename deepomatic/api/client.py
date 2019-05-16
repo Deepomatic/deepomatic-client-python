@@ -44,7 +44,8 @@ class Client(object):
                If it fails raise a `DeepomaticException`.
            :type api_key: string
            :param verify_ssl (optional): whether to ask `requests` to verify the TLS/SSL certificates.
-               Defaults to `None`. If `None` try to get it from the env var `DEEPOMATIC_API_VERIFY_TLS`.
+               Defaults to `None`. 
+               If `None` try to get it from the `DEEPOMATIC_API_VERIFY_TLS` environment variable (`0`: False, `1`: True).
                If not found it is set to True.
            :type verify_ssl: bool
            :param host (optional): API root URL.
