@@ -8,6 +8,7 @@ import shutil
 import hashlib
 import requests
 
+from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 
@@ -45,7 +46,7 @@ def demo(client=None):
     if client is None:
         app_id = os.getenv('DEEPOMATIC_APP_ID')
         api_key = os.getenv('DEEPOMATIC_API_KEY')
-        client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
+        client = Client(app_id, api_key, user_agent_prefix='{}-demo/{}'.format(__title__, __version__))  # this would be equivalent to using `Client()` in this case.
 
     ###################
     # Public networks #
@@ -351,6 +352,7 @@ def download_file(url):
         r.raw.decode_content = True
         shutil.copyfileobj(r.raw, f)
     return filename
+
 
 def print_header(text):
     logger.info("**** {} ****".format(text))

@@ -6,6 +6,7 @@ import tempfile
 import hashlib
 import shutil
 import requests
+from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 from pytest_voluptuous import S
@@ -42,7 +43,7 @@ def client():
     api_host = os.getenv('DEEPOMATIC_API_URL')
     app_id = os.environ['DEEPOMATIC_APP_ID']
     api_key = os.environ['DEEPOMATIC_API_KEY']
-    yield Client(app_id, api_key, host=api_host)
+    yield Client(app_id, api_key, host=api_host, user_agent_prefix='{}-tests/{}'.format(__title__, __version__))
 
 
 @pytest.fixture(scope='session')
