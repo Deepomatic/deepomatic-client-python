@@ -142,7 +142,7 @@ class TestClient(object):
     def test_headers(self, client):
         http_helper = client.http_helper
         session_headers = http_helper.session.headers
-        assert session_headers['User-Agent'].startswith('deepomatic-api/')
+        assert session_headers['User-Agent'].startswith('{}-tests/{} {}/{}'.format(__title__, __version__, __title__, __version__))
         assert 'platform/' in session_headers['User-Agent']
         assert 'python/' in session_headers['User-Agent']
         assert session_headers['X-APP-ID']
