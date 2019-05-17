@@ -6,6 +6,7 @@ import tempfile
 import hashlib
 import shutil
 import requests
+import zipfile
 from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
@@ -48,27 +49,41 @@ def client():
 
 @pytest.fixture(scope='session')
 def custom_network(client):
-    deploy_prototxt = download_file('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt')
-    snapshot_caffemodel = download_file('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel')
-    extract_dir = tempfile.gettempdir()
-    mean_file = os.path.join(extract_dir, 'imagenet_mean.binaryproto')
+    extract_dir = '/tmp/inception_v3'
+    if not os.path.exists(extract_dir):
+        os.makedirs(extract_dir)
+
+    net_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/network.zip')
+    preproc_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/preprocessing.zip')
+
+    model_file_name = 'saved_model.pb'
+    variables_file_name = 'variables.index'
+    variables_data_file_name = 'variables.data-00000-of-00001'
+    mean_file_name = 'mean.proto.bin'
+
+    model_file = os.path.join(extract_dir, model_file_name)
+    mean_file = os.path.join(extract_dir, mean_file_name)
+    variables_file = os.path.join(extract_dir+'/variables/', variables_file_name)
+    variables_data_file = os.path.join(extract_dir+'/variables/', variables_data_file_name)
+
+    if not os.path.exists(model_file):
+        with zipfile.ZipFile(net_zip) as f:
+            f.extractall(extract_dir)
     if not os.path.exists(mean_file):
-        archive = download_file('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz')
-        tar = tarfile.open(archive, "r:gz")
-        tar.extractall(path=extract_dir)
-        tar.close()
+        with zipfile.ZipFile(preproc_zip) as f:
+            f.extractall(extract_dir)
 
     preprocessing = {
         "inputs": [
             {
-                "tensor_name": "data",
+                "tensor_name": "map/TensorArrayStack/TensorArrayGatherV3:0",
                 "image": {
+                    "dimension_order": "NHWC",
+                    "target_size": "299x299",
+                    "resize_type": "CROP",
+                    "mean_file": mean_file_name,
                     "color_channels": "BGR",
-                    "target_size": "224x224",
-                    "resize_type": "SQUASH",
-                    "mean_file": "mean.binaryproto",
-                    "dimension_order": "NCHW",
-                    "pixel_scaling": 255.0,
+                    "pixel_scaling": 2.0,
                     "data_type": "FLOAT32"
                 }
             }
@@ -77,13 +92,14 @@ def custom_network(client):
     }
 
     files = {
-        'deploy.prototxt': deploy_prototxt,
-        'snapshot.caffemodel': snapshot_caffemodel,
-        'mean.binaryproto': mean_file
+        model_file_name: open(model_file, 'rb'),
+        variables_file_name: open(variables_file, 'rb'),
+        variables_data_file_name: open(variables_data_file, 'rb'),
+        mean_file_name: open(mean_file, 'rb')
     }
 
     network = client.Network.create(name="My first network",
-                                    framework='nv-caffe-0.x-mod',
+                                    framework='tensorflow-1.x',
                                     preprocessing=preprocessing,
                                     files=files)
     assert network['id']
@@ -171,7 +187,7 @@ class TestClient(object):
         assert result['count'] > 0
 
     def test_retrieve_spec(self, client):
-        spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
         assert spec['id']
         data = spec.data()
         assert 'name' in data
@@ -179,11 +195,10 @@ class TestClient(object):
         assert 'update_date' in data
 
     def test_inference_spec(self, client):
-        spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
-
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
         first_result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=True, max_predictions=3)
 
-        assert inference_schema(1, 2, 'golden retriever', 0.9) == first_result
+        assert inference_schema(2, 1, 'golden retriever', 0.8) == first_result
 
         f = open(download_file(DEMO_URL), 'rb')
         result = spec.inference(inputs=[ImageInput(f)], show_discarded=True, max_predictions=3)
@@ -203,17 +218,16 @@ class TestClient(object):
         # test query by id
         network = client.Network.retrieve(custom_network['id'])
         assert network['name']
-
         custom_network.update(description="I had forgotten the description")
 
-        outputs = client.RecognitionSpec.retrieve('imagenet-inception-v1')['outputs']
+        outputs = client.RecognitionSpec.retrieve('imagenet-inception-v3')['outputs']
 
         spec = client.RecognitionSpec.create(name="My recognition model", outputs=outputs)
 
         version = client.RecognitionVersion.create(network_id=custom_network['id'], spec_id=spec['id'], post_processings=[
             {
                 "classification": {
-                    "output_tensor": "prob",
+                    "output_tensor": "inception_v3/logits/predictions",
                 }
             }
 
@@ -226,10 +240,10 @@ class TestClient(object):
         client.Task.retrieve(custom_network['task_id']).wait()
 
         result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=False, max_predictions=3)
-        assert inference_schema(1, 0, 'golden retriever', 0.9) == result
+        assert inference_schema(2, 0, 'golden retriever', 0.8) == result
 
         result = version.inference(inputs=[ImageInput(DEMO_URL, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
-        assert inference_schema(1, 2, 'golden retriever', 0.9) == result
+        assert inference_schema(3, 0, 'golden retriever', 0.5) == result
 
         versions = spec.versions()
         assert versions.count() > 0
@@ -247,10 +261,10 @@ class TestClient(object):
         assert task['error'] is None
         task.wait()
         assert task['status'] == 'success'
-        assert inference_schema(1, 0, 'golden retriever', 0.9) == task['data']
+        assert inference_schema(2, 0, 'golden retriever', 0.8) == task['data']
 
     def test_batch_wait(self, client):
-        spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
         tasks = []
         timeout = 30
         nb_inference = 20
@@ -271,4 +285,4 @@ class TestClient(object):
             assert(tasks[pos].pk == err.pk)
         for pos, success in success_tasks:
             assert(tasks[pos].pk == success.pk)
-            assert inference_schema(1, 0, 'golden retriever', 0.9) == success['data']
+            assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
