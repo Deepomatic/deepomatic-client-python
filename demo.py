@@ -8,6 +8,7 @@ import shutil
 import hashlib
 import requests
 
+from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 
@@ -37,15 +38,16 @@ def demo(client=None):
     #########
 
     # You can create a client in two ways:
-    # i) explicitly: you pass your APP_ID and API_KEY by calling `client = Client(app_id, api_key)`
+    # i) explicitly: you pass your APP_ID and API_KEY by calling `client = Client(app_id, api_key, user_agent_prefix='my-app/1.0.0')`
     # ii) implicitly: you define environment variables `DEEPOMATIC_APP_ID` and `DEEPOMATIC_API_KEY`
-    #                 and just call `client = Client()`
+    #                 and just call `client = Client(user_agent_prefix='my-app/1.0.0')`
     #
+    # In both ways `user_agent_prefix` parameter is optional but recommended to identify your app to the API
     # Here we actually use a mix of those two methods to illustrate:
     if client is None:
         app_id = os.getenv('DEEPOMATIC_APP_ID')
         api_key = os.getenv('DEEPOMATIC_API_KEY')
-        client = Client(app_id, api_key)  # this would be equivalent to using `Client()` in this case.
+        client = Client(app_id, api_key, user_agent_prefix='{}-demo/{}'.format(__title__, __version__))
 
     ###################
     # Public networks #
@@ -351,6 +353,7 @@ def download_file(url):
         r.raw.decode_content = True
         shutil.copyfileobj(r.raw, f)
     return filename
+
 
 def print_header(text):
     logger.info("**** {} ****".format(text))
