@@ -78,7 +78,7 @@ class HTTPHelper(object):
         else:
             self.user_agent = ''
 
-        self.user_agent += '{package_title}/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
+        self.user_agent += '{package_title}-python-client/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
             '.format(**user_agent_params)
 
         if user_agent_suffix:
