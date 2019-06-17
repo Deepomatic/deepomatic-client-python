@@ -47,7 +47,7 @@ class HTTPHelper(object):
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
-            verify = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '0'
+            verify = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '1'
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
