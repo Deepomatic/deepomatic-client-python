@@ -22,9 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import logging
+from tenacity import (Retrying, wait_random_exponential,
+                      stop_after_delay, retry_if_result,
+                      retry_if_exception_type,
+                      before_log, after_log)
 from deepomatic.api.exceptions import DeepomaticException
 from deepomatic.api.resources.task import Task
 from deepomatic.api.inputs import format_inputs
+
+
+logger = logging.getLogger(__name__)
 
 
 ###############################################################################
@@ -50,3 +58,23 @@ class InferenceResource(object):
 
 
 ###############################################################################
+
+class Functor(object):
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.func(*self.args, **self.kwargs)
+
+
+def retry(apply_func, retry,
+          timeout=60, wait_exp_multiplier=0.05, wait_exp_max=1.0):
+    retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier,
+                                                    max=wait_exp_max),
+                       stop=stop_after_delay(timeout),
+                       retry=retry,
+                       before=before_log(logger, logging.DEBUG),
+                       after=after_log(logger, logging.DEBUG))
+    return retryer(apply_func)

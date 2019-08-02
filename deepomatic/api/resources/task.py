@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from tenacity import Retrying, wait_random_exponential, stop_after_delay, retry_if_result, before_log, after_log, RetryError
 
+from tenacity import RetryError, retry_if_result
+from deepomatic.api.utils import retry, Functor
 from deepomatic.api.resource import Resource
 from deepomatic.api.mixins import ListableResource
 from deepomatic.api.exceptions import TaskError, TaskTimeout
@@ -62,17 +63,14 @@ class Task(ListableResource, Resource):
         assert(isinstance(task_ids, list))
         return super(Task, self).list(task_ids=task_ids)
 
-    def wait(self, timeout=60, wait_exp_multiplier=0.05, wait_exp_max=1.0):
+    def wait(self, **retry_kwargs):
         """
         Wait until task is completed. Expires after 'timeout' seconds.
         """
         try:
-            retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier, max=wait_exp_max),
-                               stop=stop_after_delay(timeout),
-                               retry=retry_if_result(is_pending_status),
-                               before=before_log(logger, logging.DEBUG),
-                               after=after_log(logger, logging.DEBUG))
-            retryer(self._refresh_status)
+            retry(self._refresh_status,
+                  retry_if_result(is_pending_status),
+                  **retry_kwargs)
         except RetryError:
             raise TaskTimeout(self.data())
 
@@ -106,7 +104,7 @@ class Task(ListableResource, Resource):
 
         return pending_tasks
 
-    def batch_wait(self, tasks, timeout=300, wait_exp_multiplier=0.05, wait_exp_max=1.0):
+    def batch_wait(self, tasks, **retry_kwargs):
         """
         Wait until a list of task are completed. Expires after 'timeout' seconds.
 
@@ -114,6 +112,7 @@ class Task(ListableResource, Resource):
         Each list contains a couple (original_position, task) sorted by original_position asc
         original_position gives the original index in the input tasks list parameter. This helps to keep the order.
         """
+        retry_kwargs['timeout'] = retry_kwargs.get('timeout', 300)
         try:
             positions = {}
             pending_tasks = []
@@ -122,12 +121,13 @@ class Task(ListableResource, Resource):
                 pending_tasks.append((pos, task))
             success_tasks = []
             error_tasks = []
-            retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier, max=wait_exp_max),
-                               stop=stop_after_delay(timeout),
-                               retry=retry_if_result(has_pending_tasks),
-                               before=before_log(logger, logging.DEBUG),
-                               after=after_log(logger, logging.DEBUG))
-            retryer(self._refresh_tasks_status, pending_tasks, success_tasks, error_tasks, positions)
+
+            functor = Functor(self._refresh_tasks_status, pending_tasks,
+                              success_tasks, error_tasks, positions)
+            retry(functor,
+                  retry_if_result(has_pending_tasks),
+                  **retry_kwargs)
+
         except RetryError:
             pass
 

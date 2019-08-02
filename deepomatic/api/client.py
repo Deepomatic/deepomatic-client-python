@@ -44,7 +44,7 @@ class Client(object):
                If it fails raise a `DeepomaticException`.
            :type api_key: string
            :param verify_ssl (optional): whether to ask `requests` to verify the TLS/SSL certificates.
-               Defaults to `None`. 
+               Defaults to `None`.
                If `None` try to get it from the `DEEPOMATIC_API_VERIFY_TLS` environment variable (`0`: False, `1`: True).
                If not found it is set to True.
            :type verify_ssl: bool
@@ -60,6 +60,11 @@ class Client(object):
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
+           :param retry_if (optional): predicate to retry on requests errors.
+               More details directly in tenacity source code:
+                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/__init__.py#L179
+                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/retry.py
+           :type retry_if: tenacity.retry_base
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client
