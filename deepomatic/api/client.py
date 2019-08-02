@@ -65,6 +65,12 @@ class Client(object):
                    - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/__init__.py#L179
                    - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/retry.py
            :type retry_if: tenacity.retry_base
+           :param retry_kwargs (optional): dict of retry parameters:
+               - timeout (default=60): raise tenacity.RetryError when timeout is reached (in seconds).
+                     If None, retry indefinitely.
+               - wait_exp_multiplier (default=0.05): wait exponential multiplier
+                -wait_exp_max (default=1.0): wait exponential maximum (in seconds)
+           :type retry_kwargs: dict
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client

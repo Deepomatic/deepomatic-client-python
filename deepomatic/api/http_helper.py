@@ -50,7 +50,7 @@ class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
-                 retry_if=None):
+                 retry_if=None, retry_kwargs=None):
         """
         Init the HTTP helper with API key and secret
         """
@@ -67,6 +67,7 @@ class HTTPHelper(object):
 
         self.retry_status_code = {}
         self.retry_if = retry_if
+        self.retry_kwargs = retry_kwargs or {}
 
         if self.retry_if is None:
             self.retry_status_code = set(DEFAULT_RETRY_STATUS_CODES)
@@ -232,7 +233,7 @@ class HTTPHelper(object):
         functor = Functor(func, resource, *args, params=params,
                           data=data, files=files, headers=headers,
                           verify=self.verify, stream=stream, **kwargs)
-        response = retry(functor, self.retry_if)
+        response = retry(functor, self.retry_if, **self.retry_kwargs)
 
         # Close opened files
         for file in opened_files:

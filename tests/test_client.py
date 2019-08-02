@@ -1,24 +1,27 @@
 import os
 import base64
-import tarfile
 import pytest
 import tempfile
 import hashlib
 import shutil
 import requests
 import zipfile
+from tenacity import RetryError
 from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 from pytest_voluptuous import S
 from voluptuous.validators import All, Length, Any
 import six
+import time
 
 import logging
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 logger = logging.getLogger(__name__)
 
 DEMO_URL = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+
+USER_AGENT_PREFIX = '{}-tests/{}'.format(__title__, __version__)
 
 
 def ExactLen(nb):
@@ -41,10 +44,7 @@ def download_file(url):
 
 @pytest.fixture(scope='session')
 def client():
-    api_host = os.getenv('DEEPOMATIC_API_URL')
-    app_id = os.environ['DEEPOMATIC_APP_ID']
-    api_key = os.environ['DEEPOMATIC_API_KEY']
-    yield Client(app_id, api_key, host=api_host, user_agent_prefix='{}-tests/{}'.format(__title__, __version__))
+    yield Client(user_agent_prefix=USER_AGENT_PREFIX)
 
 
 @pytest.fixture(scope='session')
@@ -286,3 +286,14 @@ class TestClient(object):
         for pos, success in success_tasks:
             assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
+
+
+def test_retry_client():
+    timeout = 5
+    client = Client(host='http://unknown-domain.com', retry_kwargs={'timeout': timeout})
+    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
+    start_time = time.time()
+    with pytest.raises(RetryError) as e:
+        print(spec.data())
+
+    assert time.time() - start_time > timeout

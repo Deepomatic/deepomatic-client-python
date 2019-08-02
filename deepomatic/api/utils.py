@@ -25,7 +25,7 @@ THE SOFTWARE.
 import logging
 from tenacity import (Retrying, wait_random_exponential,
                       stop_after_delay, retry_if_result,
-                      retry_if_exception_type,
+                      retry_if_exception_type, stop_never,
                       before_log, after_log)
 
 
@@ -44,9 +44,15 @@ class Functor(object):
 
 def retry(apply_func, retry,
           timeout=60, wait_exp_multiplier=0.05, wait_exp_max=1.0):
+
+    if timeout is None:
+        stop = stop_never
+    else:
+        stop = stop_after_delay(timeout)
+
     retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier,
                                                     max=wait_exp_max),
-                       stop=stop_after_delay(timeout),
+                       stop=stop,
                        retry=retry,
                        before=before_log(logger, logging.DEBUG),
                        after=after_log(logger, logging.DEBUG))
