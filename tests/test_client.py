@@ -296,4 +296,5 @@ def test_retry_client():
     with pytest.raises(RetryError) as e:
         print(spec.data())
 
-    assert time.time() - start_time > timeout
+    diff = time.time() - start_time
+    assert diff > timeout and diff < timeout + 5
