@@ -290,11 +290,13 @@ class TestClient(object):
 
 def test_retry_client():
     timeout = 5
-    client = Client(host='http://unknown-domain.com', retry_kwargs={'timeout': timeout})
+    client = Client(host='http://unknown-domain.com',
+                    user_agent_prefix=USER_AGENT_PREFIX,
+                    retry_kwargs={'timeout': timeout})
     spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
     start_time = time.time()
-    with pytest.raises(RetryError) as e:
+    with pytest.raises(RetryError):
         print(spec.data())
 
     diff = time.time() - start_time
-    assert diff > timeout and diff < timeout + 5
+    assert diff > timeout and diff < timeout + 2
