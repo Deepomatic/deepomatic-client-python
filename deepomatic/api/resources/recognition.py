@@ -25,7 +25,7 @@ THE SOFTWARE.
 from six import string_types
 
 from deepomatic.api.resource import Resource, ResourceList
-from deepomatic.api.utils import InferenceResource
+from deepomatic.api.inference import InferenceResource
 from deepomatic.api.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
 from deepomatic.api.mixins import RequiredArg, OptionnalArg, ImmutableArg, UpdateOnlyArg
 
@@ -76,4 +76,3 @@ class RecognitionVersion(CreateableResource,
         'network_id':       RequiredArg(),
         'post_processings': RequiredArg(),
     }
-

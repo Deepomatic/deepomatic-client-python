@@ -26,7 +26,7 @@ from six import string_types
 import numpy as np
 
 from deepomatic.api.resource import Resource
-from deepomatic.api.utils import InferenceResource
+from deepomatic.api.inference import InferenceResource
 from deepomatic.api.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
 from deepomatic.api.mixins import RequiredArg, OptionnalArg, ImmutableArg
 
