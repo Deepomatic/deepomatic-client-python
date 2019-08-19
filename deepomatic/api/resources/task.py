@@ -23,13 +23,14 @@ THE SOFTWARE.
 """
 
 
-from tenacity import RetryError, retry_if_result
-from deepomatic.api.utils import retry, Functor
-from deepomatic.api.resource import Resource
-from deepomatic.api.mixins import ListableResource
-from deepomatic.api.exceptions import TaskError, TaskTimeout
+import functools
 import logging
 
+from deepomatic.api.exceptions import TaskError, TaskTimeout
+from deepomatic.api.mixins import ListableResource
+from deepomatic.api.resource import Resource
+from deepomatic.api.utils import retry
+from tenacity import RetryError, retry_if_result
 
 logger = logging.getLogger(__name__)
 
@@ -122,11 +123,9 @@ class Task(ListableResource, Resource):
             success_tasks = []
             error_tasks = []
 
-            functor = Functor(self._refresh_tasks_status, pending_tasks,
-                              success_tasks, error_tasks, positions)
-            retry(functor,
-                  retry_if_result(has_pending_tasks),
-                  **retry_kwargs)
+            functor = functools.partial(self._refresh_tasks_status, pending_tasks,
+                                        success_tasks, error_tasks, positions)
+            retry(functor, retry_if_result(has_pending_tasks), **retry_kwargs)
 
         except RetryError:
             pass

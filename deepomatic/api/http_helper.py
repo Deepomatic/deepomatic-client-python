@@ -22,20 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import os
+import functools
 import json
-import requests
-from requests.exceptions import RequestException
-import sys
+import os
 import platform
+import sys
+
+import requests
+from deepomatic.api.exceptions import BadStatus, DeepomaticException
+from deepomatic.api.utils import retry
+from deepomatic.api.version import __title__, __version__
+from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
 from six import string_types
-
-from tenacity import retry_if_result, retry_if_exception_type
-
-from deepomatic.api.utils import Functor, retry
-from deepomatic.api.exceptions import DeepomaticException, BadStatus
-from deepomatic.api.version import __title__, __version__
+from tenacity import retry_if_exception_type, retry_if_result
 
 API_HOST = 'https://api.deepomatic.com'
 API_VERSION = 0.7
@@ -230,9 +230,9 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        functor = Functor(func, resource, *args, params=params,
-                          data=data, files=files, headers=headers,
-                          verify=self.verify, stream=stream, **kwargs)
+        functor = functools.partial(func, resource, *args, params=params,
+                                    data=data, files=files, headers=headers,
+                                    verify=self.verify, stream=stream, **kwargs)
         response = retry(functor, self.retry_if, **self.retry_kwargs)
 
         # Close opened files

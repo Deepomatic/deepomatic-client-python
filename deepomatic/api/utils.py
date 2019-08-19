@@ -23,23 +23,11 @@ THE SOFTWARE.
 """
 
 import logging
-from tenacity import (Retrying, wait_random_exponential,
-                      stop_after_delay, retry_if_result,
-                      retry_if_exception_type, stop_never,
-                      before_log, after_log)
 
+from tenacity import (Retrying, after_log, before_log, stop_after_delay,
+                      stop_never, wait_random_exponential)
 
 logger = logging.getLogger(__name__)
-
-
-class Functor(object):
-    def __init__(self, func, *args, **kwargs):
-        self.func = func
-        self.args = args
-        self.kwargs = kwargs
-
-    def __call__(self):
-        return self.func(*self.args, **self.kwargs)
 
 
 def retry(apply_func, retry,
