@@ -1,21 +1,26 @@
-import os
 import base64
-import pytest
-import tempfile
 import hashlib
+import logging
+import os
+import re
 import shutil
-import requests
+import tempfile
+import time
 import zipfile
-from tenacity import RetryError
-from deepomatic.api.version import __title__, __version__
+
+import httpretty
+import pytest
+import requests
+import six
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
-from pytest_voluptuous import S
-from voluptuous.validators import All, Length, Any
-import six
-import time
+from deepomatic.api.version import __title__, __version__
+from requests.exceptions import ConnectionError
+from tenacity import RetryError
 
-import logging
+from pytest_voluptuous import S
+from voluptuous.validators import All, Any, Length
+
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 logger = logging.getLogger(__name__)
 
@@ -288,15 +293,40 @@ class TestClient(object):
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
 
 
-def test_retry_client():
-    timeout = 5
-    client = Client(host='http://unknown-domain.com',
-                    user_agent_prefix=USER_AGENT_PREFIX,
-                    retry_kwargs={'timeout': timeout})
-    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
-    start_time = time.time()
-    with pytest.raises(RetryError):
-        print(spec.data())
+class TestClientRetry(object):
+    DEFAULT_TIMEOUT = 5
+    DEFAULT_MIN_ATTEMPT_NUMBER = 10
 
-    diff = time.time() - start_time
-    assert diff > timeout and diff < timeout + 2
+    def expect_retry(self, client, timeout, min_attempt_number):
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
+        start_time = time.time()
+        with pytest.raises(RetryError) as exc:
+            print(spec.data())
+
+        diff = time.time() - start_time
+        assert diff > timeout and diff < timeout + 2
+        last_attempt = exc.value.last_attempt
+        assert last_attempt.attempt_number > min_attempt_number
+        return last_attempt
+
+    def test_retry_network_failure(self):
+        client = Client(host='http://unknown-domain.com',
+                        retry_kwargs={'timeout': self.DEFAULT_TIMEOUT})
+        last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        exc = last_attempt.exception(timeout=0)
+        assert isinstance(exc, ConnectionError)
+        assert 'Name or service not known' in str(exc)
+
+    @httpretty.activate
+    def test_retry_bad_http_status(self):
+        httpretty.register_uri(
+            httpretty.GET,
+            re.compile(r'https?://.*'),
+            status=502,
+            content_type="application/json",
+        )
+        client = Client(retry_kwargs={'timeout': self.DEFAULT_TIMEOUT})
+        last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        assert last_attempt.exception(timeout=0) is None  # no exception raised during retry
+        last_response = last_attempt.result()
+        assert 502 == last_response.status_code
