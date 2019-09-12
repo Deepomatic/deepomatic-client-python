@@ -16,7 +16,7 @@ from deepomatic.api.client import Client
 from deepomatic.api.http_retryer import DEFAULT_RETRY_EXP_MAX, HTTPRetryer
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, MissingSchema
 from tenacity import RetryError, stop_after_delay
 
 from pytest_voluptuous import S
@@ -349,3 +349,10 @@ class TestClientRetry(object):
         assert last_attempt.attempt_number == 1
         last_response = last_attempt.result()
         assert 502 == last_response.status_code
+
+    def test_no_retry_blacklist_exception(self):
+         http_retryer = HTTPRetryer(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+         client = Client(http_retryer=http_retryer)
+         # check that there is no retry on exceptions from DEFAULT_RETRY_EXCEPTION_TYPES_BLACKLIST
+         with pytest.raises(MissingSchema) as exc:
+             client.http_helper.http_retryer.retry(requests.get, '')
