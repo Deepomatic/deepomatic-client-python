@@ -23,10 +23,11 @@ THE SOFTWARE.
 """
 
 from deepomatic.api.http_helper import HTTPHelper
-from deepomatic.api.resources.network import Network
-from deepomatic.api.resources.recognition import RecognitionSpec, RecognitionVersion
-from deepomatic.api.resources.task import Task
 from deepomatic.api.resources.account import Account
+from deepomatic.api.resources.network import Network
+from deepomatic.api.resources.recognition import (RecognitionSpec,
+                                                  RecognitionVersion)
+from deepomatic.api.resources.task import Task
 
 
 class Client(object):
@@ -60,17 +61,8 @@ class Client(object):
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
-           :param retry_if (optional): predicate to retry on requests errors.
-               More details directly in tenacity source code:
-                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/__init__.py#L179
-                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/retry.py
-           :type retry_if: tenacity.retry_base
-           :param retry_kwargs (optional): dict of retry parameters:
-               - timeout (default=60): raise tenacity.RetryError when timeout is reached (in seconds).
-                     If None, retry indefinitely.
-               - wait_exp_multiplier (default=0.05): wait exponential multiplier
-                -wait_exp_max (default=1.0): wait exponential maximum (in seconds)
-           :type retry_kwargs: dict
+           :param http_retryer (optional): Customize the retry of http errors
+           :type http_retryer: http_retryer.HTTPRetryer
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client

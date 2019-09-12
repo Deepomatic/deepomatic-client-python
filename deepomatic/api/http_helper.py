@@ -22,7 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import functools
 import json
 import os
 import platform
@@ -30,18 +29,13 @@ import sys
 
 import requests
 from deepomatic.api.exceptions import BadStatus, DeepomaticException
-from deepomatic.api.utils import retry
+from deepomatic.api.http_retryer import HTTPRetryer
 from deepomatic.api.version import __title__, __version__
-from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
 from six import string_types
-from tenacity import retry_if_exception_type, retry_if_result
 
 API_HOST = 'https://api.deepomatic.com'
 API_VERSION = 0.7
-
-DEFAULT_RETRY_STATUS_CODES = [502, 503, 504]
-DEFAULT_RETRY_EXCEPTION_TYPES = [RequestException]
 
 ###############################################################################
 
@@ -50,7 +44,7 @@ class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
-                 retry_if=None, retry_kwargs=None):
+                 http_retryer=None):
         """
         Init the HTTP helper with API key and secret
         """
@@ -65,15 +59,7 @@ class HTTPHelper(object):
         if app_id is None or api_key is None:
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
-        self.retry_status_code = {}
-        self.retry_if = retry_if
-        self.retry_kwargs = retry_kwargs or {}
-
-        if self.retry_if is None:
-            self.retry_status_code = set(DEFAULT_RETRY_STATUS_CODES)
-            self.retry_if = retry_if_result(self.retry_if_status_code)
-            for exception_type in DEFAULT_RETRY_EXCEPTION_TYPES:
-                self.retry_if |= retry_if_exception_type(exception_type)
+        self.http_retryer = http_retryer or HTTPRetryer()
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
@@ -177,9 +163,6 @@ class HTTPHelper(object):
 
         return new_dict
 
-    def retry_if_status_code(self, response):
-        return response.status_code in self.retry_status_code
-
     def make_request(self, func, resource, params=None, data=None,
                      content_type='application/json', files=None,
                      stream=False, *args, **kwargs):
@@ -230,10 +213,13 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        functor = functools.partial(func, resource, *args, params=params,
-                                    data=data, files=files, headers=headers,
-                                    verify=self.verify, stream=stream, **kwargs)
-        response = retry(functor, self.retry_if, **self.retry_kwargs)
+        http_retryer = kwargs.pop('http_retryer', None) or self.http_retryer
+
+        response = http_retryer.retry(func, resource, *args,
+                                      params=params, data=data,
+                                      files=files, headers=headers,
+                                      verify=self.verify,
+                                      stream=stream, **kwargs)
 
         # Close opened files
         for file in opened_files:

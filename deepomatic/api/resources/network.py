@@ -22,16 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from six import string_types
 import numpy as np
-
-from deepomatic.api.resource import Resource
+from deepomatic.api.http_retryer import HTTPRetryer
 from deepomatic.api.inference import InferenceResource
-from deepomatic.api.mixins import CreateableResource, ListableResource, UpdatableResource, DeletableResource
-from deepomatic.api.mixins import RequiredArg, OptionnalArg, ImmutableArg
-
+from deepomatic.api.mixins import (CreateableResource, DeletableResource,
+                                   ImmutableArg, ListableResource,
+                                   OptionnalArg, RequiredArg,
+                                   UpdatableResource)
+from deepomatic.api.resource import Resource
+from six import string_types
+from tenacity import stop_after_attempt
 
 ###############################################################################
+
+# No retry on network create as this is an heavy request
+NETWORK_CREATE_RETRYER = HTTPRetryer(requests_timeout=(3.05, 600),
+                                     stop=stop_after_attempt(0))
+
 
 class Network(ListableResource,
               CreateableResource,
@@ -65,6 +72,10 @@ class Network(ListableResource,
             return self._convert_result_to_numpy(result)
         else:
             return result
+
+    def create(self, *args, **kwargs):
+        kwargs['http_retryer'] = kwargs.get('http_retryer', NETWORK_CREATE_RETRYER)
+        return super(Network, self).create(*args, **kwargs)
 
     @staticmethod
     def _convert_result_to_numpy(result):

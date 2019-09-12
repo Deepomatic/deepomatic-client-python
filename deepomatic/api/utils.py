@@ -24,24 +24,35 @@ THE SOFTWARE.
 
 import logging
 
-from tenacity import (Retrying, after_log, before_log, stop_after_delay,
-                      stop_never, wait_random_exponential)
+from tenacity import (RetryError, Retrying, after_log, before_log,
+                      stop_after_delay, stop_never, wait_random_exponential)
 
 logger = logging.getLogger(__name__)
 
 
-def retry(apply_func, retry,
-          timeout=60, wait_exp_multiplier=0.05, wait_exp_max=1.0):
-
-    if timeout is None:
-        stop = stop_never
-    else:
-        stop = stop_after_delay(timeout)
-
-    retryer = Retrying(wait=wait_random_exponential(multiplier=wait_exp_multiplier,
-                                                    max=wait_exp_max),
+def retry(apply_func, retry_if, wait, stop):
+    retryer = Retrying(retry=retry_if,
+                       wait=wait,
                        stop=stop,
-                       retry=retry,
                        before=before_log(logger, logging.DEBUG),
                        after=after_log(logger, logging.DEBUG))
     return retryer(apply_func)
+
+
+def warn_on_http_retry_error(http_func, suffix=''):
+    # http helper can raise a RetryError
+    try:
+        # this should be an http_helper call
+        return http_func()
+    except RetryError as e:
+        last_exception = e.last_attempt.exception(timeout=0)
+        msg = "HTTPHelper failed to refresh task status. In the last attempt, "
+        if last_exception is None:
+            last_response = last_attempt.result()
+            msg += 'the status code was {}.'.format(last_response.status_code)
+        else:
+            msg += 'an exception occured: {}.'.format(last_exception)
+        if suffix:
+            msg += ' ' + suffix
+        logger.warning(msg)
+        return None
