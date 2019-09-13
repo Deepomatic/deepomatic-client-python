@@ -297,7 +297,7 @@ class TestClient(object):
 
 class TestClientRetry(object):
     DEFAULT_TIMEOUT = 2
-    DEFAULT_MIN_ATTEMPT_NUMBER = 4
+    DEFAULT_MIN_ATTEMPT_NUMBER = 3
 
     def expect_retry(self, client, timeout, min_attempt_number):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
@@ -308,7 +308,7 @@ class TestClientRetry(object):
         diff = time.time() - start_time
         assert diff > timeout and diff < timeout + HTTPRetry.Default.RETRY_EXP_MAX
         last_attempt = exc.value.last_attempt
-        assert last_attempt.attempt_number > min_attempt_number
+        assert last_attempt.attempt_number >= min_attempt_number
         return last_attempt
 
     def test_retry_network_failure(self):
