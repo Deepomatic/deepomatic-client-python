@@ -84,7 +84,17 @@ class DeletableResource(object):
 ###############################################################################
 
 class CreateableResource(object):
-    def create(self, content_type='application/json', files=None, http_retryer=None, **kwargs):
+    def create(self, content_type='application/json', files=None, **kwargs):
+        post_kwargs = {}
+        # TODO: this is a hack, kwargs shouldn't be the data to post
+        # it should be the requests kwargs
+        # the fix will be a breaking change, so for now we just pop them
+        for key in ['http_retry', 'timeout']:
+            try:
+                post_kwargs[key] = kwargs.pop(key)
+            except KeyError:
+                pass
+
         if self._helper.check_query_parameters:
             for arg_name in kwargs:
                 if arg_name not in self.object_template or self.object_template[arg_name]._shoud_be_present_when_adding is False:
@@ -95,8 +105,10 @@ class CreateableResource(object):
 
         if files is not None:
             content_type = 'multipart/mixed'
-        data = self._helper.post(self._uri(), data=kwargs, content_type=content_type,
-                                 files=files, http_retryer=http_retryer)
+
+        data = self._helper.post(self._uri(), data=kwargs,
+                                 content_type=content_type,
+                                 files=files, **post_kwargs)
         return self.__class__(self._helper, pk=data['id'], data=data)
 
 

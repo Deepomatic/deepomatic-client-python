@@ -13,7 +13,8 @@ import pytest
 import requests
 import six
 from deepomatic.api.client import Client
-from deepomatic.api.http_retryer import DEFAULT_RETRY_EXP_MAX, HTTPRetryer
+from deepomatic.api.exceptions import BadStatus
+from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
 from requests.exceptions import ConnectionError, MissingSchema
@@ -295,7 +296,7 @@ class TestClient(object):
 
 
 class TestClientRetry(object):
-    DEFAULT_TIMEOUT = 5
+    DEFAULT_TIMEOUT = 2
     DEFAULT_MIN_ATTEMPT_NUMBER = 4
 
     def expect_retry(self, client, timeout, min_attempt_number):
@@ -305,15 +306,15 @@ class TestClientRetry(object):
             print(spec.data()) # does make a http call
 
         diff = time.time() - start_time
-        assert diff > timeout and diff < timeout + DEFAULT_RETRY_EXP_MAX
+        assert diff > timeout and diff < timeout + HTTPRetry.Default.RETRY_EXP_MAX
         last_attempt = exc.value.last_attempt
         assert last_attempt.attempt_number > min_attempt_number
         return last_attempt
 
     def test_retry_network_failure(self):
-        http_retryer = HTTPRetryer(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
         client = Client(host='http://unknown-domain.com',
-                        http_retryer=http_retryer)
+                        http_retry=http_retry)
         last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
         exc = last_attempt.exception(timeout=0)
         assert isinstance(exc, ConnectionError)
@@ -331,28 +332,31 @@ class TestClientRetry(object):
     @httpretty.activate
     def test_retry_bad_http_status(self):
         self.register_uri([httpretty.GET, httpretty.POST], 502)
-        http_retryer = HTTPRetryer(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
-        client = Client(http_retryer=http_retryer)
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        client = Client(http_retry=http_retry)
         last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
         assert last_attempt.exception(timeout=0) is None  # no exception raised during retry
         last_response = last_attempt.result()
         assert 502 == last_response.status_code
 
-        # Creating network doesn't retry
-        with pytest.raises(RetryError) as exc:
+    @httpretty.activate
+    def test_no_retry_create_network(self):
+        self.register_uri([httpretty.GET, httpretty.POST], 502)
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        client = Client(http_retry=http_retry)
+        # Creating network doesn't retry, we directly get a 502
+        t = time.time()
+        with pytest.raises(BadStatus) as exc:
             network = client.Network.create(name="My first network",
                                             framework='tensorflow-1.x',
                                             preprocessing=["useless"],
                                             files=["useless"])
-
-        last_attempt = exc.value.last_attempt
-        assert last_attempt.attempt_number == 1
-        last_response = last_attempt.result()
-        assert 502 == last_response.status_code
+            assert 502 == exc.status_code
+        assert time.time() - t < 0.3
 
     def test_no_retry_blacklist_exception(self):
-         http_retryer = HTTPRetryer(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
-         client = Client(http_retryer=http_retryer)
+         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+         client = Client(http_retry=http_retry)
          # check that there is no retry on exceptions from DEFAULT_RETRY_EXCEPTION_TYPES_BLACKLIST
          with pytest.raises(MissingSchema) as exc:
-             client.http_helper.http_retryer.retry(requests.get, '')
+             client.http_helper.http_retry.retry(requests.get, '')

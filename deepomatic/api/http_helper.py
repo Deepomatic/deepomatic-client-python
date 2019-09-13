@@ -29,7 +29,7 @@ import sys
 
 import requests
 from deepomatic.api.exceptions import BadStatus, DeepomaticException
-from deepomatic.api.http_retryer import HTTPRetryer
+from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.version import __title__, __version__
 from requests.structures import CaseInsensitiveDict
 from six import string_types
@@ -44,7 +44,7 @@ class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
-                 http_retryer=None):
+                 http_retry=None):
         """
         Init the HTTP helper with API key and secret
         """
@@ -59,7 +59,7 @@ class HTTPHelper(object):
         if app_id is None or api_key is None:
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
-        self.http_retryer = http_retryer or HTTPRetryer()
+        self.http_retry = http_retry or HTTPRetry.DEFAULT
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
@@ -213,13 +213,25 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        http_retryer = kwargs.pop('http_retryer', None) or self.http_retryer
+        try:
+            http_retry = kwargs.pop('http_retry')
+        except KeyError:
+            http_retry = self.http_retry
 
-        response = http_retryer.retry(func, resource, *args,
-                                      params=params, data=data,
-                                      files=files, headers=headers,
-                                      verify=self.verify,
-                                      stream=stream, **kwargs)
+        if http_retry is not None:
+            response = http_retry.retry(func, resource, *args,
+                                        params=params, data=data,
+                                        files=files, headers=headers,
+                                        verify=self.verify,
+                                        stream=stream, **kwargs)
+        else:
+            # Call requests directly, no retry
+            response = func(resource, *args,
+                            params=params, data=data,
+                            files=files, headers=headers,
+                            verify=self.verify,
+                            stream=stream, **kwargs)
+
 
         # Close opened files
         for file in opened_files:

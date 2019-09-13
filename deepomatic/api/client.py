@@ -61,8 +61,8 @@ class Client(object):
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
-           :param http_retryer (optional): Customize the retry of http errors
-           :type http_retryer: http_retryer.HTTPRetryer
+           :param http_retry (optional): Customize the retry of http errors
+           :type http_retry: http_retry.HTTPRetry
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client

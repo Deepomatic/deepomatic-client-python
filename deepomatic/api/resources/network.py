@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 import numpy as np
-from deepomatic.api.http_retryer import HTTPRetryer
+from deepomatic.api.http_retry import HTTPRetry, RequestsTimeout
 from deepomatic.api.inference import InferenceResource
 from deepomatic.api.mixins import (CreateableResource, DeletableResource,
                                    ImmutableArg, ListableResource,
@@ -35,9 +35,7 @@ from tenacity import stop_after_attempt
 
 ###############################################################################
 
-# No retry on network create as this is an heavy request
-NETWORK_CREATE_RETRYER = HTTPRetryer(requests_timeout=(3.05, 600),
-                                     stop=stop_after_attempt(0))
+
 
 
 class Network(ListableResource,
@@ -74,7 +72,9 @@ class Network(ListableResource,
             return result
 
     def create(self, *args, **kwargs):
-        kwargs['http_retryer'] = kwargs.get('http_retryer', NETWORK_CREATE_RETRYER)
+        # No retry on network create by default as this is an heavy request
+        kwargs['http_retry'] = kwargs.get('http_retry')
+        kwargs['timeout'] = kwargs.get('timeout', RequestsTimeout.SLOW)
         return super(Network, self).create(*args, **kwargs)
 
     @staticmethod
