@@ -23,7 +23,7 @@ THE SOFTWARE.
 """
 
 import numpy as np
-from deepomatic.api.http_retry import HTTPRetry, RequestsTimeout
+from deepomatic.api.http_helper import RequestsTimeout
 from deepomatic.api.inference import InferenceResource
 from deepomatic.api.mixins import (CreateableResource, DeletableResource,
                                    ImmutableArg, ListableResource,
@@ -31,11 +31,8 @@ from deepomatic.api.mixins import (CreateableResource, DeletableResource,
                                    UpdatableResource)
 from deepomatic.api.resource import Resource
 from six import string_types
-from tenacity import stop_after_attempt
 
 ###############################################################################
-
-
 
 
 class Network(ListableResource,

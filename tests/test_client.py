@@ -1,4 +1,5 @@
 import base64
+import functools
 import hashlib
 import logging
 import os
@@ -349,16 +350,16 @@ class TestClientRetry(object):
         # Creating network doesn't retry, we directly get a 502
         t = time.time()
         with pytest.raises(BadStatus) as exc:
-            network = client.Network.create(name="My first network",
-                                            framework='tensorflow-1.x',
-                                            preprocessing=["useless"],
-                                            files=["useless"])
+            client.Network.create(name="My first network",
+                                  framework='tensorflow-1.x',
+                                  preprocessing=["useless"],
+                                  files=["useless"])
             assert 502 == exc.status_code
         assert time.time() - t < 0.3
 
     def test_no_retry_blacklist_exception(self):
-         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
-         client = Client(http_retry=http_retry)
-         # check that there is no retry on exceptions from DEFAULT_RETRY_EXCEPTION_TYPES_BLACKLIST
-         with pytest.raises(MissingSchema) as exc:
-             client.http_helper.http_retry.retry(requests.get, '')
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        client = Client(http_retry=http_retry)
+        # check that there is no retry on exceptions from DEFAULT_RETRY_EXCEPTION_TYPES_BLACKLIST
+        with pytest.raises(MissingSchema):
+            client.http_helper.http_retry.retry(functools.partial(requests.get, ''))

@@ -61,7 +61,11 @@ class Client(object):
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
-           :param http_retry (optional): Customize the retry of http errors
+           :param requests_timeout: timeout of each request.
+               Defaults to http_helper.RequestsTimeout.FAST.
+               More details in the `requests` documentation: https://2.python-requests.org//en/master/user/advanced/#timeouts
+           :type requests_timeout: float or tuple(float, float)
+           :param http_retry (optional): Customize the retry of http errors.
            :type http_retry: http_retry.HTTPRetry
 
            :return: :class:`Client` object

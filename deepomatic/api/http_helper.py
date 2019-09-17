@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import functools
 import json
 import os
 import platform
@@ -40,11 +41,17 @@ API_VERSION = 0.7
 ###############################################################################
 
 
+class RequestsTimeout(object):
+    FAST = (3.05, 10.)
+    MEDIUM = (3.05, 60.)
+    SLOW = (3.05, 600.)
+
+
 class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
-                 http_retry=None):
+                 requests_timeout=RequestsTimeout.FAST, http_retry=None):
         """
         Init the HTTP helper with API key and secret
         """
@@ -60,6 +67,7 @@ class HTTPHelper(object):
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
         self.http_retry = http_retry or HTTPRetry.DEFAULT
+        self.requests_timeout = requests_timeout
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
@@ -163,6 +171,28 @@ class HTTPHelper(object):
 
         return new_dict
 
+    def send_request(self, requests_callable, *args, **kwargs):
+        # requests_callable must be a method from the requests module
+        try:
+            # this is the timeout of requests module
+            requests_timeout = kwargs.pop('timeout')
+        except KeyError:
+            requests_timeout = self.requests_timeout
+
+        try:
+            http_retry = kwargs.pop('http_retry')
+        except KeyError:
+            http_retry = self.http_retry
+
+        functor = functools.partial(requests_callable, *args,
+                                    verify=self.verify,
+                                    timeout=requests_timeout, **kwargs)
+
+        if http_retry is not None:
+            return http_retry.retry(functor)
+
+        return functor()
+
     def make_request(self, func, resource, params=None, data=None,
                      content_type='application/json', files=None,
                      stream=False, *args, **kwargs):
@@ -213,25 +243,10 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        try:
-            http_retry = kwargs.pop('http_retry')
-        except KeyError:
-            http_retry = self.http_retry
-
-        if http_retry is not None:
-            response = http_retry.retry(func, resource, *args,
-                                        params=params, data=data,
-                                        files=files, headers=headers,
-                                        verify=self.verify,
-                                        stream=stream, **kwargs)
-        else:
-            # Call requests directly, no retry
-            response = func(resource, *args,
-                            params=params, data=data,
-                            files=files, headers=headers,
-                            verify=self.verify,
-                            stream=stream, **kwargs)
-
+        response = self.send_request(func, resource, *args,
+                                     params=params, data=data,
+                                     files=files, headers=headers,
+                                     stream=stream, **kwargs)
 
         # Close opened files
         for file in opened_files:
