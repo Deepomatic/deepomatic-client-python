@@ -66,7 +66,7 @@ class HTTPHelper(object):
         if app_id is None or api_key is None:
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
-        self.http_retry = http_retry or HTTPRetry.DEFAULT
+        self.http_retry = http_retry or HTTPRetry()
         self.requests_timeout = requests_timeout
 
         if not isinstance(version, string_types):
