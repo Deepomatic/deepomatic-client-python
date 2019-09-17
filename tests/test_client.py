@@ -299,7 +299,7 @@ class TestClientRetry(object):
     DEFAULT_TIMEOUT = 2
     DEFAULT_MIN_ATTEMPT_NUMBER = 3
 
-    def expect_retry(self, client, timeout, min_attempt_number):
+    def send_request_and_expect_retry(self, client, timeout, min_attempt_number):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
         start_time = time.time()
         with pytest.raises(RetryError) as exc:
@@ -315,7 +315,8 @@ class TestClientRetry(object):
         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
         client = Client(host='http://unknown-domain.com',
                         http_retry=http_retry)
-        last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
+                                                          self.DEFAULT_MIN_ATTEMPT_NUMBER)
         exc = last_attempt.exception(timeout=0)
         assert isinstance(exc, ConnectionError)
         assert 'Name or service not known' in str(exc)
@@ -334,7 +335,8 @@ class TestClientRetry(object):
         self.register_uri([httpretty.GET, httpretty.POST], 502)
         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
         client = Client(http_retry=http_retry)
-        last_attempt = self.expect_retry(client, self.DEFAULT_TIMEOUT, self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
+                                                          self.DEFAULT_MIN_ATTEMPT_NUMBER)
         assert last_attempt.exception(timeout=0) is None  # no exception raised during retry
         last_response = last_attempt.result()
         assert 502 == last_response.status_code

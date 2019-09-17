@@ -8,6 +8,8 @@ from tenacity import (retry_if_exception, retry_if_result, stop_after_delay,
 
 
 class retry_if_exception_type(retry_if_exception):
+    # Taken from https://github.com/jd/tenacity/blob/2775f13b34b3ec67a774061a77fcd4e1e9b4157c/tenacity/retry.py#L72
+    # Extented to support blacklist types
     def __predicate(self, e):
         return (isinstance(e, self.exception_types) and
                 not isinstance(e, self.exception_types_blacklist))
@@ -30,14 +32,15 @@ class HTTPRetry(object):
     """
            :param retry_if (optional): predicate to retry on requests errors.
                More details directly in tenacity source code:
-                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/__init__.py#L179
-                   - https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/retry.py
+
+                   - https://github.com/jd/tenacity/blob/5.1.1/tenacity/__init__.py#L179
+                   - https://github.com/jd/tenacity/blob/5.1.1/tenacity/retry.py
                If not provided, the default behavior is:
                    - Retry on status code from Default.RETRY_STATUS_CODES
                    - Retry on exceptions from Default.RETRY_EXCEPTION_TYPES excluding those from Default.RETRY_EXCEPTION_TYPES_BLACKLIST
            :type retry_if: tenacity.retry_base
            :param wait (optional): how to wait between retry
-               More details directly in tenacity source code https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/wait.py
+               More details directly in tenacity source code https://github.com/jd/tenacity/blob/5.1.1/tenacity/wait.py
 
                if not provided, the default behavior is:
                ```
@@ -48,11 +51,11 @@ class HTTPRetry(object):
                               wait_fixed(0.1) + random_wait)
                ```
             :type wait: tenacity.wait_base
-            :param stop (optional). Tell when to stop retrying. By default it stops retrying after a delay of 60 seconds. A last retry can be done just before this delay is reached, thus the total amount of elapsed time might be a bit higher. More details in tenacity source code https://github.com/jd/tenacity/blob/1d05520276766d8c53fbb35b2b8368cc43a6c52c/tenacity/stop.py
+            :param stop (optional). Tell when to stop retrying. By default it stops retrying after a delay of 60 seconds. A last retry can be done just before this delay is reached, thus the total amount of elapsed time might be a bit higher. More details in tenacity source code https://github.com/jd/tenacity/blob/5.1.1/tenacity/stop.py
                 Raises tenacity.RetryError when timeout is reached.
             :type timeout: tenacity.stop_base
             :param requests_timeout: timeout of each request. More details in the `requests` documentation: https://2.python-requests.org//en/master/user/advanced/#timeouts
-            :param requests_timeout: float or tuple(float, float)
+            :type requests_timeout: float or tuple(float, float)
 
     """
 
@@ -62,7 +65,6 @@ class HTTPRetry(object):
         RETRY_STATUS_CODES = [500, 502, 503, 504]
         RETRY_EXCEPTION_TYPES = (RequestException, )
         RETRY_EXCEPTION_TYPES_BLACKLIST = (ValueError, ProxyError, TooManyRedirects, URLRequired)
-
 
     def __init__(self, retry_if=None, wait=None, stop=None,
                  requests_timeout=RequestsTimeout.FAST):
@@ -90,6 +92,7 @@ class HTTPRetry(object):
 
     def retry(self, requests_callable, *args, **kwargs):
         try:
+            # requests_callable must be a method from the requests module
             # this is the timeout of requests module
             # not the one of the retry
             requests_timeout = kwargs.pop('timeout')
