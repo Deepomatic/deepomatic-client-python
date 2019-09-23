@@ -60,3 +60,4 @@ def warn_on_http_retry_error(http_func, suffix='', reraise=True):
         logger.warning(msg)
         if reraise:
             raise
+        return None

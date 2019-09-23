@@ -29,9 +29,8 @@ from tenacity import RetryError
 ###############################################################################
 
 class DeepomaticException(Exception):
-    pass
-    # def __init__(self, msg):
-    #     super(DeepomaticException, self).__init__(msg)
+    def __init__(self, msg):
+        super(DeepomaticException, self).__init__(msg)
 
 
 ###############################################################################
