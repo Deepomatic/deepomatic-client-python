@@ -51,7 +51,7 @@ class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
-                 requests_timeout=RequestsTimeout.FAST, http_retry=None):
+                 requests_timeout=RequestsTimeout.FAST, http_retry=HTTPRetry()):
         """
         Init the HTTP helper with API key and secret
         """
@@ -66,7 +66,11 @@ class HTTPHelper(object):
         if app_id is None or api_key is None:
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
-        self.http_retry = http_retry or HTTPRetry()
+        # WARNING for developers: `self.http_retry` should not be modified in this class.
+        # It should be a constant object.
+        # This will affect the default parameter otherwise.
+        self.http_retry = http_retry
+
         self.requests_timeout = requests_timeout
 
         if not isinstance(version, string_types):

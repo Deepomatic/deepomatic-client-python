@@ -24,28 +24,31 @@ THE SOFTWARE.
 
 import logging
 
+from deepomatic.api.exceptions import HTTPRetryError
 from tenacity import (RetryError, Retrying, after_log, before_log,
                       stop_after_delay, stop_never, wait_random_exponential)
 
 logger = logging.getLogger(__name__)
 
 
-def retry(apply_func, retry_if, wait, stop):
+def retry(apply_func, retry_if, wait, stop, **kwargs):
     retryer = Retrying(retry=retry_if,
                        wait=wait,
                        stop=stop,
                        before=before_log(logger, logging.DEBUG),
-                       after=after_log(logger, logging.DEBUG))
+                       after=after_log(logger, logging.DEBUG),
+                       **kwargs)
     return retryer(apply_func)
 
 
-def warn_on_http_retry_error(http_func, suffix=''):
-    # http helper can raise a RetryError
+def warn_on_http_retry_error(http_func, suffix='', reraise=True):
+    # http helper can raise a HTTPRetryError
     try:
         # this should be an http_helper call
         return http_func()
-    except RetryError as e:
-        last_exception = e.last_attempt.exception(timeout=0)
+    except HTTPRetryError as e:
+        last_attempt = e.last_attempt
+        last_exception = last_attempt.exception(timeout=0)
         msg = "HTTPHelper failed to refresh task status. In the last attempt, "
         if last_exception is None:
             last_response = last_attempt.result()
@@ -55,4 +58,5 @@ def warn_on_http_retry_error(http_func, suffix=''):
         if suffix:
             msg += ' ' + suffix
         logger.warning(msg)
-        return None
+        if reraise:
+            raise

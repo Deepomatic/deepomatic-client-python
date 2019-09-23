@@ -26,7 +26,7 @@ THE SOFTWARE.
 import functools
 import logging
 
-from deepomatic.api.exceptions import TaskError, TaskTimeout
+from deepomatic.api.exceptions import TaskError, TaskTimeout, HTTPRetryError, TaskRetryError
 from deepomatic.api.mixins import ListableResource
 from deepomatic.api.resource import Resource
 from deepomatic.api.utils import retry, warn_on_http_retry_error
@@ -55,6 +55,7 @@ def is_success_status(status):
 def has_pending_tasks(pending_tasks):
     return len(pending_tasks) > 0
 
+
 def retry_get_tasks(apply_func, retry_if, timeout=60,
                     wait_exp_multiplier=0.05, wait_exp_max=1.0):
     if timeout is None:
@@ -65,7 +66,7 @@ def retry_get_tasks(apply_func, retry_if, timeout=60,
     wait = wait_chain(wait_fixed(0.05),
                       wait_fixed(0.1) + wait_random_exponential(multiplier=wait_exp_multiplier,
                                                                 max=min(timeout, wait_exp_max)))
-    return retry(apply_func, retry_if, wait, stop)
+    return retry(apply_func, retry_if, wait, stop, retry_error_cls=TaskRetryError)
 
 
 class Task(ListableResource, Resource):
@@ -84,28 +85,27 @@ class Task(ListableResource, Resource):
         """
         try:
             retry_get_tasks(self._refresh_status,
+                            retry_if_exception_type(HTTPRetryError) |
                             retry_if_result(is_pending_status),
                             **retry_kwargs)
-        except RetryError:
-            raise TaskTimeout(self.data())
+        except TaskRetryError as retry_error:
+            raise TaskTimeout(self._data, retry_error)
 
-        if is_error_status(self['status']):
-            raise TaskError(self.data())
+        if is_error_status(self._data['status']):
+            raise TaskError(self._data)
 
         return self
 
     def _refresh_status(self):
         logger.debug("Refreshing Task {}".format(self))
-        warn_on_http_retry_error(self.refresh, suffix="Retrying until Task.wait timeouts.")
+        warn_on_http_retry_error(self.refresh, suffix="Retrying until Task.wait timeouts.", reraise=True)
         return self['status']
 
     def _refresh_tasks_status(self, pending_tasks, success_tasks, error_tasks, positions):
         logger.debug("Refreshing batch of Task {}".format(pending_tasks))
         task_ids = [task.pk for idx, task in pending_tasks]
         functor = functools.partial(self.list, task_ids=task_ids)
-        refreshed_tasks = warn_on_http_retry_error(functor, suffix="Retrying until Task.batch_wait timeouts.")
-        if refreshed_tasks is None:
-            return pending_tasks
+        refreshed_tasks = warn_on_http_retry_error(functor, suffix="Retrying until Task.batch_wait timeouts.", reraise=True)
 
         pending_tasks[:] = []  # clear the list (we have to keep the reference)
         for task in refreshed_tasks:

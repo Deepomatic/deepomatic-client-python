@@ -1,6 +1,7 @@
 import functools
 
 from deepomatic.api import utils
+from deepomatic.api.exceptions import HTTPRetryError
 from requests.exceptions import (ProxyError, RequestException,
                                  TooManyRedirects, URLRequired)
 from tenacity import (retry_if_exception, retry_if_result, stop_after_delay,
@@ -80,7 +81,7 @@ class HTTPRetry(object):
                                    wait_fixed(0.1) + random_wait)
 
     def retry(self, functor):
-        return utils.retry(functor, self.retry_if, self.wait, self.stop)
+        return utils.retry(functor, self.retry_if, self.wait, self.stop, retry_error_cls=HTTPRetryError)
 
     def retry_if_status_code(self, response):
         return response.status_code in self.retry_status_code

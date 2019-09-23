@@ -23,13 +23,15 @@ THE SOFTWARE.
 """
 
 import json
+from tenacity import RetryError
 
 
 ###############################################################################
 
 class DeepomaticException(Exception):
-    def __init__(self, msg):
-        super(DeepomaticException, self).__init__(msg)
+    pass
+    # def __init__(self, msg):
+    #     super(DeepomaticException, self).__init__(msg)
 
 
 ###############################################################################
@@ -83,11 +85,23 @@ class TaskError(DeepomaticException):
 ###############################################################################
 
 class TaskTimeout(DeepomaticException):
-    def __init__(self, task):
+    def __init__(self, task, retry_error=None):
         self.task = task
+        self.retry_error = retry_error
 
     def __str__(self):
         return "Timeout on task:\n{}".format(json.dumps(self.task))
 
     def get_task_id(self):
         return self.task['id']
+
+
+###############################################################################
+
+
+class HTTPRetryError(RetryError):
+    pass
+
+
+class TaskRetryError(RetryError):
+    pass
