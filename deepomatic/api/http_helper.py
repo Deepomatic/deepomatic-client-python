@@ -53,8 +53,17 @@ class HTTPHelper(object):
                  user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
                  requests_timeout=RequestsTimeout.FAST, **kwargs):
         """
-        Init the HTTP helper with API key and secret
+        Init the HTTP helper with API key and secret.
+        Check out `client.Client` documentation for more details about the parameters.
         """
+
+        try:
+            self.http_retry = kwargs.pop('http_retry')
+        except KeyError:
+            self.http_retry = HTTPRetry()
+
+        self.requests_timeout = requests_timeout
+
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
@@ -65,13 +74,6 @@ class HTTPHelper(object):
             api_key = os.getenv('DEEPOMATIC_API_KEY')
         if app_id is None or api_key is None:
             raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
-
-        try:
-            self.http_retry = kwargs.pop('http_retry')
-        except KeyError:
-            self.http_retry = HTTPRetry()
-
-        self.requests_timeout = requests_timeout
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
