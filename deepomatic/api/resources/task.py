@@ -99,7 +99,7 @@ class Task(ListableResource, Resource):
     def _refresh_status(self):
         logger.debug("Refreshing Task {}".format(self))
         warn_on_http_retry_error(self.refresh, suffix="Retrying until Task.wait timeouts.", reraise=True)
-        return self['status']
+        return self._data['status']
 
     def _refresh_tasks_status(self, pending_tasks, success_tasks, error_tasks, positions):
         logger.debug("Refreshing batch of Task {}".format(pending_tasks))
