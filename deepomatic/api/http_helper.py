@@ -54,7 +54,7 @@ class HTTPHelper(object):
                  requests_timeout=RequestsTimeout.FAST, **kwargs):
         """
         Init the HTTP helper with API key and secret.
-        Check out `client.Client` documentation for more details about the parameters.
+        Check out the `client.Client` documentation for more details about the parameters.
         """
 
         try:
