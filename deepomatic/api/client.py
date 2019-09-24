@@ -62,10 +62,12 @@ class Client(object):
                Defaults to 20.
            :type pool_maxsize: int
            :param requests_timeout: timeout of each request.
-               Defaults to http_helper.RequestsTimeout.FAST.
+               Defaults to `http_helper.RequestsTimeout.FAST`.
                More details in the `requests` documentation: https://2.python-requests.org//en/master/user/advanced/#timeouts
            :type requests_timeout: float or tuple(float, float)
            :param http_retry (optional): Customize the retry of http errors.
+               Defaults to `HTTPRetry()`. Check out `http_retry.HTTPRetry` documentation for more information about the parameters and default values.
+               If None, no retry will be done on errors.
            :type http_retry: http_retry.HTTPRetry
 
            :return: :class:`Client` object
