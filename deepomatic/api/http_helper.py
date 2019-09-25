@@ -29,7 +29,8 @@ import platform
 import sys
 
 import requests
-from deepomatic.api.exceptions import BadStatus, DeepomaticException
+from deepomatic.api.exceptions import (BadStatus, ServerError,
+                                       ClientError, DeepomaticException)
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.version import __title__, __version__
 from requests.structures import CaseInsensitiveDict
