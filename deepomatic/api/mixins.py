@@ -25,6 +25,7 @@ THE SOFTWARE.
 from deepomatic.api.exceptions import DeepomaticException
 from deepomatic.api.resource import ResourceList
 
+
 ###############################################################################
 
 class Arg(object):

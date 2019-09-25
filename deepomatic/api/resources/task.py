@@ -31,7 +31,7 @@ from deepomatic.api.mixins import ListableResource
 from deepomatic.api.resource import Resource
 from deepomatic.api.utils import retry, warn_on_http_retry_error
 from tenacity import (RetryError, retry_if_exception_type, retry_if_result,
-                      stop_after_delay, wait_chain, wait_fixed,
+                      stop_after_delay, wait_chain, wait_fixed, stop_never,
                       wait_random_exponential)
 
 logger = logging.getLogger(__name__)

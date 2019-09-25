@@ -312,7 +312,7 @@ class TestClientRetry(object):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
         start_time = time.time()
         with pytest.raises(RetryError) as exc:
-            print(spec.data()) # does make a http call
+            print(spec.data())  # does make a http call
 
         diff = time.time() - start_time
         assert diff > timeout and diff < timeout + HTTPRetry.Default.RETRY_EXP_MAX
@@ -323,7 +323,7 @@ class TestClientRetry(object):
     def test_retry_network_failure(self):
         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
         client = get_client(host='http://unknown-domain.com',
-                        http_retry=http_retry)
+                            http_retry=http_retry)
         last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
                                                           self.DEFAULT_MIN_ATTEMPT_NUMBER)
         exc = last_attempt.exception(timeout=0)

@@ -25,8 +25,7 @@ THE SOFTWARE.
 import logging
 
 from deepomatic.api.exceptions import HTTPRetryError
-from tenacity import (RetryError, Retrying, after_log, before_log,
-                      stop_after_delay, stop_never, wait_random_exponential)
+from tenacity import (Retrying, after_log, before_log)
 
 logger = logging.getLogger(__name__)
 
