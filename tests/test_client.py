@@ -14,7 +14,7 @@ import pytest
 import requests
 import six
 from deepomatic.api.client import Client
-from deepomatic.api.exceptions import BadStatus, TaskTimeout, HTTPRetryError, TaskRetryError
+from deepomatic.api.exceptions import ServerError, TaskTimeout, HTTPRetryError, TaskRetryError
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
@@ -355,7 +355,7 @@ class TestClientRetry(object):
         client = self.get_client_with_retry()
         # Creating network doesn't retry, we directly get a 502
         t = time.time()
-        with pytest.raises(BadStatus) as exc:
+        with pytest.raises(ServerError) as exc:
             client.Network.create(name="My first network",
                                   framework='tensorflow-1.x',
                                   preprocessing=["useless"],

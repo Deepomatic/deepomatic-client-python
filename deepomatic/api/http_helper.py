@@ -254,11 +254,17 @@ class HTTPHelper(object):
         for file in opened_files:
             file.close()
 
-        if response.status_code == 204:  # delete
+        status_code = response.status_code
+        if status_code == 204:  # delete
             return None
 
-        if response.status_code < 200 or response.status_code >= 300:
-            raise BadStatus(response)
+        if status_code < 200 or status_code >= 300:
+            if status_code >= 400 and status_code < 500:
+                raise ClientError(response)
+            elif status_code >= 500 and status_code < 600:
+                raise ServerError(response)
+            else:
+                raise BadStatus(response)
 
         if stream:
             # we asked for a stream, we let the user download it as he wants or it will load everything in RAM

@@ -68,6 +68,14 @@ class BadStatus(DeepomaticException):
         return "Bad status code %s with body %s" % (self.response.status_code, self.response.content)
 
 
+class ClientError(BadStatus):
+    pass
+
+
+class ServerError(BadStatus):
+    pass
+
+
 ###############################################################################
 
 class TaskError(DeepomaticException):
