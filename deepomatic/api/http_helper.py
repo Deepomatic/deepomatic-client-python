@@ -95,13 +95,18 @@ class HTTPHelper(object):
             'platform': platform.platform()
         }
 
-        if user_agent_prefix:
-            self.user_agent = user_agent_prefix + ' '
-        else:
-            self.user_agent = ''
+        user_agent_list = []
 
-        self.user_agent += '{package_title}-python-client/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
-            '.format(**user_agent_params)
+        if user_agent_prefix:
+            user_agent_list.append(user_agent_prefix)
+
+        user_agent_list += [
+            '{package_title}-python-client/{package_version}',
+            'requests/{requests_version}',
+            'python/{python_version} platform/{platform}',
+        ]
+
+        self.user_agent = ' '.join(user_agent_list).format(**user_agent_params)
 
         self.api_key = str(api_key)
         self.app_id = str(app_id)
