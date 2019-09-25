@@ -1,24 +1,35 @@
-import os
 import base64
-import tarfile
-import pytest
-import tempfile
+import functools
 import hashlib
-import shutil
-import requests
-import zipfile
-from deepomatic.api.version import __title__, __version__
-from deepomatic.api.client import Client
-from deepomatic.api.inputs import ImageInput
-from pytest_voluptuous import S
-from voluptuous.validators import All, Length, Any
-import six
-
 import logging
+import os
+import re
+import shutil
+import tempfile
+import time
+import zipfile
+
+import httpretty
+import pytest
+import requests
+import six
+from deepomatic.api.client import Client
+from deepomatic.api.exceptions import BadStatus, TaskTimeout, HTTPRetryError, TaskRetryError
+from deepomatic.api.http_retry import HTTPRetry
+from deepomatic.api.inputs import ImageInput
+from deepomatic.api.version import __title__, __version__
+from requests.exceptions import ConnectionError, MissingSchema
+from tenacity import RetryError, stop_after_delay
+
+from pytest_voluptuous import S
+from voluptuous.validators import All, Any, Length
+
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 logger = logging.getLogger(__name__)
 
 DEMO_URL = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+
+USER_AGENT_PREFIX = '{}-tests/{}'.format(__title__, __version__)
 
 
 def ExactLen(nb):
@@ -39,12 +50,13 @@ def download_file(url):
     return filename
 
 
+def get_client(*args, **kwargs):
+    return Client(*args, user_agent_prefix=USER_AGENT_PREFIX, **kwargs)
+
+
 @pytest.fixture(scope='session')
 def client():
-    api_host = os.getenv('DEEPOMATIC_API_URL')
-    app_id = os.environ['DEEPOMATIC_APP_ID']
-    api_key = os.environ['DEEPOMATIC_API_KEY']
-    yield Client(app_id, api_key, host=api_host, user_agent_prefix='{}-tests/{}'.format(__title__, __version__))
+    yield get_client()
 
 
 @pytest.fixture(scope='session')
@@ -286,3 +298,103 @@ class TestClient(object):
         for pos, success in success_tasks:
             assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
+
+
+class TestClientRetry(object):
+    DEFAULT_TIMEOUT = 2
+    DEFAULT_MIN_ATTEMPT_NUMBER = 3
+
+    def get_client_with_retry(self):
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        return get_client(http_retry=http_retry)
+
+    def send_request_and_expect_retry(self, client, timeout, min_attempt_number):
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
+        start_time = time.time()
+        with pytest.raises(RetryError) as exc:
+            print(spec.data())  # does make a http call
+
+        diff = time.time() - start_time
+        assert diff > timeout and diff < timeout + HTTPRetry.Default.RETRY_EXP_MAX
+        last_attempt = exc.value.last_attempt
+        assert last_attempt.attempt_number >= min_attempt_number
+        return last_attempt
+
+    def test_retry_network_failure(self):
+        http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
+        client = get_client(host='http://unknown-domain.com',
+                            http_retry=http_retry)
+        last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
+                                                          self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        exc = last_attempt.exception(timeout=0)
+        assert isinstance(exc, ConnectionError)
+        assert 'Name or service not known' in str(exc)
+
+    def register_uri(self, methods, status):
+        for method in methods:
+            httpretty.register_uri(
+                method,
+                re.compile(r'https?://.*'),
+                status=502,
+                content_type="application/json"
+            )
+
+    @httpretty.activate
+    def test_retry_bad_http_status(self):
+        self.register_uri([httpretty.GET, httpretty.POST], 502)
+        client = self.get_client_with_retry()
+        last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
+                                                          self.DEFAULT_MIN_ATTEMPT_NUMBER)
+        assert last_attempt.exception(timeout=0) is None  # no exception raised during retry
+        last_response = last_attempt.result()
+        assert 502 == last_response.status_code
+
+    @httpretty.activate
+    def test_no_retry_create_network(self):
+        self.register_uri([httpretty.GET, httpretty.POST], 502)
+        client = self.get_client_with_retry()
+        # Creating network doesn't retry, we directly get a 502
+        t = time.time()
+        with pytest.raises(BadStatus) as exc:
+            client.Network.create(name="My first network",
+                                  framework='tensorflow-1.x',
+                                  preprocessing=["useless"],
+                                  files=["useless"])
+            assert 502 == exc.status_code
+        assert time.time() - t < 0.3
+
+    def test_retry_task_with_http_errors(self):
+        # We create two clients on purpose because of a bug in httpretty
+        # https://github.com/gabrielfalcao/HTTPretty/issues/381
+        # Also this allow us to test a simple requests with no retryer
+
+        client = get_client(http_retry=None)
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
+        task = spec.inference(inputs=[ImageInput(DEMO_URL)], return_task=True, wait_task=False)
+
+        client = self.get_client_with_retry()
+        with httpretty.enabled():
+            task = client.Task.retrieve(task.pk)
+            httpretty.register_uri(
+                httpretty.GET,
+                re.compile(r'https?://.*?/tasks/\d+/?'),
+                status=502,
+            )
+
+            with pytest.raises(TaskTimeout) as task_timeout:
+                task.wait(timeout=5)
+
+            # Test nested retry errors
+            # TaskRetryError has been raised because of too many HTTPRetryError
+            # (couldn't refresh the status once)
+            retry_error = task_timeout.value.retry_error
+            assert isinstance(retry_error, TaskRetryError)
+            last_exception = retry_error.last_attempt.exception(timeout=0)
+            assert isinstance(last_exception, HTTPRetryError)
+            assert 502 == last_exception.last_attempt.result().status_code
+
+    def test_no_retry_blacklist_exception(self):
+        client = self.get_client_with_retry()
+        # check that there is no retry on exceptions from DEFAULT_RETRY_EXCEPTION_TYPES_BLACKLIST
+        with pytest.raises(MissingSchema):
+            client.http_helper.http_retry.retry(functools.partial(requests.get, ''))

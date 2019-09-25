@@ -22,31 +22,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from deepomatic.api.exceptions import DeepomaticException
-from deepomatic.api.resources.task import Task
-from deepomatic.api.inputs import format_inputs
+import logging
+
+from deepomatic.api.exceptions import HTTPRetryError
+from tenacity import (Retrying, after_log, before_log)
+
+logger = logging.getLogger(__name__)
 
 
-###############################################################################
+def retry(apply_func, retry_if, wait, stop, **kwargs):
+    retryer = Retrying(retry=retry_if,
+                       wait=wait,
+                       stop=stop,
+                       before=before_log(logger, logging.DEBUG),
+                       after=after_log(logger, logging.DEBUG),
+                       **kwargs)
+    return retryer(apply_func)
 
-class InferenceResource(object):
-    def inference(self, return_task=False, wait_task=True, **kwargs):
-        assert(self._pk is not None)
 
-        inputs = kwargs.pop('inputs', None)
-        if inputs is None:
-            raise DeepomaticException("Missing keyword argument: inputs")
-        content_type, data, files = format_inputs(inputs, kwargs)
-        result = self._helper.post(self._uri(pk=self._pk, suffix='/inference'), content_type=content_type, data=data, files=files)
-        task_id = result['task_id']
-        task = Task(self._helper, pk=task_id)
-        if wait_task:
-            task.wait()
-
-        if return_task:
-            return task
+def warn_on_http_retry_error(http_func, suffix='', reraise=True):
+    # http helper can raise a HTTPRetryError
+    try:
+        # this should be an http_helper call
+        return http_func()
+    except HTTPRetryError as e:
+        last_attempt = e.last_attempt
+        last_exception = last_attempt.exception(timeout=0)
+        msg = "HTTPHelper failed to refresh task status. In the last attempt, "
+        if last_exception is None:
+            last_response = last_attempt.result()
+            msg += 'the status code was {}.'.format(last_response.status_code)
         else:
-            return task['data']
-
-
-###############################################################################
+            msg += 'an exception occured: {}.'.format(last_exception)
+        if suffix:
+            msg += ' ' + suffix
+        logger.warning(msg)
+        if reraise:
+            raise
+        return None

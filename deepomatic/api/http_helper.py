@@ -22,16 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import os
+import functools
 import json
-import requests
-import sys
+import os
 import platform
+import sys
+
+import requests
+from deepomatic.api.exceptions import BadStatus, DeepomaticException
+from deepomatic.api.http_retry import HTTPRetry
+from deepomatic.api.version import __title__, __version__
 from requests.structures import CaseInsensitiveDict
 from six import string_types
-
-from deepomatic.api.exceptions import DeepomaticException, BadStatus
-from deepomatic.api.version import __title__, __version__
 
 API_HOST = 'https://api.deepomatic.com'
 API_VERSION = 0.7
@@ -39,11 +41,31 @@ API_VERSION = 0.7
 ###############################################################################
 
 
+class RequestsTimeout(object):
+    FAST = (3.05, 10.)
+    MEDIUM = (3.05, 60.)
+    SLOW = (3.05, 600.)
+
+
 class HTTPHelper(object):
-    def __init__(self, app_id=None, api_key=None, verify_ssl=None, host=None, version=API_VERSION, check_query_parameters=True, user_agent_prefix='', user_agent_suffix='', pool_maxsize=20):
+    def __init__(self, app_id=None, api_key=None, verify_ssl=None,
+                 host=None, version=API_VERSION, check_query_parameters=True,
+                 user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
+                 requests_timeout=RequestsTimeout.FAST, **kwargs):
         """
-        Init the HTTP helper with API key and secret
+        Init the HTTP helper with API key and secret.
+        Check out the `client.Client` documentation for more details about the parameters.
         """
+
+        # `http_retry` is retrieved from `kwargs` because a default parameter `http_retry=HTTPRetry()` is dangerous
+        # If the rest of the code mutates `self.http_retry`, it would change the default parameter for all other `Client` instances
+        self.http_retry = kwargs.pop('http_retry', HTTPRetry())
+
+        if len(kwargs) > 0:
+            raise TypeError("Too many parameters. HTTPRetry does not handle kwargs: {}".format(kwargs))
+
+        self.requests_timeout = requests_timeout
+
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
@@ -157,7 +179,25 @@ class HTTPHelper(object):
 
         return new_dict
 
-    def make_request(self, func, resource, params=None, data=None, content_type='application/json', files=None, stream=False, *args, **kwargs):
+    def send_request(self, requests_callable, *args, **kwargs):
+        # requests_callable must be a method from the requests module
+
+        # this is the timeout of requests module
+        requests_timeout = kwargs.pop('timeout', self.requests_timeout)
+        http_retry = kwargs.pop('http_retry', self.http_retry)
+
+        functor = functools.partial(requests_callable, *args,
+                                    verify=self.verify,
+                                    timeout=requests_timeout, **kwargs)
+
+        if http_retry is not None:
+            return http_retry.retry(functor)
+
+        return functor()
+
+    def make_request(self, func, resource, params=None, data=None,
+                     content_type='application/json', files=None,
+                     stream=False, *args, **kwargs):
 
         if content_type is not None:
             if content_type.strip() == 'application/json':
@@ -204,7 +244,11 @@ class HTTPHelper(object):
 
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
-        response = func(resource, params=params, data=data, files=files, headers=headers, verify=self.verify, stream=stream, *args, **kwargs)
+
+        response = self.send_request(func, resource, *args,
+                                     params=params, data=data,
+                                     files=files, headers=headers,
+                                     stream=stream, **kwargs)
 
         # Close opened files
         for file in opened_files:

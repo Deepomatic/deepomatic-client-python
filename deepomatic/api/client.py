@@ -23,10 +23,11 @@ THE SOFTWARE.
 """
 
 from deepomatic.api.http_helper import HTTPHelper
-from deepomatic.api.resources.network import Network
-from deepomatic.api.resources.recognition import RecognitionSpec, RecognitionVersion
-from deepomatic.api.resources.task import Task
 from deepomatic.api.resources.account import Account
+from deepomatic.api.resources.network import Network
+from deepomatic.api.resources.recognition import (RecognitionSpec,
+                                                  RecognitionVersion)
+from deepomatic.api.resources.task import Task
 
 
 class Client(object):
@@ -44,7 +45,7 @@ class Client(object):
                If it fails raise a `DeepomaticException`.
            :type api_key: string
            :param verify_ssl (optional): whether to ask `requests` to verify the TLS/SSL certificates.
-               Defaults to `None`. 
+               Defaults to `None`.
                If `None` try to get it from the `DEEPOMATIC_API_VERIFY_TLS` environment variable (`0`: False, `1`: True).
                If not found it is set to True.
            :type verify_ssl: bool
@@ -60,6 +61,14 @@ class Client(object):
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
            :type pool_maxsize: int
+           :param requests_timeout: timeout of each request.
+               Defaults to `http_helper.RequestsTimeout.FAST`.
+               More details in the `requests` documentation: https://2.python-requests.org/en/master/user/advanced/#timeouts
+           :type requests_timeout: float or tuple(float, float)
+           :param http_retry (optional): Customize the retry of http errors.
+               Defaults to `HTTPRetry()`. Check out `http_retry.HTTPRetry` documentation for more information about the parameters and default values.
+               If `None`, no retry will be done on errors.
+           :type http_retry: http_retry.HTTPRetry
 
            :return: :class:`Client` object
            :rtype: deepomatic.api.client.Client
