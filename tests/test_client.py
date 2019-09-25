@@ -14,7 +14,7 @@ import pytest
 import requests
 import six
 from deepomatic.api.client import Client
-from deepomatic.api.exceptions import ServerError, TaskTimeout, HTTPRetryError, TaskRetryError
+from deepomatic.api.exceptions import ServerError, ClientError, TaskTimeout, HTTPRetryError, TaskRetryError
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
@@ -299,11 +299,13 @@ class TestClient(object):
             assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
 
-    def test_client_error(self):
+    def test_client_error(self, client):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
         with pytest.raises(ClientError) as exc:
-            spec.inference(inputs=[ImageInput("")])
-            assert 400 == exc.status_code
+            spec.inference(inputs=[])
+
+        assert 400 == exc.value.status_code
+        assert 'error' in exc.value.json()
 
 
 class TestClientRetry(object):
@@ -366,7 +368,7 @@ class TestClientRetry(object):
                                   framework='tensorflow-1.x',
                                   preprocessing=["useless"],
                                   files=["useless"])
-            assert 502 == exc.status_code
+        assert 502 == exc.value.status_code
         assert time.time() - t < 0.3
 
     def test_retry_task_with_http_errors(self):

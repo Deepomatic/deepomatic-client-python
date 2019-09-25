@@ -50,6 +50,9 @@ class NoData(DeepomaticException):
 ###############################################################################
 
 class BadStatus(DeepomaticException):
+    """
+    Thrown when HTTP response status_code < 200 or status_code >= 300.
+    """
     def __init__(self, response):
         self.response = response
 
@@ -69,10 +72,18 @@ class BadStatus(DeepomaticException):
 
 
 class ClientError(BadStatus):
+    """
+    Thrown when HTTP response status_code is a 4xx.
+    The client sent a bad request.
+    """
     pass
 
 
 class ServerError(BadStatus):
+    """
+    Thrown when HTTP response status_code is a 5xx.
+    The request seems to be valid but the server couldn't handle it for some reason.
+    """
     pass
 
 
