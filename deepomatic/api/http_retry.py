@@ -1,5 +1,3 @@
-import functools
-
 from deepomatic.api import utils
 from deepomatic.api.exceptions import HTTPRetryError
 from requests.exceptions import (ProxyError, RequestException,
@@ -12,8 +10,8 @@ class retry_if_exception_type(retry_if_exception):
     # Taken from https://github.com/jd/tenacity/blob/2775f13b34b3ec67a774061a77fcd4e1e9b4157c/tenacity/retry.py#L72
     # Extented to support blacklist types
     def __predicate(self, e):
-        return (isinstance(e, self.exception_types) and
-                not isinstance(e, self.exception_types_blacklist))
+        return (isinstance(e, self.exception_types)
+                and not isinstance(e, self.exception_types_blacklist))
 
     def __init__(self, exception_types=Exception,
                  exception_types_blacklist=()):
@@ -46,7 +44,9 @@ class HTTPRetry(object):
                               wait_fixed(0.1) + random_wait)
                ```
             :type wait: tenacity.wait_base
-            :param stop (optional). Tell when to stop retrying. By default it stops retrying after a delay of 60 seconds. A last retry can be done just before this delay is reached, thus the total amount of elapsed time might be a bit higher. More details in tenacity source code https://github.com/jd/tenacity/blob/5.1.1/tenacity/stop.py
+            :param stop (optional). Tell when to stop retrying. By default it stops retrying after a delay of 60 seconds.
+                A last retry can be done just before this delay is reached, thus the total amount of elapsed time might be a bit higher.
+                More details in tenacity source code https://github.com/jd/tenacity/blob/5.1.1/tenacity/stop.py
                 Raises tenacity.RetryError when timeout is reached.
             :type timeout: tenacity.stop_base
     """
@@ -69,9 +69,9 @@ class HTTPRetry(object):
 
         if self.retry_if is None:
             self.retry_status_code = set(HTTPRetry.Default.RETRY_STATUS_CODES)
-            self.retry_if = (retry_if_result(self.retry_if_status_code) |
-                             retry_if_exception_type(HTTPRetry.Default.RETRY_EXCEPTION_TYPES,
-                                                     HTTPRetry.Default.RETRY_EXCEPTION_TYPES_BLACKLIST))
+            self.retry_if = (retry_if_result(self.retry_if_status_code)
+                             | retry_if_exception_type(HTTPRetry.Default.RETRY_EXCEPTION_TYPES,
+                                                       HTTPRetry.Default.RETRY_EXCEPTION_TYPES_BLACKLIST))
 
         if self.wait is None:
             random_wait = wait_random_exponential(multiplier=HTTPRetry.Default.RETRY_EXP_MULTIPLIER,

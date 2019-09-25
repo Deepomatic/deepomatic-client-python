@@ -85,8 +85,8 @@ class Task(ListableResource, Resource):
         """
         try:
             retry_get_tasks(self._refresh_status,
-                            retry_if_exception_type(HTTPRetryError) |
-                            retry_if_result(is_pending_status),
+                            retry_if_exception_type(HTTPRetryError)
+                            | retry_if_result(is_pending_status),
                             **retry_kwargs)
         except TaskRetryError as retry_error:
             raise TaskTimeout(self._data, retry_error)

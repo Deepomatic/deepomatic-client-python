@@ -60,7 +60,8 @@ class AbstractInput(object):
         is_file = hasattr(source, 'read')
         is_raw = False
         if not is_file:
-            is_raw = (sys.version_info >= (3, 0) and isinstance(source, bytes)) or not any([source.startswith(p) for p in self.supported_protocols])
+            is_raw = ((sys.version_info >= (3, 0) and isinstance(source, bytes))
+                      or not any([source.startswith(p) for p in self.supported_protocols]))
             if is_raw:
                 if encoding is None:
                     raise DeepomaticException("You must specify 'encoding' when passing raw data")

@@ -64,7 +64,7 @@ class Client(object):
                More details in the `requests` documentation: https://2.python-requests.org/en/master/user/advanced/#timeouts
            :type requests_timeout: float or tuple(float, float)
            :param http_retry (optional): Customize the retry of http errors.
-               Defaults to `HTTPRetry()`. Check out `http_retry.HTTPRetry` documentation for more information about the parameters and default values.
+               Defaults to `HTTPRetry()`. See `http_retry.HTTPRetry` documentation for details about parameters and default values.
                If `None`, no retry will be done on errors.
            :type http_retry: http_retry.HTTPRetry
 
