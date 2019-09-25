@@ -57,10 +57,10 @@ class HTTPHelper(object):
         Check out the `client.Client` documentation for more details about the parameters.
         """
 
-        try:
-            self.http_retry = kwargs.pop('http_retry')
-        except KeyError:
-            self.http_retry = HTTPRetry()
+        self.http_retry = kwargs.pop('http_retry', HTTPRetry())
+
+        if len(kwargs) > 0:
+            raise TypeError("Too many parameters. HTTPRetry does not handle kwargs: {}".format(kwargs))
 
         self.requests_timeout = requests_timeout
 
@@ -179,16 +179,10 @@ class HTTPHelper(object):
 
     def send_request(self, requests_callable, *args, **kwargs):
         # requests_callable must be a method from the requests module
-        try:
-            # this is the timeout of requests module
-            requests_timeout = kwargs.pop('timeout')
-        except KeyError:
-            requests_timeout = self.requests_timeout
 
-        try:
-            http_retry = kwargs.pop('http_retry')
-        except KeyError:
-            http_retry = self.http_retry
+        # this is the timeout of requests module
+        requests_timeout = kwargs.pop('timeout', self.requests_timeout)
+        http_retry = kwargs.pop('http_retry', self.http_retry)
 
         functor = functools.partial(requests_callable, *args,
                                     verify=self.verify,

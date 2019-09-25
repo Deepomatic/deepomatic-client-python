@@ -69,7 +69,7 @@ class Network(ListableResource,
             return result
 
     def create(self, *args, **kwargs):
-        # No retry on network create by default as this is an heavy request
+        # No retry on Network.create() errors by default as this is a large request
         kwargs['http_retry'] = kwargs.get('http_retry', None)
         kwargs['timeout'] = kwargs.get('timeout', RequestsTimeout.SLOW)
         return super(Network, self).create(*args, **kwargs)
