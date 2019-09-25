@@ -57,6 +57,8 @@ class HTTPHelper(object):
         Check out the `client.Client` documentation for more details about the parameters.
         """
 
+        # `http_retry` is retrieved from `kwargs` because a default parameter `http_retry=HTTPRetry()` is dangerous
+        # If the rest of the code mutates `self.http_retry`, it would change the default parameter for all other `Client` instances
         self.http_retry = kwargs.pop('http_retry', HTTPRetry())
 
         if len(kwargs) > 0:
