@@ -67,7 +67,7 @@ class Client(object):
            :type requests_timeout: float or tuple(float, float)
            :param http_retry (optional): Customize the retry of http errors.
                Defaults to `HTTPRetry()`. Check out `http_retry.HTTPRetry` documentation for more information about the parameters and default values.
-               If None, no retry will be done on errors.
+               If `None`, no retry will be done on errors.
            :type http_retry: http_retry.HTTPRetry
 
            :return: :class:`Client` object
