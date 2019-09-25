@@ -54,6 +54,7 @@ class Client(object):
            :param version (optional): API version.
            :type version: string
            :param user_agent_prefix (optional): Prefix the HTTP User-Agent.
+               It is recommended to declare your client via this parameter. Example: 'my-app/1.0.0'.
            :type user_agent_prefix: string
            :param pool_maxsize (optional): Set `requests.adapters.HTTPAdapter.pool_maxsize` for concurrent calls.
                Defaults to 20.
