@@ -299,6 +299,12 @@ class TestClient(object):
             assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
 
+    def test_client_error(self):
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
+        with pytest.raises(ClientError) as exc:
+            spec.inference(inputs=[ImageInput("")])
+            assert 400 == exc.status_code
+
 
 class TestClientRetry(object):
     DEFAULT_TIMEOUT = 2
