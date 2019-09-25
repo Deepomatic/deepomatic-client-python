@@ -50,7 +50,7 @@ class RequestsTimeout(object):
 class HTTPHelper(object):
     def __init__(self, app_id=None, api_key=None, verify_ssl=None,
                  host=None, version=API_VERSION, check_query_parameters=True,
-                 user_agent_prefix='', user_agent_suffix='', pool_maxsize=20,
+                 user_agent_prefix='', pool_maxsize=20,
                  requests_timeout=RequestsTimeout.FAST, **kwargs):
         """
         Init the HTTP helper with API key and secret.
@@ -95,16 +95,18 @@ class HTTPHelper(object):
             'platform': platform.platform()
         }
 
+        user_agent_list = []
+
         if user_agent_prefix:
-            self.user_agent = user_agent_prefix + ' '
-        else:
-            self.user_agent = ''
+            user_agent_list.append(user_agent_prefix)
 
-        self.user_agent += '{package_title}-python-client/{package_version} requests/{requests_version} python/{python_version} platform/{platform}\
-            '.format(**user_agent_params)
+        user_agent_list += [
+            '{package_title}-python-client/{package_version}',
+            'requests/{requests_version}',
+            'python/{python_version} platform/{platform}',
+        ]
 
-        if user_agent_suffix:
-            self.user_agent += ' ' + user_agent_suffix
+        self.user_agent = ' '.join(user_agent_list).format(**user_agent_params)
 
         self.api_key = str(api_key)
         self.app_id = str(app_id)
