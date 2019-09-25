@@ -4,6 +4,8 @@ FROM ${BASE_IMAGE} as builder
 
 WORKDIR /app
 COPY . .
+# lint check
+RUN flake8 --statistics --verbose
 RUN python setup.py bdist_wheel
 
 
