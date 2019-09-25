@@ -42,10 +42,10 @@ class RecognitionSpec(ListableResource,
     This is an helper to manipulate a 'Recognition Specification' object.
     """
     object_template = {
-        'name':        RequiredArg(),
+        'name': RequiredArg(),
         'description': OptionnalArg(),
-        'metadata':    OptionnalArg(),
-        'outputs':     ImmutableArg(),
+        'metadata': OptionnalArg(),
+        'outputs': ImmutableArg(),
         'current_version_id': UpdateOnlyArg()
     }
 
@@ -72,7 +72,7 @@ class RecognitionVersion(CreateableResource,
     base_uri = '/recognition/versions/'
 
     object_template = {
-        'spec_id':          RequiredArg(),
-        'network_id':       RequiredArg(),
+        'spec_id': RequiredArg(),
+        'network_id': RequiredArg(),
         'post_processings': RequiredArg(),
     }

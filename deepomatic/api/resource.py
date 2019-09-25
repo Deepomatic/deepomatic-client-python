@@ -108,6 +108,7 @@ class ResourceList(Resource):
     """
     This is an helper to access a resource list.
     """
+
     def __init__(self, resource_class, helper, uri, offset=None, limit=None, **kwargs):
         params = copy.deepcopy(kwargs)
         if offset is not None:

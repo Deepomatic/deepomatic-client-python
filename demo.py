@@ -280,7 +280,9 @@ def demo(client=None):
     logger.info(result)
 
     print_header("Run inference on specific version with a bounding box")
-    result = version.inference(inputs=[ImageInput(demo_url, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
+    result = version.inference(inputs=[ImageInput(demo_url, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})],
+                               show_discarded=True,
+                               max_predictions=3)
     logger.info(result)
 
     """

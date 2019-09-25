@@ -75,7 +75,8 @@ class HTTPHelper(object):
         if api_key is None:
             api_key = os.getenv('DEEPOMATIC_API_KEY')
         if app_id is None or api_key is None:
-            raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
+            raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client"
+                                      " or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
 
         if not isinstance(version, string_types):
             version = 'v%g' % version

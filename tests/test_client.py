@@ -75,8 +75,8 @@ def custom_network(client):
 
     model_file = os.path.join(extract_dir, model_file_name)
     mean_file = os.path.join(extract_dir, mean_file_name)
-    variables_file = os.path.join(extract_dir+'/variables/', variables_file_name)
-    variables_data_file = os.path.join(extract_dir+'/variables/', variables_data_file_name)
+    variables_file = os.path.join(extract_dir + '/variables/', variables_file_name)
+    variables_data_file = os.path.join(extract_dir + '/variables/', variables_data_file_name)
 
     if not os.path.exists(model_file):
         with zipfile.ZipFile(net_zip) as f:
@@ -170,7 +170,8 @@ class TestClient(object):
     def test_headers(self, client):
         http_helper = client.http_helper
         session_headers = http_helper.session.headers
-        assert session_headers['User-Agent'].startswith('{}-tests/{} {}-python-client/{}'.format(__title__, __version__, __title__, __version__))
+        assert session_headers['User-Agent'].startswith(
+            '{}-tests/{} {}-python-client/{}'.format(__title__, __version__, __title__, __version__))
         assert 'platform/' in session_headers['User-Agent']
         assert 'python/' in session_headers['User-Agent']
         assert session_headers['X-APP-ID']
@@ -254,7 +255,9 @@ class TestClient(object):
         result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=False, max_predictions=3)
         assert inference_schema(2, 0, 'golden retriever', 0.8) == result
 
-        result = version.inference(inputs=[ImageInput(DEMO_URL, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})], show_discarded=True, max_predictions=3)
+        result = version.inference(inputs=[ImageInput(DEMO_URL, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})],
+                                   show_discarded=True,
+                                   max_predictions=3)
         assert inference_schema(3, 0, 'golden retriever', 0.5) == result
 
         versions = spec.versions()

@@ -45,10 +45,10 @@ class Network(ListableResource,
     This is an helper to manipulate a 'Network' object.
     """
     object_template = {
-        'name':          RequiredArg(),
-        'description':   OptionnalArg(),
-        'metadata':      OptionnalArg(),
-        'framework':     ImmutableArg(),
+        'name': RequiredArg(),
+        'description': OptionnalArg(),
+        'metadata': OptionnalArg(),
+        'framework': ImmutableArg(),
         'preprocessing': ImmutableArg(),
         'postprocessings': OptionnalArg(mutable=False),
     }
