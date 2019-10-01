@@ -45,9 +45,8 @@ def demo(client=None):
     # In both ways `user_agent_prefix` parameter is optional but recommended to identify your app to the API
     # Here we actually use a mix of those two methods to illustrate:
     if client is None:
-        app_id = os.getenv('DEEPOMATIC_APP_ID')
         api_key = os.getenv('DEEPOMATIC_API_KEY')
-        client = Client(app_id, api_key, user_agent_prefix='{}-demo/{}'.format(__title__, __version__))
+        client = Client(api_key=api_key, user_agent_prefix='{}-demo/{}'.format(__title__, __version__))
 
     ###################
     # Public networks #

@@ -25,8 +25,9 @@ Does not make any call to the server.
 from deepomatic.api.client import Client
 
 # If you don't have your credentials, contact us at support@deepomatic.com
-client = Client(app_id, api_key, user_agent_prefix='my-app/1.0.0')
+client = Client(api_key=api_key, user_agent_prefix='my-app/1.0.0')
 ```
+> app_id is now optional but if you don't put it, you have to ensure that the api_key is a named parameter to the function 
 
 ### Client methods
 
