@@ -314,7 +314,7 @@ def demo(client=None):
     nb_inference = 20
 
     logger.info("Pushing %d inferences" % nb_inference)
-    for i in range(nb_inference):
+    for _ in range(nb_inference):
         task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
         tasks.append(task)
 

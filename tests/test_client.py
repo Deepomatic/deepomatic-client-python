@@ -283,7 +283,7 @@ class TestClient(object):
         timeout = 30
         nb_inference = 20
 
-        for i in range(nb_inference):
+        for _ in range(nb_inference):
             task = spec.inference(inputs=[ImageInput(DEMO_URL)], return_task=True, wait_task=False)
             tasks.append(task)
 
