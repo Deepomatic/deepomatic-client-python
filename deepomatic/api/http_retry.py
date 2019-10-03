@@ -44,7 +44,7 @@ class HTTPRetry(object):
                               wait_fixed(0.1) + random_wait)
                ```
             :type wait: tenacity.wait_base
-            :param stop (optional). Tell when to stop retrying. By default it stops retrying after a delay of 60 seconds.
+            :param stop (optional). Tell when to stop retrying. By default it stops retrying after 60s (Default.RETRY_TIMEOUT).
                 A last retry can be done just before this delay is reached, thus the total amount of elapsed time might be a bit higher.
                 More details in tenacity source code https://github.com/jd/tenacity/blob/5.1.1/tenacity/stop.py
                 Raises tenacity.RetryError when timeout is reached.
@@ -52,6 +52,7 @@ class HTTPRetry(object):
     """
 
     class Default(object):
+        RETRY_TIMEOUT = 60
         RETRY_EXP_MAX = 10.
         RETRY_EXP_MULTIPLIER = 0.5
         RETRY_STATUS_CODES = [500, 502, 503, 504]
@@ -65,7 +66,7 @@ class HTTPRetry(object):
         self.stop = stop
 
         if self.stop is None:
-            self.stop = stop_after_delay(60)
+            self.stop = stop_after_delay(HTTPRetry.Default.RETRY_TIMEOUT)
 
         if self.retry_if is None:
             self.retry_status_code = set(HTTPRetry.Default.RETRY_STATUS_CODES)
