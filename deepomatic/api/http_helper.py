@@ -75,9 +75,9 @@ class HTTPHelper(object):
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
             api_key = os.getenv('DEEPOMATIC_API_KEY')
-        if app_id is None or api_key is None:
-            raise DeepomaticException("Please specify 'app_id' and 'api_key' either by passing those values to the client"
-                                      " or by defining the DEEPOMATIC_APP_ID and DEEPOMATIC_API_KEY environment variables.")
+        if api_key is None:
+            raise DeepomaticException("Please specify 'api_key' either by passing those values to the client"
+                                      " or by defining the DEEPOMATIC_API_KEY environment variables.")
 
         if not isinstance(version, string_types):
             version = 'v%g' % version
@@ -111,7 +111,7 @@ class HTTPHelper(object):
         self.user_agent = ' '.join(user_agent_list).format(**user_agent_params)
 
         self.api_key = str(api_key)
-        self.app_id = str(app_id)
+        self.app_id = str(app_id) if app_id else None
         self.verify = verify
         self.host = host
         self.resource_prefix = host + version
@@ -119,17 +119,24 @@ class HTTPHelper(object):
         # This is only used in mixins, this should not stay here
         self.check_query_parameters = check_query_parameters
 
-        headers = {
-            'User-Agent': self.user_agent,
-            'X-APP-ID': self.app_id,
-            'X-API-KEY': self.api_key,
-        }
         self.session = requests.Session()
-        self.session.headers.update(headers)
+        self.session.headers.update(self.default_headers())
         # Use pool_maxsize to cache connections for the same host
         adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
+
+    def default_headers(self):
+        """
+        Return the default headers, can be overridden
+        """
+        headers = {
+            'User-Agent': self.user_agent,
+            'X-API-KEY': self.api_key,
+        }
+        if self.app_id:
+            headers['X-APP-ID'] = self.app_id
+        return headers
 
     def setup_headers(self, headers=None, content_type=None):
         """

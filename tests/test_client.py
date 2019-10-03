@@ -174,7 +174,6 @@ class TestClient(object):
             '{}-tests/{} {}-python-client/{}'.format(__title__, __version__, __title__, __version__))
         assert 'platform/' in session_headers['User-Agent']
         assert 'python/' in session_headers['User-Agent']
-        assert session_headers['X-APP-ID']
         assert session_headers['X-API-KEY']
 
         headers = http_helper.setup_headers(headers={'Hello': 'World'},
