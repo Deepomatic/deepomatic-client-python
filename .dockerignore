@@ -2,7 +2,7 @@ dmake.yml
 .dmake/
 DMakefile
 
-Dockerfile
+deploy/Dockerfile
 .git
 **/.gitignore
 .dockerignore
