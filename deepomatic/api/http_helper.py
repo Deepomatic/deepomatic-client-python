@@ -135,7 +135,7 @@ class HTTPHelper(object):
             'X-API-KEY': self.api_key,
         }
         if self.app_id:
-            headers['X-APP-ID'] = self.app_id,
+            headers['X-APP-ID'] = self.app_id
         return headers
 
     def setup_headers(self, headers=None, content_type=None):
