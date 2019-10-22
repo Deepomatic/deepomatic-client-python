@@ -14,7 +14,7 @@ import pytest
 import requests
 import six
 from deepomatic.api.client import Client
-from deepomatic.api.exceptions import ServerError, ClientError, TaskTimeout, HTTPRetryError, TaskRetryError
+from deepomatic.api.exceptions import ServerError, ClientError, TaskError, TaskTimeout, HTTPRetryError, TaskRetryError
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
@@ -300,6 +300,14 @@ class TestClient(object):
         for pos, success in success_tasks:
             assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
+
+        # Task* str(): oneliners (easier to parse in log tooling)
+        task = success_tasks[0][1]
+        task_error = TaskError(task._data)
+        task_timeout = TaskTimeout(task._data)
+        assert '\n' not in str(task)
+        assert '\n' not in str(task_error)
+        assert '\n' not in str(task_timeout)
 
     def test_client_error(self, client):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')

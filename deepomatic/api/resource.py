@@ -79,7 +79,7 @@ class Resource(object):
         pk = 'id={pk} '.format(pk=self._pk) if self._pk else ''
         string = '<{classname} object {pk}at {addr}>'.format(classname=self.__class__.__name__, pk=pk, addr=hex(id(self)))
         if self._data is not None:
-            string += ' JSON: ' + json.dumps(self._data, indent=4, separators=(',', ': '))
+            string += ' JSON: ' + json.dumps(self._data)
         return string
 
     @classmethod
