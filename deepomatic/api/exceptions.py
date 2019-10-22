@@ -94,7 +94,7 @@ class TaskError(DeepomaticException):
         self.task = task
 
     def __str__(self):
-        return "Error on task:\n{}".format(json.dumps(self.task))
+        return "Error on task: {}".format(json.dumps(self.task))
 
     def get_task_id(self):
         return self.task['id']
@@ -108,7 +108,7 @@ class TaskTimeout(DeepomaticException):
         self.retry_error = retry_error
 
     def __str__(self):
-        return "Timeout on task:\n{}".format(json.dumps(self.task))
+        return "Timeout on task: {}".format(json.dumps(self.task))
 
     def get_task_id(self):
         return self.task['id']
