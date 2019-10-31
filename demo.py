@@ -299,7 +299,7 @@ def demo(client=None):
 
     print_header("Delete networks and recognition models")
     """
-    And finally, we delete the network, which will delete the recognition version and recognition spec in cascade.
+    And finally, we delete the network, which will delete the recognition version in cascade.
     """
     network.delete()
 
