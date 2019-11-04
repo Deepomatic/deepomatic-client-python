@@ -79,7 +79,9 @@ class HTTPHelper(object):
             raise DeepomaticException("Please specify 'api_key' either by passing it to the client"
                                       " or by defining the DEEPOMATIC_API_KEY environment variable.")
 
-        if not isinstance(version, string_types):
+        if version is None:
+            version = ''
+        elif not isinstance(version, string_types):
             version = 'v%g' % version
         elif version[0] != 'v':
             version = 'v' + version
