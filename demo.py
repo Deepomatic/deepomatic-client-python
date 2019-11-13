@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import hashlib
 import requests
+import zipfile
 
 from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
@@ -58,9 +59,9 @@ def demo(client=None):
     You can get an object resource using the client with the '.retrieve(id)' method. It will
     return an object resource which may have '.update(...)' and '.delete()' methods. They
     respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
-    (see below). Here, we retrieve a public network named 'imagenet-inception-v1'
+    (see below). Here, we retrieve a public network named 'imagenet-inception-v3'
     """
-    network = client.Network.retrieve('imagenet-inception-v1')
+    network = client.Network.retrieve('imagenet-inception-v3')
     logger.info(network)
 
     #############################
@@ -93,10 +94,10 @@ def demo(client=None):
     print_header("Getting spec")
     """
     Let's now focus on what we can do with a recognition models.
-    We get the output specifications of the Inception v1 (GoogLeNet) model with client.recognition_spec('imagenet-inception-v1')
+    We get the output specifications of the Imagenet Inception v3 model with client.recognition_spec('imagenet-inception-v3')
     We can see its spec with 'spec.data()'
     """
-    spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
     pretty_print_json(spec.data())
 
     print_header("Inference from a URL")
@@ -148,22 +149,34 @@ def demo(client=None):
     print_header("Adding a network (it may take some time to upload)...")
     """
     To starting playing with custom networks, let's first create a custom network.
-    We will download the tradionnal Caffe GoogLeNet model but it would work the same for your own custom model !
+    Here we will download a Tensorflow Inception v3 model but it would work the same for your own custom model !
     Below, we download:
-    - deploy_prototxt: the file that describe the network architecture
-    - snapshot_caffemodel: the file that describe the learned parameters of the model
-    - mean_file: the file that stores the mean image that needs to be substracted from the input
+    - saved_model.pb:  the network architecture
+    - variables.*: the files that describe the learned parameters of the model (they might be included in the saved_model.pb).
+    - mean_file: the file that stores the mean image that needs to be substracted from the input (optional)
     """
-    deploy_prototxt = download_file('https://raw.githubusercontent.com/BVLC/caffe/master/models/bvlc_googlenet/deploy.prototxt')
-    snapshot_caffemodel = download_file('http://dl.caffe.berkeleyvision.org/bvlc_googlenet.caffemodel')
-    mean_file = os.path.join(tempfile.gettempdir(), 'imagenet_mean.binaryproto')
+
+    extract_dir = tempfile.gettempdir()
+    net_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/network.zip')
+    preproc_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/preprocessing.zip')
+
+    model_file_name = 'saved_model.pb'
+    variables_file_name = 'variables.index'
+    variables_data_file_name = 'variables.data-00000-of-00001'
+    mean_file_name = 'mean.proto.bin'
+
+    model_file = os.path.join(extract_dir, model_file_name)
+    mean_file = os.path.join(extract_dir, mean_file_name)
+    variables_file = os.path.join(extract_dir + '/variables/', variables_file_name)
+    variables_data_file = os.path.join(extract_dir + '/variables/', variables_data_file_name)
+
+    if not os.path.exists(model_file):
+        with zipfile.ZipFile(net_zip) as f:
+            f.extractall(extract_dir)
     if not os.path.exists(mean_file):
-        archive = download_file('http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz')
-        tar = tarfile.open(archive, "r:gz")
-        tar.extractall(path=tempfile.gettempdir())
-        tar.close()
-    else:
-        print_comment("Skipping download of mean file: {}".format(mean_file))
+        with zipfile.ZipFile(preproc_zip) as f:
+            f.extractall(extract_dir)
+
     """
     Here, we specify the network preprocessing. Please refer to the documentation to see what each
     field is used for.
@@ -171,14 +184,14 @@ def demo(client=None):
     preprocessing = {
         "inputs": [
             {
-                "tensor_name": "data",
+                "tensor_name": "map/TensorArrayStack/TensorArrayGatherV3:0",
                 "image": {
+                    "dimension_order": "NHWC",
+                    "target_size": "299x299",
+                    "resize_type": "CROP",
+                    "mean_file": mean_file_name,
                     "color_channels": "BGR",
-                    "target_size": "224x224",
-                    "resize_type": "SQUASH",
-                    "mean_file": "mean.binaryproto",
-                    "dimension_order": "NCHW",
-                    "pixel_scaling": 255.0,
+                    "pixel_scaling": 2.0,
                     "data_type": "FLOAT32"
                 }
             }
@@ -190,9 +203,10 @@ def demo(client=None):
     We now register the three files needed by our network
     """
     files = {
-        'deploy.prototxt': deploy_prototxt,
-        'snapshot.caffemodel': snapshot_caffemodel,
-        'mean.binaryproto': mean_file
+        model_file_name: open(model_file, 'rb'),
+        variables_file_name: open(variables_file, 'rb'),
+        variables_data_file_name: open(variables_data_file, 'rb'),
+        mean_file_name: open(mean_file, 'rb')
     }
 
     """
@@ -200,7 +214,7 @@ def demo(client=None):
     Please refere to the documentation for a description of each parameter.
     """
     network = client.Network.create(name="My first network",
-                                    framework='nv-caffe-0.x-mod',
+                                    framework='tensorflow-1.x',
                                     preprocessing=preprocessing,
                                     files=files)
     network_id = network['id']
@@ -227,7 +241,7 @@ def demo(client=None):
     able to recognize. Here we retrieve the list of labels of imagenet from the public imagenet model.
     Please refere to the documentation for the description of 'outputs'
     """
-    outputs = client.RecognitionSpec.retrieve('imagenet-inception-v1')['outputs']
+    outputs = client.RecognitionSpec.retrieve('imagenet-inception-v3')['outputs']
 
     """
     We now create a recogntion specification with client.recognition_specs().create(...)
@@ -254,7 +268,7 @@ def demo(client=None):
     version = client.RecognitionVersion.create(network_id=network_id, spec_id=spec['id'], post_processings=[
         {
             "classification": {
-                "output_tensor": "prob",
+                "output_tensor": "inception_v3/logits/predictions",
             }
         }
     ])
@@ -308,7 +322,7 @@ def demo(client=None):
     #########################
 
     print_header("Run multiple inferences and wait for them per batch")
-    spec = client.RecognitionSpec.retrieve('imagenet-inception-v1')
+    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
     tasks = []
     timeout = 30
     nb_inference = 20
