@@ -63,7 +63,7 @@ class HTTPHelper(object):
         self.http_retry = kwargs.pop('http_retry', HTTPRetry())
 
         if len(kwargs) > 0:
-            raise TypeError("Too many parameters. HTTPRetry does not handle kwargs: {}".format(kwargs))
+            raise TypeError("Too many parameters. HTTPHelper does not handle kwargs: {}".format(kwargs))
 
         self.requests_timeout = requests_timeout
 
@@ -76,10 +76,12 @@ class HTTPHelper(object):
         if api_key is None:
             api_key = os.getenv('DEEPOMATIC_API_KEY')
         if api_key is None:
-            raise DeepomaticException("Please specify 'api_key' either by passing those values to the client"
-                                      " or by defining the DEEPOMATIC_API_KEY environment variables.")
+            raise DeepomaticException("Please specify 'api_key' either by passing it to the client"
+                                      " or by defining the DEEPOMATIC_API_KEY environment variable.")
 
-        if not isinstance(version, string_types):
+        if version is None or version == '':
+            version = ''
+        elif not isinstance(version, string_types):
             version = 'v%g' % version
         elif version[0] != 'v':
             version = 'v' + version
