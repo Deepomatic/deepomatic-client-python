@@ -70,7 +70,7 @@ class HTTPHelper(object):
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
-            verify = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '1'
+            verify_ssl = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '1'
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
@@ -114,7 +114,7 @@ class HTTPHelper(object):
 
         self.api_key = str(api_key)
         self.app_id = str(app_id) if app_id else None
-        self.verify = verify
+        self.verify_ssl = verify_ssl
         self.host = host
         self.resource_prefix = host + version
 
@@ -200,7 +200,7 @@ class HTTPHelper(object):
         http_retry = kwargs.pop('http_retry', self.http_retry)
 
         functor = functools.partial(requests_callable, *args,
-                                    verify=self.verify,
+                                    verify=self.verify_ssl,
                                     timeout=requests_timeout, **kwargs)
 
         if http_retry is not None:
