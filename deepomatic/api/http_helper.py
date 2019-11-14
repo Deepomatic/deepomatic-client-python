@@ -43,9 +43,9 @@ API_VERSION = 0.7
 
 
 class RequestsTimeout(object):
-    FAST = (3.05, 10.)
-    MEDIUM = (3.05, 60.)
-    SLOW = (3.05, 600.)
+    FAST = 8.
+    MEDIUM = 60.
+    SLOW = 600.
 
 
 class HTTPHelper(object):
