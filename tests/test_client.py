@@ -61,68 +61,66 @@ def client():
 
 @pytest.fixture(scope='session')
 def custom_network(client):
-    extract_dir = '/tmp/inception_v3'
-    if not os.path.exists(extract_dir):
-        os.makedirs(extract_dir)
+    with tempfile.TemporaryDirectory(prefix='inception_v3') as extract_dir:
+        url_prefix = 'https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3'
+        net_zip = download_file('{}/network.zip'.format(url_prefix))
+        preproc_zip = download_file('{}/preprocessing.zip'.format(url_prefix))
 
-    net_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/network.zip')
-    preproc_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/preprocessing.zip')
+        model_file_name = 'saved_model.pb'
+        variables_file_name = 'variables.index'
+        variables_data_file_name = 'variables.data-00000-of-00001'
+        mean_file_name = 'mean.proto.bin'
 
-    model_file_name = 'saved_model.pb'
-    variables_file_name = 'variables.index'
-    variables_data_file_name = 'variables.data-00000-of-00001'
-    mean_file_name = 'mean.proto.bin'
+        model_file = os.path.join(extract_dir, model_file_name)
+        mean_file = os.path.join(extract_dir, mean_file_name)
+        variables_file = os.path.join(extract_dir + '/variables/', variables_file_name)
+        variables_data_file = os.path.join(extract_dir + '/variables/', variables_data_file_name)
 
-    model_file = os.path.join(extract_dir, model_file_name)
-    mean_file = os.path.join(extract_dir, mean_file_name)
-    variables_file = os.path.join(extract_dir + '/variables/', variables_file_name)
-    variables_data_file = os.path.join(extract_dir + '/variables/', variables_data_file_name)
+        if not os.path.exists(model_file):
+            with zipfile.ZipFile(net_zip) as f:
+                f.extractall(extract_dir)
+        if not os.path.exists(mean_file):
+            with zipfile.ZipFile(preproc_zip) as f:
+                f.extractall(extract_dir)
 
-    if not os.path.exists(model_file):
-        with zipfile.ZipFile(net_zip) as f:
-            f.extractall(extract_dir)
-    if not os.path.exists(mean_file):
-        with zipfile.ZipFile(preproc_zip) as f:
-            f.extractall(extract_dir)
-
-    preprocessing = {
-        "inputs": [
-            {
-                "tensor_name": "map/TensorArrayStack/TensorArrayGatherV3:0",
-                "image": {
-                    "dimension_order": "NHWC",
-                    "target_size": "299x299",
-                    "resize_type": "CROP",
-                    "mean_file": mean_file_name,
-                    "color_channels": "BGR",
-                    "pixel_scaling": 2.0,
-                    "data_type": "FLOAT32"
+        preprocessing = {
+            "inputs": [
+                {
+                    "tensor_name": "map/TensorArrayStack/TensorArrayGatherV3:0",
+                    "image": {
+                        "dimension_order": "NHWC",
+                        "target_size": "299x299",
+                        "resize_type": "CROP",
+                        "mean_file": mean_file_name,
+                        "color_channels": "BGR",
+                        "pixel_scaling": 2.0,
+                        "data_type": "FLOAT32"
+                    }
                 }
-            }
-        ],
-        "batched_output": True
-    }
+            ],
+            "batched_output": True
+        }
 
-    files = {
-        model_file_name: open(model_file, 'rb'),
-        variables_file_name: open(variables_file, 'rb'),
-        variables_data_file_name: open(variables_data_file, 'rb'),
-        mean_file_name: open(mean_file, 'rb')
-    }
+        files = {
+            model_file_name: open(model_file, 'rb'),
+            variables_file_name: open(variables_file, 'rb'),
+            variables_data_file_name: open(variables_data_file, 'rb'),
+            mean_file_name: open(mean_file, 'rb')
+        }
 
-    network = client.Network.create(name="My first network",
-                                    framework='tensorflow-1.x',
-                                    preprocessing=preprocessing,
-                                    files=files)
-    assert network['id']
-    data = network.data()
-    assert network['name'] == 'My first network'
-    assert 'description' in data
-    assert 'create_date' in data
-    assert 'update_date' in data
+        network = client.Network.create(name="My first network",
+                                        framework='tensorflow-1.x',
+                                        preprocessing=preprocessing,
+                                        files=files)
+        assert network['id']
+        data = network.data()
+        assert network['name'] == 'My first network'
+        assert 'description' in data
+        assert 'create_date' in data
+        assert 'update_date' in data
 
-    yield network
-    network.delete()
+        yield network
+        network.delete()
 
 
 def check_first_prediction(first_label_name, first_score_range):
