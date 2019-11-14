@@ -1,8 +1,11 @@
 all: release
 
 build: clean
-	# lint + unit tests + build egg (available in host ./dist) + test egg on python 2 and 3
-	dmake test test-egg-py2 test-egg-py3
+	# lint + unit tests + build egg (available in host ./dist)
+	dmake test build-egg
+	# + test egg on python 2 and 3 using egg from host
+	dmake test -s test-egg-py2:2.7
+	dmake test -s test-egg-py3:3.6
 
 clean:
 	rm -rf dist
