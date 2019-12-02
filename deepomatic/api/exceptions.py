@@ -34,6 +34,7 @@ class DeepomaticException(Exception):
 
 ###############################################################################
 
+
 class CredentialsNotFound(DeepomaticException):
     pass
 
