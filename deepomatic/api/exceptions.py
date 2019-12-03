@@ -32,6 +32,12 @@ class DeepomaticException(Exception):
     def __init__(self, msg):
         super(DeepomaticException, self).__init__(msg)
 
+###############################################################################
+
+
+class CredentialsNotFound(DeepomaticException):
+    pass
+
 
 ###############################################################################
 

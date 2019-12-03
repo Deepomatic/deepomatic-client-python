@@ -30,7 +30,8 @@ import sys
 
 import requests
 from deepomatic.api.exceptions import (BadStatus, ServerError,
-                                       ClientError, DeepomaticException)
+                                       ClientError, DeepomaticException,
+                                       CredentialsNotFound)
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.version import __title__, __version__
 from requests.structures import CaseInsensitiveDict
@@ -76,7 +77,7 @@ class HTTPHelper(object):
         if api_key is None:
             api_key = os.getenv('DEEPOMATIC_API_KEY')
         if api_key is None:
-            raise DeepomaticException("Please specify 'api_key' either by passing it to the client"
+            raise CredentialsNotFound("Please specify 'api_key' either by passing it to the client"
                                       " or by defining the DEEPOMATIC_API_KEY environment variable.")
 
         if version is None or version == '':
