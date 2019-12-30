@@ -27,7 +27,7 @@ from voluptuous.validators import All, Any, Length
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'))
 logger = logging.getLogger(__name__)
 
-DEMO_URL = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+DEMO_URL = "https://deepo-tests.s3-eu-west-1.amazonaws.com/api-clients/dog1.jpg"
 
 USER_AGENT_PREFIX = '{}-tests/{}'.format(__title__, __version__)
 
