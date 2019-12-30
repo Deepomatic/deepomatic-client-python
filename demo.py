@@ -12,7 +12,7 @@ from deepomatic.api.version import __title__, __version__
 from deepomatic.api.client import Client
 from deepomatic.api.inputs import ImageInput
 
-demo_url = "https://static.deepomatic.com/resources/demos/api-clients/dog1.jpg"
+demo_url = "https://deepo-tests.s3-eu-west-1.amazonaws.com/api-clients/dog1.jpg"
 
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO'),
                     format='[%(levelname)s %(name)s %(asctime)s %(process)d %(thread)d %(filename)s:%(lineno)s] %(message)s')
