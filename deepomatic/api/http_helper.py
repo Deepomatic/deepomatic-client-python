@@ -74,9 +74,7 @@ class HTTPHelper(object):
 
         self.setup_credentials(app_id, api_key)
 
-        self.setup_user_agent(user_agent_prefix)
-
-        self.user_agent = self.get_user_agent()
+        self.user_agent = self.get_user_agent(user_agent_prefix)
 
         # This is only used in mixins, this should not stay here
         self.check_query_parameters = check_query_parameters
