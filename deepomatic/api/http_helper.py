@@ -68,13 +68,13 @@ class HTTPHelper(object):
 
         self.requests_timeout = requests_timeout
 
-        self.setup_host(host, verify_ssl)
+        self._setup_host(host, verify_ssl)
 
-        self.resource_prefix = self.host + self.parse_host_version(version)
+        self.resource_prefix = self.host + self._parse_host_version(version)
 
-        self.setup_credentials(app_id, api_key)
+        self._setup_credentials(app_id, api_key)
 
-        self.user_agent = self.get_user_agent(user_agent_prefix)
+        self.user_agent = self._get_user_agent(user_agent_prefix)
 
         # This is only used in mixins, this should not stay here
         self.check_query_parameters = check_query_parameters
@@ -86,7 +86,7 @@ class HTTPHelper(object):
         self.session.mount('http://', adapter)
         self.session.mount('https://', adapter)
 
-    def setup_host(self, host, verify_ssl):
+    def _setup_host(self, host, verify_ssl):
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
@@ -98,7 +98,7 @@ class HTTPHelper(object):
         self.verify_ssl = verify_ssl
         self.host = host
 
-    def parse_host_version(self, version):
+    def _parse_host_version(self, version):
         # Allow to automatically prefix the host URL with the version
         if version is None or version == '':
             version = ''
@@ -108,7 +108,7 @@ class HTTPHelper(object):
             version = 'v' + version
         return version
 
-    def setup_credentials(self, app_id, api_key):
+    def _setup_credentials(self, app_id, api_key):
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
@@ -119,7 +119,7 @@ class HTTPHelper(object):
         self.api_key = str(api_key)
         self.app_id = str(app_id) if app_id else None
 
-    def get_user_agent(self, user_agent_prefix):
+    def _get_user_agent(self, user_agent_prefix):
         python_version = "{0}.{1}.{2}".format(sys.version_info.major,
                                               sys.version_info.minor,
                                               sys.version_info.micro)
