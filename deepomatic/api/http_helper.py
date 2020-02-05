@@ -68,10 +68,47 @@ class HTTPHelper(object):
 
         self.requests_timeout = requests_timeout
 
+        self._setup_host(host, verify_ssl)
+
+        self.resource_prefix = self.host + self._parse_host_version(version)
+
+        self._setup_credentials(app_id, api_key)
+
+        self.user_agent = self._get_user_agent(user_agent_prefix)
+
+        # This is only used in mixins, this should not stay here
+        self.check_query_parameters = check_query_parameters
+
+        self.session = requests.Session()
+        self.session.headers.update(self.default_headers())
+        # Use pool_maxsize to cache connections for the same host
+        adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+
+    def _setup_host(self, host, verify_ssl):
         if host is None:
             host = os.getenv('DEEPOMATIC_API_URL', API_HOST)
         if verify_ssl is None:
             verify_ssl = os.getenv('DEEPOMATIC_API_VERIFY_TLS', '1') == '1'
+
+        if not host.endswith('/'):
+            host += '/'
+
+        self.verify_ssl = verify_ssl
+        self.host = host
+
+    def _parse_host_version(self, version):
+        # Allow to automatically prefix the host URL with the version
+        if version is None or version == '':
+            version = ''
+        elif not isinstance(version, string_types):
+            version = 'v%g' % version
+        elif version[0] != 'v':
+            version = 'v' + version
+        return version
+
+    def _setup_credentials(self, app_id, api_key):
         if app_id is None:
             app_id = os.getenv('DEEPOMATIC_APP_ID')
         if api_key is None:
@@ -79,18 +116,13 @@ class HTTPHelper(object):
         if api_key is None:
             raise CredentialsNotFound("Please specify 'api_key' either by passing it to the client"
                                       " or by defining the DEEPOMATIC_API_KEY environment variable.")
+        self.api_key = str(api_key)
+        self.app_id = str(app_id) if app_id else None
 
-        if version is None or version == '':
-            version = ''
-        elif not isinstance(version, string_types):
-            version = 'v%g' % version
-        elif version[0] != 'v':
-            version = 'v' + version
-
-        if not host.endswith('/'):
-            host += '/'
-
-        python_version = "{0}.{1}.{2}".format(sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+    def _get_user_agent(self, user_agent_prefix):
+        python_version = "{0}.{1}.{2}".format(sys.version_info.major,
+                                              sys.version_info.minor,
+                                              sys.version_info.micro)
 
         user_agent_params = {
             'package_title': __title__,
@@ -110,24 +142,7 @@ class HTTPHelper(object):
             'requests/{requests_version}',
             'python/{python_version} platform/{platform}',
         ]
-
-        self.user_agent = ' '.join(user_agent_list).format(**user_agent_params)
-
-        self.api_key = str(api_key)
-        self.app_id = str(app_id) if app_id else None
-        self.verify_ssl = verify_ssl
-        self.host = host
-        self.resource_prefix = host + version
-
-        # This is only used in mixins, this should not stay here
-        self.check_query_parameters = check_query_parameters
-
-        self.session = requests.Session()
-        self.session.headers.update(self.default_headers())
-        # Use pool_maxsize to cache connections for the same host
-        adapter = requests.adapters.HTTPAdapter(pool_maxsize=pool_maxsize)
-        self.session.mount('http://', adapter)
-        self.session.mount('https://', adapter)
+        return ' '.join(user_agent_list).format(**user_agent_params)
 
     def default_headers(self):
         """
