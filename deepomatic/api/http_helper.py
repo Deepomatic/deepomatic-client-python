@@ -299,7 +299,8 @@ class HTTPHelper(object):
             # we asked for a stream, we let the user download it as he wants or it will load everything in RAM
             # not good for big files
             return response
-        elif 'application/json' in response.headers['Content-Type']:
+        
+        elif 'application/json' in response.headers.get('Content-Type', ''):
             return response.json()
         else:
             return response.content
