@@ -26,7 +26,8 @@ THE SOFTWARE.
 import functools
 import logging
 
-from deepomatic.api.exceptions import TaskError, TaskTimeout, HTTPRetryError, TaskRetryError
+from deepomatic.api.exceptions import (TaskError, TaskTimeout, HTTPRetryError,
+                                       TaskRetryError, DeepomaticException)
 from deepomatic.api.mixins import ListableResource
 from deepomatic.api.resource import Resource
 from deepomatic.api.utils import retry, warn_on_http_retry_error
@@ -119,7 +120,7 @@ class Task(ListableResource, Resource):
             elif is_success_status(status):
                 success_tasks.append((pos, task))
             else:
-                raise Exception("Unknown task status %s" % status)
+                raise DeepomaticException("Unknown task status %s" % status)
 
         return pending_tasks
 

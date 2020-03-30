@@ -236,7 +236,7 @@ class HTTPHelper(object):
                 # If no files are provided, requests will default to form-urlencoded content type
                 # But the API doesn't support it.
                 if not files:
-                    raise Exception("Cannot send the request as multipart without files provided.")
+                    raise DeepomaticException("Cannot send the request as multipart without files provided.")
                 # requests will build the good multipart content types with the boundaries
                 content_type = None
                 data = self.dump_json_for_multipart(data)
@@ -299,7 +299,7 @@ class HTTPHelper(object):
             # we asked for a stream, we let the user download it as he wants or it will load everything in RAM
             # not good for big files
             return response
-        elif 'application/json' in response.headers['Content-Type']:
+        elif 'application/json' in response.headers.get('Content-Type', ''):
             return response.json()
         else:
             return response.content
