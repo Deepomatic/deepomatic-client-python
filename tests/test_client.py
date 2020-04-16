@@ -340,7 +340,7 @@ class TestClientRetry(object):
 
     def test_retry_network_failure(self):
         http_retry = HTTPRetry(stop=stop_after_delay(self.DEFAULT_TIMEOUT))
-        client = get_client(host='http://unknown-domain.com',
+        client = get_client(host='http://invalid-domain.deepomatic.com',
                             http_retry=http_retry)
         last_attempt = self.send_request_and_expect_retry(client, self.DEFAULT_TIMEOUT,
                                                           self.DEFAULT_MIN_ATTEMPT_NUMBER)
