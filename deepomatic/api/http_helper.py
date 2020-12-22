@@ -209,15 +209,30 @@ class HTTPHelper(object):
         return new_dict
 
     def send_request(self, requests_callable, *args, **kwargs):
-        # requests_callable must be a method from the requests module
-
         # this is the timeout of requests module
         requests_timeout = kwargs.pop('timeout', self.requests_timeout)
+
+        files = kwargs.pop('files', None)
+        print(files)
+        if files:
+            for f in files.values():
+                # seek files before each retry
+                if hasattr(f, 'seek'):
+                    f.seek(0)
+        print("SENDING REQUEST")
+        return requests_callable(*args, files=files,
+                                 timeout=requests_timeout,
+                                 verify=self.verify_ssl,
+                                 **kwargs)
+
+    def maybe_retry_send_request(self, requests_callable, *args, **kwargs):
+        # requests_callable must be a method from the requests module
+
         http_retry = kwargs.pop('http_retry', self.http_retry)
 
-        functor = functools.partial(requests_callable, *args,
-                                    verify=self.verify_ssl,
-                                    timeout=requests_timeout, **kwargs)
+        functor = functools.partial(self.send_request,
+                                    requests_callable,
+                                    *args, **kwargs)
 
         if http_retry is not None:
             return http_retry.retry(functor)
@@ -274,10 +289,10 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        response = self.send_request(func, resource, *args,
-                                     params=params, data=data,
-                                     files=files, headers=headers,
-                                     stream=stream, **kwargs)
+        response = self.maybe_retry_send_request(func, resource, *args,
+                                                 params=params, data=data,
+                                                 files=files, headers=headers,
+                                                 stream=stream, **kwargs)
 
         # Close opened files
         for file in opened_files:
