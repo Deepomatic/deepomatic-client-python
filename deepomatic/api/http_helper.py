@@ -225,11 +225,11 @@ class HTTPHelper(object):
                 # seek files before each retry, to avoid silently retrying with different input
                 if hasattr(f, 'seek'):
                     if hasattr('seekable') and not f.seakable():
-                        raise DeepomaticException("{}: not seakable".format(error)
+                        raise DeepomaticException("{}: not seakable".format(error))
                     f.seek(0)
                     continue
 
-                raise DeepomaticException("{}: not a scalar or seakable.".format(error)
+                raise DeepomaticException("{}: not a scalar or seakable.".format(error))
 
         return requests_callable(*args, files=files,
                                  timeout=requests_timeout,
