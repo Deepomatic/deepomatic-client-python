@@ -219,7 +219,7 @@ class HTTPHelper(object):
                 # if so, the fileobj is in second position
                 if isinstance(f, (tuple, list)):
                     f = f[1]
-                if isinstance(f, (string_types, bytes, bytearray, int, float, bool)):
+                if f is None or isinstance(f, (string_types, bytes, bytearray, int, float, bool)):
                     continue
                 error = "Unsupported file object type '{}' for key '{}'".format(type(f), key)
                 # seek files before each retry, to avoid silently retrying with different input
