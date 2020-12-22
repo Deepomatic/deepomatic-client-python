@@ -215,6 +215,10 @@ class HTTPHelper(object):
         files = kwargs.pop('files', None)
         if files:
             for key, f in files.items():
+                # file can be a tuple
+                # if so, the fileobj is in second position
+                if isinstance(f, (tuple, list)):
+                    f = f[1]
                 # seek files before each retry, to avoid silently retrying with different input
                 if hasattr(f, 'seek'):
                     f.seek(0)
