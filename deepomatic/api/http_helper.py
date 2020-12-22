@@ -214,10 +214,12 @@ class HTTPHelper(object):
 
         files = kwargs.pop('files', None)
         if files:
-            for f in files.values():
+            for key, f in files.items():
                 # seek files before each retry
                 if hasattr(f, 'seek'):
                     f.seek(0)
+                elif not isinstance(f, (string_types, bytes, bytearray)):
+                    raise DeepomaticException("Unsupported file type '{}' for key '{}'".format(type(f), key))
 
         return requests_callable(*args, files=files,
                                  timeout=requests_timeout,
