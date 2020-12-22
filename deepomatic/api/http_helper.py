@@ -209,15 +209,41 @@ class HTTPHelper(object):
         return new_dict
 
     def send_request(self, requests_callable, *args, **kwargs):
-        # requests_callable must be a method from the requests module
-
         # this is the timeout of requests module
         requests_timeout = kwargs.pop('timeout', self.requests_timeout)
+
+        files = kwargs.pop('files', None)
+        if files:
+            for key, f in files.items():
+                # file can be a tuple
+                # if so, the fileobj is in second position
+                if isinstance(f, (tuple, list)):
+                    f = f[1]
+                if f is None or isinstance(f, (string_types, bytes, bytearray, int, float, bool)):
+                    continue
+                error = "Unsupported file object type '{}' for key '{}'".format(type(f), key)
+                # seek files before each retry, to avoid silently retrying with different input
+                if hasattr(f, 'seek'):
+                    if hasattr(f, 'seekable') and not f.seekable():
+                        raise DeepomaticException("{}: not seekable".format(error))
+                    f.seek(0)
+                    continue
+
+                raise DeepomaticException("{}: not a scalar or seekable.".format(error))
+
+        return requests_callable(*args, files=files,
+                                 timeout=requests_timeout,
+                                 verify=self.verify_ssl,
+                                 **kwargs)
+
+    def maybe_retry_send_request(self, requests_callable, *args, **kwargs):
+        # requests_callable must be a method from the requests module
+
         http_retry = kwargs.pop('http_retry', self.http_retry)
 
-        functor = functools.partial(requests_callable, *args,
-                                    verify=self.verify_ssl,
-                                    timeout=requests_timeout, **kwargs)
+        functor = functools.partial(self.send_request,
+                                    requests_callable,
+                                    *args, **kwargs)
 
         if http_retry is not None:
             return http_retry.retry(functor)
@@ -274,10 +300,10 @@ class HTTPHelper(object):
         if not resource.startswith('http'):
             resource = self.resource_prefix + resource
 
-        response = self.send_request(func, resource, *args,
-                                     params=params, data=data,
-                                     files=files, headers=headers,
-                                     stream=stream, **kwargs)
+        response = self.maybe_retry_send_request(func, resource, *args,
+                                                 params=params, data=data,
+                                                 files=files, headers=headers,
+                                                 stream=stream, **kwargs)
 
         # Close opened files
         for file in opened_files:

@@ -359,7 +359,7 @@ def download_file(url):
     filename = os.path.join(tempfile.gettempdir(),
                             hashlib.sha1(url.encode()).hexdigest() + ext)
     if os.path.exists(filename):  # avoid redownloading
-        logger.info("Skipping download of {}: file already exist in ".format(url, filename))
+        logger.info("Skipping download of {}: file already exist in {}".format(url, filename))
         return filename
     r = requests.get(url, stream=True)
     r.raise_for_status()
