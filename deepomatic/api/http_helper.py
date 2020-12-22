@@ -215,7 +215,7 @@ class HTTPHelper(object):
         files = kwargs.pop('files', None)
         if files:
             for key, f in files.items():
-                # seek files before each retry
+                # seek files before each retry, to avoid silently retrying with different input
                 if hasattr(f, 'seek'):
                     f.seek(0)
                 elif not isinstance(f, (string_types, bytes, bytearray)):
