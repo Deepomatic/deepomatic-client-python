@@ -219,11 +219,17 @@ class HTTPHelper(object):
                 # if so, the fileobj is in second position
                 if isinstance(f, (tuple, list)):
                     f = f[1]
+                if isinstance(f, (string_types, bytes, bytearray, int, float, bool)):
+                    continue
+                error = "Unsupported file object type '{}' for key '{}'".format(type(f), key)
                 # seek files before each retry, to avoid silently retrying with different input
                 if hasattr(f, 'seek'):
+                    if hasattr('seekable') and not f.seakable():
+                        raise DeepomaticException("{}: not seakable".format(error)
                     f.seek(0)
-                elif not isinstance(f, (string_types, bytes, bytearray)):
-                    raise DeepomaticException("Unsupported file object type '{}' for key '{}'".format(type(f), key))
+                    continue
+
+                raise DeepomaticException("{}: not a scalar or seakable.".format(error)
 
         return requests_callable(*args, files=files,
                                  timeout=requests_timeout,
