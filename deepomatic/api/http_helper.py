@@ -224,7 +224,7 @@ class HTTPHelper(object):
                 error = "Unsupported file object type '{}' for key '{}'".format(type(f), key)
                 # seek files before each retry, to avoid silently retrying with different input
                 if hasattr(f, 'seek'):
-                    if hasattr('seekable') and not f.seakable():
+                    if hasattr(f, 'seekable') and not f.seakable():
                         raise DeepomaticException("{}: not seakable".format(error))
                     f.seek(0)
                     continue
