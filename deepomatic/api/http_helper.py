@@ -213,13 +213,12 @@ class HTTPHelper(object):
         requests_timeout = kwargs.pop('timeout', self.requests_timeout)
 
         files = kwargs.pop('files', None)
-        print(files)
         if files:
             for f in files.values():
                 # seek files before each retry
                 if hasattr(f, 'seek'):
                     f.seek(0)
-        print("SENDING REQUEST")
+
         return requests_callable(*args, files=files,
                                  timeout=requests_timeout,
                                  verify=self.verify_ssl,
