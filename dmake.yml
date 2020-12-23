@@ -19,7 +19,7 @@ docker:
     # "- <<: *base_image" as used below.
     - &base_image
       name: deepomatic-client-python
-      variant: 2.7
+      variant: '2.7'
       root_image: python:2.7
       copy_files:
         - requirements.txt
@@ -28,13 +28,13 @@ docker:
         - deploy/install.sh
     # Nothing changes comparing to above, except 'variant' and 'root_image'
     - <<: *base_image
-      variant: 3.4
+      variant: '3.4'
       root_image: python:3.4
     - <<: *base_image
-      variant: 3.5
+      variant: '3.5'
       root_image: python:3.5
     - <<: *base_image
-      variant: 3.6
+      variant: '3.6'
       root_image: python:3.6
 
 
@@ -47,10 +47,10 @@ services:
           dockerfile: deploy/Dockerfile
           target: dev
         base_image_variant:
-          - 2.7
-          - 3.4
-          - 3.5
-          - 3.6
+          - '2.7'
+          - '3.4'
+          - '3.5'
+          - '3.6'
     tests:
       commands:
         - LOG_LEVEL=DEBUG pytest --junit-xml=junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report html:cover -vv /app/tests
@@ -73,7 +73,7 @@ services:
           context: .
           dockerfile: deploy/Dockerfile
           target: build
-        base_image_variant: 3.6
+        base_image_variant: '3.6'
     tests:
       # TODO follow up on https://github.com/Deepomatic/dmake/issues/311
       data_volumes:
@@ -96,7 +96,7 @@ services:
           target: runtime-py2
         # only used by dmake shell; bypassed by runtime-py2 Dockerfile target
         base_image_variant:
-          - 2.7
+          - '2.7'
     tests:
       data_volumes:
        - container_volume: /dist/
@@ -117,7 +117,7 @@ services:
           target: runtime-py3
         # only used by dmake shell; bypassed by runtime-py3 Dockerfile target
         base_image_variant:
-          - 3.6
+          - '3.6'
     tests:
       data_volumes:
        - container_volume: /dist/
