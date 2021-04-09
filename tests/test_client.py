@@ -18,6 +18,7 @@ from deepomatic.api.exceptions import ServerError, ClientError, TaskError, TaskT
 from deepomatic.api.http_retry import HTTPRetry
 from deepomatic.api.inputs import ImageInput
 from deepomatic.api.version import __title__, __version__
+from io import BytesIO
 from requests.exceptions import ConnectionError, MissingSchema
 from tenacity import RetryError, stop_after_delay
 
@@ -255,6 +256,14 @@ class TestClient(object):
         assert inference_schema(2, 0, 'golden retriever', 0.8) == result
 
         result = version.inference(inputs=[ImageInput(DEMO_URL, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})],
+                                   show_discarded=True,
+                                   max_predictions=3)
+        assert inference_schema(3, 0, 'golden retriever', 0.5) == result
+
+        # Test a binary image via multipart
+        response = requests.get(DEMO_URL)
+        img_data = BytesIO(response.content)
+        result = version.inference(inputs=[ImageInput(img_data, encoding='binary', bbox={"xmin": 0.2, "ymin": 0.2, "xmax": 0.8, "ymax": 0.8})],
                                    show_discarded=True,
                                    max_predictions=3)
         assert inference_schema(3, 0, 'golden retriever', 0.5) == result

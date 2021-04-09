@@ -38,22 +38,13 @@ def format_inputs(inputs, data):
     data = copy.deepcopy(data)
     files = {}
     need_multipart = any([input_data.need_multipart() for input_data in inputs])
-    # img['bbox'] = {...}
-    # get_input() = {
-    #     'image': img
-    # }
     inputs_data = [input_data.get_input() for input_data in inputs]
-    # inputs_data: [{'image': img}, ]
     if need_multipart:
         files['inputs'] = inputs_data
     else:
         data['inputs'] = inputs_data
 
     content_type = 'multipart/mixed' if need_multipart else 'application/json'
-    # data: {
-    #     'inputs': [{'image': img}, ],
-    #     ...
-    # }
     return content_type, data, files
 
 
@@ -104,7 +95,6 @@ class ImageInput(AbstractInput):
         self.bbox = bbox
         self.polygon = polygon
         self.crop_uniform_background = crop_uniform_background
-        self.encoding = encoding
 
     def get_input(self):
         image = {
@@ -113,7 +103,7 @@ class ImageInput(AbstractInput):
         }
         if self.bbox is not None:
             image['bbox'] = self.bbox
-            if self.need_multipart:
+            if self.need_multipart and isinstance(image['bbox'], dict):
                 # Convert the bbox to a string to allow serialization
                 image['bbox'] = json.dumps(image['bbox'])
         if self.polygon is not None:
