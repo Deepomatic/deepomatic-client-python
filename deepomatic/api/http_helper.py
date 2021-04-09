@@ -184,6 +184,7 @@ class HTTPHelper(object):
     def dump_json_for_multipart(self, data_dict):
         if data_dict is None:
             return None
+        print("PILOU PILOUUUUUUUUU")
 
         def recursive_json_dump(prefix, obj, data_dict, omit_dot=False):
             if isinstance(obj, dict):
@@ -206,6 +207,19 @@ class HTTPHelper(object):
 
         recursive_json_dump('', data_dict, new_dict, omit_dot=True)
 
+        return new_dict
+
+    def dump_json_for_multipart_new(self, data_dict):
+        if data_dict is None:
+            return None
+        print("PILOW PILOWWWWW")
+        new_dict = {}
+        for k, obj in data_dict.items():
+            print(f"obj: {obj}")
+            if isinstance(obj, (dict, list)):
+                new_dict[k] = json.dumps(obj)
+            else:
+                new_dict[k] = obj
         return new_dict
 
     def send_request(self, requests_callable, *args, **kwargs):
@@ -265,8 +279,29 @@ class HTTPHelper(object):
                     raise DeepomaticException("Cannot send the request as multipart without files provided.")
                 # requests will build the good multipart content types with the boundaries
                 content_type = None
+                # data: {
+                #     'inputs': [{
+                #        'image': {
+                #           'url': "http://xxxx",
+                #           'bbox': {'xmin': 0.1}
+                #           }
+                #       },
+                #     ],
+                #     ...
+                # }
+                print(f"original dict: {data}")
                 data = self.dump_json_for_multipart(data)
+                print(f"new data dumped: {data}")
+                # data: {
+                #     'inputs[0]image.bbox': "{'xmin': 0.1}"
+                #           }
+                #       },
+                #     ],
+                #     ...
+                # }
+                print(f"original files: {files}")
                 files = self.dump_json_for_multipart(files)
+                print(f"transformed files: {files}")
             else:
                 raise DeepomaticException("Unsupported Content-Type")
 
