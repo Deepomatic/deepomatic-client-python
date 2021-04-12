@@ -5,7 +5,7 @@ FROM ${BASE_IMAGE} as dev
 WORKDIR /app
 COPY . .
 # lint check
-# RUN flake8 --statistics --verbose
+RUN flake8 --statistics --verbose
 # prepare local dev environment, for tests execution
 RUN pip install -e .
 
