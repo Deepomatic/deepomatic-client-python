@@ -263,7 +263,8 @@ class TestClient(object):
         # Test a binary image via multipart
         response = requests.get(DEMO_URL)
         img_data = BytesIO(response.content)
-        result = version.inference(inputs=[ImageInput(img_data, encoding='binary', bbox={"xmin": 0.2, "ymin": 0.2, "xmax": 0.8, "ymax": 0.8})],
+        result = version.inference(inputs=[ImageInput(img_data, encoding='binary',
+                                                      bbox={"xmin": 0.2, "ymin": 0.2, "xmax": 0.8, "ymax": 0.8})],
                                    show_discarded=True,
                                    max_predictions=3)
         assert inference_schema(3, 0, 'golden retriever', 0.5) == result
