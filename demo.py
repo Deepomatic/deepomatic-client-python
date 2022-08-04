@@ -48,98 +48,6 @@ def demo(client=None):
         api_key = os.getenv('DEEPOMATIC_API_KEY')
         client = Client(api_key=api_key, user_agent_prefix='{}-demo/{}'.format(__title__, __version__))
 
-    ###################
-    # Public networks #
-    ###################
-
-    print_header("Getting network")
-    """
-    Let's start by getting some public neural network.
-    You can get an object resource using the client with the '.retrieve(id)' method. It will
-    return an object resource which may have '.update(...)' and '.delete()' methods. They
-    respectively modifiy it or delete the object. You may also invoke special actions like '.inference()'
-    (see below). Here, we retrieve a public network named 'imagenet-inception-v3'
-    """
-    network = client.Network.retrieve('imagenet-inception-v3')
-    logger.info(network)
-
-    #############################
-    # Public recognition models #
-    #############################
-
-    print_header("Listing public recognition models")
-    """
-    A network by itself is not very usefull. It's more interesting when it's tied to some output labels !
-    This is the role of a recognition specification: precisely describing some expected output.
-    Those specifications will then be matched to a network via "specification versions".
-    Lets first see the list of public recognition models with 'client.RecognitionSpec.list(public=True)'
-    Here, public recognition models are read only so you can only call '.list()'.
-    The '.list()' method returns a paginated list of objects, i.e. an API call may not return all objects.
-    By default, it returns 100 objects and gives your the URI at which you will find the next page.
-    It takes two optionnal arguments:
-      - 'offset': the index at which we should start iterating (defaut: 0)
-      - 'limit': the number of element per page (default: 100)
-    """
-    for spec in client.RecognitionSpec.list(public=True):
-        print_comment("- {spec_id}: {name}".format(spec_id=spec['id'], name=spec['name']))
-
-    """
-    You may also query the list of object with '.data()' but it will only return the JSON associated with
-    the current page, unlike the iterator version above that will loop trough all the data.
-    """
-    result = client.RecognitionSpec.list(public=True).data()
-    pretty_print_json(result)
-
-    print_header("Getting spec")
-    """
-    Let's now focus on what we can do with a recognition models.
-    We get the output specifications of the Imagenet Inception v3 model with client.recognition_spec('imagenet-inception-v3')
-    We can see its spec with 'spec.data()'
-    """
-    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
-    pretty_print_json(spec.data())
-
-    print_header("Inference from a URL")
-    """
-    You can call '.inference()' on a spec, which will give you access on raw tensor output.
-    Inference requests may take input image in various forms.
-    Here, it take an url as input via 'ImageInput(demo_url)'.
-    Also we have used the generic form of inference which might take multiple inputs if your networks has multiple ones.
-    """
-    result = spec.inference(inputs=[ImageInput(demo_url)], show_discarded=True, max_predictions=3)
-    pretty_print_json(result)
-
-    print_header("Inference from a file")
-    """
-    '.inference()' also support when you pass a single input instead of a list of inputs.
-    Here, it takes a file pointer as input.
-    """
-    file = open(download_file(demo_url), 'rb')
-    result = spec.inference(inputs=[ImageInput(file)], show_discarded=True, max_predictions=3)
-    pretty_print_json(result)
-
-    print_header("Inference from binary data")
-    """
-    It also support raw data, in which case you must specify how it is encoded.
-    'binary' means you are passing raw binary data.
-    """
-    file.seek(0)
-    binary_data = file.read()
-    result = spec.inference(inputs=[ImageInput(binary_data, encoding="binary")], show_discarded=True, max_predictions=3)
-    pretty_print_json(result)
-
-    print_header("Inference from base64 data")
-    """
-    If for some reasons you want to work with base64 encoded data, you also can ! Just specify base64 as encoding !
-    """
-    b64 = base64.b64encode(binary_data)
-    result = spec.inference(inputs=[ImageInput(b64, encoding="base64")], show_discarded=True, max_predictions=3)
-    pretty_print_json(result)
-
-    """
-    This model can recognize the 1000 official categories of imagenet, so it might not fit your use case.
-    In the following, we will learn how to deploy your custom models in deepomatic's API.
-    """
 
     ###################
     # Custom networks #
@@ -240,7 +148,8 @@ def demo(client=None):
     able to recognize. Here we retrieve the list of labels of imagenet from the public imagenet model.
     Please refere to the documentation for the description of 'outputs'
     """
-    outputs = client.RecognitionSpec.retrieve('imagenet-inception-v3')['outputs']
+    import json
+    outputs = json.loads(open('outputs.imagenet-inception-v3.json').read())
 
     """
     We now create a recogntion specification with client.recognition_specs().create(...)
@@ -316,38 +225,8 @@ def demo(client=None):
     """
     network.delete()
 
-    #########################
-    # Batched wait on tasks #
-    #########################
 
-    print_header("Run multiple inferences and wait for them per batch")
-    spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
-    tasks = []
-    timeout = 30
-    nb_inference = 20
 
-    logger.info("Pushing %d inferences" % nb_inference)
-    for _ in range(nb_inference):
-        task = spec.inference(inputs=[ImageInput(demo_url)], return_task=True, wait_task=False)
-        tasks.append(task)
-
-    logger.info("Waiting for the results")
-    pending_tasks, success_tasks, error_tasks = client.Task.batch_wait(tasks=tasks, timeout=timeout)
-    if pending_tasks:
-        logger.warning("%d tasks are still pending after %s seconds" % (len(pending_tasks), timeout))
-    if error_tasks:
-        logger.warning("%d tasks are in error" % len(error_tasks))
-    logger.info(pending_tasks)
-    logger.info(error_tasks)
-    logger.info(success_tasks)
-
-    # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
-    for pos, pending in pending_tasks:
-        assert(tasks[pos].pk == pending.pk)
-    for pos, err in error_tasks:
-        assert(tasks[pos].pk == err.pk)
-    for pos, success in success_tasks:
-        assert(tasks[pos].pk == success.pk)
 
 ###########
 # Helpers #
