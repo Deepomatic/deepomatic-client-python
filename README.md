@@ -4,7 +4,7 @@
 
 This client have been made in order to help you integrating our services within your apps in python.
 
-Tested on python 2.7, 3.4, 3.5, 3.6.
+Tested on python 3.4, 3.5, 3.6, 3.8.
 
 # API Documentation
 

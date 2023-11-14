@@ -61,10 +61,10 @@ services:
   - service_name: build-egg
     # unit tests must have passed on all supported platforms to build the universal egg
     needed_services:
-      - client:2.7
       - client:3.4
       - client:3.5
       - client:3.6
+      - client:3.8
     config:
       docker_image:
         build:
