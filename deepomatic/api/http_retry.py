@@ -55,7 +55,7 @@ class HTTPRetry(object):
         RETRY_TIMEOUT = 60
         RETRY_EXP_MAX = 10.
         RETRY_EXP_MULTIPLIER = 0.5
-        RETRY_STATUS_CODES = [500, 502, 503, 504]
+        RETRY_STATUS_CODES = [502, 503, 504]
         RETRY_EXCEPTION_TYPES = (RequestException, )
         RETRY_EXCEPTION_TYPES_BLACKLIST = (ValueError, ProxyError, TooManyRedirects, URLRequired)
 
