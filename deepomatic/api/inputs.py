@@ -32,7 +32,7 @@ from deepomatic.api.exceptions import DeepomaticException
 ###############################################################################
 
 def format_inputs(inputs, data):
-    assert(isinstance(inputs, list))
+    assert (isinstance(inputs, list))
 
     data = copy.deepcopy(data)
     files = {}

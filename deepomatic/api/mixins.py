@@ -58,7 +58,7 @@ class UpdateOnlyArg(Arg):
 
 class UpdatableResource(object):
     def update(self, replace=False, content_type='application/json', files=None, **kwargs):
-        assert(self._pk is not None)
+        assert (self._pk is not None)
 
         if self._helper.check_query_parameters:
             for arg_name in kwargs:
@@ -78,7 +78,7 @@ class UpdatableResource(object):
 
 class DeletableResource(object):
     def delete(self):
-        assert(self._pk is not None)
+        assert (self._pk is not None)
         return self._helper.delete(self._uri(pk=self._pk))
 
 
