@@ -119,7 +119,7 @@ class HTTPRetryError(RetryError):
                 last_request = last_result.request
                 msg += f"a Response <status_code={last_result.status_code} method={last_request.method.upper()} url={last_request.url}>"
             else:
-                msg += str(last_result)
+                return super().__str__()
         return msg
 
 
