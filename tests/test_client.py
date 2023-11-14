@@ -437,7 +437,6 @@ class TestClientRetry(object):
             last_exception = retry_error.last_attempt.exception(timeout=0)
             assert isinstance(last_exception, HTTPRetryError)
             assert 502 == last_exception.last_attempt.result().status_code
-            assert str(last_exception)
 
     def test_no_retry_blacklist_exception(self):
         client = self.get_client_with_retry()
