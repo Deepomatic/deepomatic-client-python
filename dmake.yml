@@ -27,14 +27,14 @@ docker:
         - deploy/install.sh
     # Nothing changes comparing to above, except 'variant' and 'root_image'
     - <<: *base_image
-      variant: '3.4'
-      root_image: python:3.4
+      variant: '3.9'
+      root_image: python:3.9
     - <<: *base_image
-      variant: '3.5'
-      root_image: python:3.5
+      variant: '3.10'
+      root_image: python:3.10
     - <<: *base_image
-      variant: '3.6'
-      root_image: python:3.6
+      variant: '3.11'
+      root_image: python:3.11
 
 services:
   - service_name: client
@@ -45,10 +45,10 @@ services:
           dockerfile: deploy/Dockerfile
           target: dev
         base_image_variant:
-          - '3.4'
-          - '3.5'
-          - '3.6'
           - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
     tests:
       commands:
         - LOG_LEVEL=DEBUG pytest --junit-xml=junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report html:cover -vv /app/tests
@@ -61,10 +61,10 @@ services:
   - service_name: build-egg
     # unit tests must have passed on all supported platforms to build the universal egg
     needed_services:
-      - client:3.4
-      - client:3.5
-      - client:3.6
       - client:3.8
+      - client:3.9
+      - client:3.10
+      - client:3.11
     config:
       docker_image:
         build:
