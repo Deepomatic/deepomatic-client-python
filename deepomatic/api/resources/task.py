@@ -77,7 +77,7 @@ class Task(ListableResource, Resource):
         """
         Returns a list of tasks
         """
-        assert(isinstance(task_ids, list))
+        assert (isinstance(task_ids, list))
         return super(Task, self).list(task_ids=task_ids)
 
     def wait(self, **retry_kwargs):
