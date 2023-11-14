@@ -26,6 +26,7 @@ import json
 from tenacity import RetryError
 from requests import Response
 
+
 class DeepomaticException(Exception):
     def __init__(self, msg):
         super(DeepomaticException, self).__init__(msg)

@@ -352,9 +352,12 @@ class TestClientRetry(object):
         with pytest.raises(HTTPRetryError) as exc:
             print(spec.data())  # does make a http call
 
-        assert str(exc.value).startswith("""
-        Last attempt was an exception <class 'requests.exceptions.ConnectionError'> "HTTPConnectionPool(host='invalid-domain.deepomatic.com', port=80): Max retries exceeded with url: /v0.7/recognition/public/imagenet-inception-v3/ (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at
-        """.strip())
+        assert str(exc.value).startswith(
+            """Last attempt was an exception <class 'requests.exceptions.ConnectionError'> \""""
+            """HTTPConnectionPool(host='invalid-domain.deepomatic.com', port=80): Max retries exceeded with url: """
+            """/v0.7/recognition/public/imagenet-inception-v3/ (Caused by NewConnectionError"""
+            """('<urllib3.connection.HTTPConnection object at"""
+        )
         assert str(exc.value).endswith("""
         >: Failed to establish a new connection: [Errno -2] Name or service not known',))"
         """.strip())
