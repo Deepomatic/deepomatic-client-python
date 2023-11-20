@@ -36,7 +36,3 @@ All client methods can be found in [deepomatic/api/client.py](deepomatic/api/cli
 ### Examples
 
 You will find examples of usage in [demo.py](demo.py).
-
-# Bugs
-
-Please send bug reports to support@deepomatic.com or open an issue here.
