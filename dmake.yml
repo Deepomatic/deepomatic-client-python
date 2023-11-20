@@ -11,7 +11,6 @@ env:
     master:
       source: ${DEEPOMATIC_CONFIG_DIR}/prod.sh
 
-
 docker:
   base_image:
     # This first item is a YAML template named "base_image"
@@ -19,8 +18,8 @@ docker:
     # "- <<: *base_image" as used below.
     - &base_image
       name: deepomatic-client-python
-      variant: '2.7'
-      root_image: python:2.7
+      variant: '3.8'
+      root_image: python:3.8
       copy_files:
         - requirements.txt
         - requirements.dev.txt
@@ -28,15 +27,14 @@ docker:
         - deploy/install.sh
     # Nothing changes comparing to above, except 'variant' and 'root_image'
     - <<: *base_image
-      variant: '3.4'
-      root_image: python:3.4
+      variant: '3.9'
+      root_image: python:3.9
     - <<: *base_image
-      variant: '3.5'
-      root_image: python:3.5
+      variant: '3.10'
+      root_image: python:3.10
     - <<: *base_image
-      variant: '3.6'
-      root_image: python:3.6
-
+      variant: '3.11'
+      root_image: python:3.11
 
 services:
   - service_name: client
@@ -47,10 +45,10 @@ services:
           dockerfile: deploy/Dockerfile
           target: dev
         base_image_variant:
-          - '2.7'
-          - '3.4'
-          - '3.5'
-          - '3.6'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
     tests:
       commands:
         - LOG_LEVEL=DEBUG pytest --junit-xml=junit.xml --cov=. --cov-report=xml:coverage.xml --cov-report html:cover -vv /app/tests
@@ -63,17 +61,17 @@ services:
   - service_name: build-egg
     # unit tests must have passed on all supported platforms to build the universal egg
     needed_services:
-      - client:2.7
-      - client:3.4
-      - client:3.5
-      - client:3.6
+      - client:3.8
+      - client:3.9
+      - client:3.10
+      - client:3.11
     config:
       docker_image:
         build:
           context: .
           dockerfile: deploy/Dockerfile
           target: build
-        base_image_variant: '3.6'
+        base_image_variant: '3.8'
     tests:
       # TODO follow up on https://github.com/Deepomatic/dmake/issues/311
       data_volumes:
@@ -84,27 +82,6 @@ services:
         - rm -rf /dist/*
         - cp /app/dist/* /dist
         - chmod -R a+w /dist
-
-  - service_name: test-egg-py2
-    needed_services:
-      - build-egg
-    config:
-      docker_image:
-        build:
-          context: .
-          dockerfile: deploy/Dockerfile
-          target: runtime-py2
-        # only used by dmake shell; bypassed by runtime-py2 Dockerfile target
-        base_image_variant:
-          - '2.7'
-    tests:
-      data_volumes:
-       - container_volume: /dist/
-         source: ./dist/
-      commands:
-        - pip install /dist/deepomatic_api-*.whl
-        - LOG_LEVEL=DEBUG python /app/demo.py
-
 
   - service_name: test-egg-py3
     needed_services:
@@ -117,7 +94,7 @@ services:
           target: runtime-py3
         # only used by dmake shell; bypassed by runtime-py3 Dockerfile target
         base_image_variant:
-          - '3.6'
+          - '3.8'
     tests:
       data_volumes:
        - container_volume: /dist/

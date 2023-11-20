@@ -294,11 +294,11 @@ class TestClient(object):
 
         # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
         for pos, pending in pending_tasks:
-            assert(tasks[pos].pk == pending.pk)
+            assert (tasks[pos].pk == pending.pk)
         for pos, err in error_tasks:
-            assert(tasks[pos].pk == err.pk)
+            assert (tasks[pos].pk == err.pk)
         for pos, success in success_tasks:
-            assert(tasks[pos].pk == success.pk)
+            assert (tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
 
         # Task* str(): oneliners (easier to parse in log tooling)
@@ -347,6 +347,33 @@ class TestClientRetry(object):
         exc = last_attempt.exception(timeout=0)
         assert isinstance(exc, ConnectionError)
         assert 'Name or service not known' in str(exc)
+
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
+        with pytest.raises(HTTPRetryError) as exc:
+            print(spec.data())  # does make a http call
+
+        # raise Exception(exc.value)
+        assert str(exc.value).startswith(
+            """Last attempt was an exception <class 'requests.exceptions.ConnectionError'> \""""
+            """HTTPConnectionPool(host='invalid-domain.deepomatic.com', port=80): Max retries exceeded with url: """
+            """/v0.7/recognition/public/imagenet-inception-v3/ (Caused by NameResolutionError"""
+            """("<urllib3.connection.HTTPConnection object at"""
+        )
+        assert str(exc.value).endswith("""
+        >: Failed to resolve 'invalid-domain.deepomatic.com' ([Errno -2] Name or service not known)"))"
+        """.strip())
+
+    def test_retry_bad_status_code(self):
+        client = get_client(host='https://httpbin.org', version=None)
+        with httpretty.enabled():
+            httpretty.register_uri(
+                httpretty.GET,
+                re.compile(r'https?://.*?/?'),
+                status=502,
+            )  # to avoid flakyness we prefer to mock even though httpbin is done for that
+            with pytest.raises(HTTPRetryError) as retry_error:
+                client.http_helper.get('/status/502')
+            assert str(retry_error.value) == "Last attempt was a Response <status_code=502 method=GET url=https://httpbin.org//status/502>"
 
     def register_uri(self, methods, status):
         for method in methods:

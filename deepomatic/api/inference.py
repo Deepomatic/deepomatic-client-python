@@ -5,7 +5,7 @@ from deepomatic.api.inputs import format_inputs
 
 class InferenceResource(object):
     def inference(self, return_task=False, wait_task=True, **kwargs):
-        assert(self._pk is not None)
+        assert (self._pk is not None)
 
         inputs = kwargs.pop('inputs', None)
         if inputs is None:
