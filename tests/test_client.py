@@ -249,7 +249,9 @@ class TestClient(object):
         assert data['network_id'] == custom_network['id']
         assert 'post_processings' in data
 
-        client.Task.retrieve(custom_network['task_id']).wait()
+        # Wait for network deployment
+        # FIXME: it could be implemented with proper 503 error code and retry
+        time.sleep(30)
 
         result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=False, max_predictions=3)
         assert inference_schema(2, 0, 'golden retriever', 0.8) == result
