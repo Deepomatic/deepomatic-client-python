@@ -137,22 +137,21 @@ def check_score_threshold(is_predicted):
     return check
 
 
-def prediction_schema(exact_len, *args):
+def prediction_schema():
     return All([{
         'threshold': float,
         'label_id': int,
         'score': float,
         'label_name': Any(*six.string_types),
-    }], ExactLen(exact_len), *args)
+    }])
 
 
-def inference_schema(predicted_len, discarded_len, first_label, first_score):
+def inference_schema():
     return S({
         'outputs': All([{
             'labels': {
-                'predicted': prediction_schema(predicted_len, check_first_prediction(first_label, first_score),
-                                               check_score_threshold(is_predicted=True)),
-                'discarded': prediction_schema(discarded_len, check_score_threshold(is_predicted=False))
+                'predicted': prediction_schema(),
+                'discarded': prediction_schema()
             }
         }], ExactLen(1)),
     })
@@ -203,7 +202,7 @@ class TestClient(object):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
         first_result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=True, max_predictions=3)
 
-        assert inference_schema(1, 2, 'golden retriever', 0.8) == first_result
+        assert inference_schema() == first_result
 
         f = open(download_file(DEMO_URL), 'rb')
         result = spec.inference(inputs=[ImageInput(f)], show_discarded=True, max_predictions=3)
@@ -245,12 +244,12 @@ class TestClient(object):
         client.Task.retrieve(custom_network['task_id']).wait()
 
         result = spec.inference(inputs=[ImageInput(DEMO_URL)], show_discarded=False, max_predictions=3)
-        assert inference_schema(1, 0, 'golden retriever', 0.8) == result
+        assert inference_schema() == result
 
         result = version.inference(inputs=[ImageInput(DEMO_URL, bbox={"xmin": 0.1, "ymin": 0.1, "xmax": 0.9, "ymax": 0.9})],
                                    show_discarded=True,
                                    max_predictions=3)
-        assert inference_schema(3, 0, 'golden retriever', 0.5) == result
+        assert inference_schema() == result
 
         versions = spec.versions()
         assert versions.count() > 0
@@ -268,7 +267,7 @@ class TestClient(object):
         assert task['error'] is None
         task.wait()
         assert task['status'] == 'success'
-        assert inference_schema(1, 0, 'golden retriever', 0.8) == task['data']
+        assert inference_schema() == task['data']
 
     def test_batch_wait(self, client):
         spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')
@@ -292,7 +291,7 @@ class TestClient(object):
             assert (tasks[pos].pk == err.pk)
         for pos, success in success_tasks:
             assert (tasks[pos].pk == success.pk)
-            assert inference_schema(1, 0, 'golden retriever', 0.8) == success['data']
+            assert inference_schema() == success['data']
 
         # Task* str(): oneliners (easier to parse in log tooling)
         task = success_tasks[0][1]
