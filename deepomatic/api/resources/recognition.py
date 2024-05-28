@@ -55,7 +55,7 @@ class RecognitionSpec(ListableResource,
         return '/recognition/public/' if public else '/recognition/specs/'
 
     def versions(self, offset=0, limit=100):
-        assert (self._pk is not None)
+        assert(self._pk is not None)
         return ResourceList(RecognitionVersion, self._helper, self._uri(pk=self._pk, suffix='versions'), offset, limit)
 
 

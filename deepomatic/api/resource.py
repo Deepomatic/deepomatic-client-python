@@ -47,7 +47,7 @@ class Resource(object):
         return self.__class__(self._helper, pk=pk)
 
     def refresh(self):
-        assert (self._pk is not None)
+        assert(self._pk is not None)
         self._data = self._helper.get(self._uri(pk=self._pk))
         return self
 

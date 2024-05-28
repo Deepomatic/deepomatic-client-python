@@ -294,11 +294,11 @@ class TestClient(object):
 
         # pending_tasks, error_tasks and success_tasks contains the original offset of the input parameter tasks
         for pos, pending in pending_tasks:
-            assert (tasks[pos].pk == pending.pk)
+            assert(tasks[pos].pk == pending.pk)
         for pos, err in error_tasks:
-            assert (tasks[pos].pk == err.pk)
+            assert(tasks[pos].pk == err.pk)
         for pos, success in success_tasks:
-            assert (tasks[pos].pk == success.pk)
+            assert(tasks[pos].pk == success.pk)
             assert inference_schema(2, 0, 'golden retriever', 0.8) == success['data']
 
         # Task* str(): oneliners (easier to parse in log tooling)

@@ -26,24 +26,34 @@ import json
 from tenacity import RetryError
 
 
+###############################################################################
+
 class DeepomaticException(Exception):
     def __init__(self, msg):
         super(DeepomaticException, self).__init__(msg)
+
+###############################################################################
 
 
 class CredentialsNotFound(DeepomaticException):
     pass
 
 
+###############################################################################
+
 class UnimplementedException(DeepomaticException):
     def __init__(self, msg):
         super(UnimplementedException, self).__init__(msg)
 
 
+###############################################################################
+
 class NoData(DeepomaticException):
     def __init__(self):
         super(NoData, self).__init__("No data !! You may need to call '.retrieve()' ?")
 
+
+###############################################################################
 
 class BadStatus(DeepomaticException):
     """
@@ -83,6 +93,8 @@ class ServerError(BadStatus):
     pass
 
 
+###############################################################################
+
 class TaskError(DeepomaticException):
     def __init__(self, task):
         self.task = task
@@ -94,6 +106,8 @@ class TaskError(DeepomaticException):
         return self.task['id']
 
 
+###############################################################################
+
 class TaskTimeout(DeepomaticException):
     def __init__(self, task, retry_error=None):
         self.task = task
@@ -104,6 +118,9 @@ class TaskTimeout(DeepomaticException):
 
     def get_task_id(self):
         return self.task['id']
+
+
+###############################################################################
 
 
 class HTTPRetryError(RetryError):
