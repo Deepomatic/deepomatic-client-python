@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 import json
 from tenacity import RetryError
+from requests import Response
 
 
 class DeepomaticException(Exception):
@@ -107,7 +108,20 @@ class TaskTimeout(DeepomaticException):
 
 
 class HTTPRetryError(RetryError):
-    pass
+    def __str__(self):
+        last_exception = self.last_attempt.exception(timeout=0)
+        msg = "Last attempt was "
+        if last_exception is not None:
+            exception_type = type(last_exception)
+            msg += f'an exception {exception_type} "{last_exception}"'
+        else:
+            last_result = self.last_attempt.result()
+            if isinstance(last_result, Response):
+                last_request = last_result.request
+                msg += f"a Response <status_code={last_result.status_code} method={last_request.method.upper()} url={last_request.url}>"
+            else:
+                return super().__str__()
+        return msg
 
 
 class TaskRetryError(RetryError):

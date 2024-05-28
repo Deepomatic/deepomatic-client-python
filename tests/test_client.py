@@ -348,6 +348,33 @@ class TestClientRetry(object):
         assert isinstance(exc, ConnectionError)
         assert 'Name or service not known' in str(exc)
 
+        spec = client.RecognitionSpec.retrieve('imagenet-inception-v3')  # doesn't make any http call
+        with pytest.raises(HTTPRetryError) as exc:
+            print(spec.data())  # does make a http call
+
+        # raise Exception(exc.value)
+        assert str(exc.value).startswith(
+            """Last attempt was an exception <class 'requests.exceptions.ConnectionError'> \""""
+            """HTTPConnectionPool(host='invalid-domain.deepomatic.com', port=80): Max retries exceeded with url: """
+            """/v0.7/recognition/public/imagenet-inception-v3/ (Caused by NameResolutionError"""
+            """("<urllib3.connection.HTTPConnection object at"""
+        )
+        assert str(exc.value).endswith("""
+        >: Failed to resolve 'invalid-domain.deepomatic.com' ([Errno -2] Name or service not known)"))"
+        """.strip())
+
+    def test_retry_bad_status_code(self):
+        client = get_client(host='https://httpbin.org', version=None)
+        with httpretty.enabled():
+            httpretty.register_uri(
+                httpretty.GET,
+                re.compile(r'https?://.*?/?'),
+                status=502,
+            )  # to avoid flakyness we prefer to mock even though httpbin is done for that
+            with pytest.raises(HTTPRetryError) as retry_error:
+                client.http_helper.get('/status/502')
+            assert str(retry_error.value) == "Last attempt was a Response <status_code=502 method=GET url=https://httpbin.org//status/502>"
+
     def register_uri(self, methods, status):
         for method in methods:
             httpretty.register_uri(
