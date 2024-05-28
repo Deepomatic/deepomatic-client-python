@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 import json
 from tenacity import RetryError
-from requests import Response
 
 
 class DeepomaticException(Exception):
