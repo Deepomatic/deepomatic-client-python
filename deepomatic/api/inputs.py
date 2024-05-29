@@ -25,6 +25,7 @@ THE SOFTWARE.
 import sys
 import copy
 import base64
+import json
 
 from deepomatic.api.exceptions import DeepomaticException
 
@@ -102,6 +103,9 @@ class ImageInput(AbstractInput):
         }
         if self.bbox is not None:
             image['bbox'] = self.bbox
+            if self.need_multipart and isinstance(image['bbox'], dict):
+                # Convert the bbox to a string to allow serialization
+                image['bbox'] = json.dumps(image['bbox'])
         if self.polygon is not None:
             image['polygon'] = self.polygon
         return {
