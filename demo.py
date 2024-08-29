@@ -156,7 +156,6 @@ def demo(client=None):
 
     extract_dir = tempfile.gettempdir()
     net_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/network.zip')
-    preproc_zip = download_file('https://s3-eu-west-1.amazonaws.com/deepo-public/run-demo-networks/imagenet-inception-v3/preprocessing.zip')
 
     model_file_name = 'saved_model.pb'
     variables_file_name = 'variables.index'
