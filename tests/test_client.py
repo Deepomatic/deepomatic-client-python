@@ -87,7 +87,6 @@ def custom_network(client):
                     "dimension_order": "NHWC",
                     "target_size": "299x299",
                     "resize_type": "CROP",
-                    "mean_file": "",
                     "color_channels": "BGR",
                     "pixel_scaling": 2.0,
                     "data_type": "FLOAT32"

@@ -152,7 +152,6 @@ def demo(client=None):
     Below, we download:
     - saved_model.pb:  the network architecture
     - variables.*: the files that describe the learned parameters of the model (they might be included in the saved_model.pb).
-    - mean_file: the file that stores the mean image that needs to be substracted from the input (optional)
     """
 
     extract_dir = tempfile.gettempdir()
@@ -162,18 +161,13 @@ def demo(client=None):
     model_file_name = 'saved_model.pb'
     variables_file_name = 'variables.index'
     variables_data_file_name = 'variables.data-00000-of-00001'
-    mean_file_name = 'mean.proto.bin'
 
     model_file = os.path.join(extract_dir, model_file_name)
-    mean_file = os.path.join(extract_dir, mean_file_name)
     variables_file = os.path.join(extract_dir + '/variables/', variables_file_name)
     variables_data_file = os.path.join(extract_dir + '/variables/', variables_data_file_name)
 
     if not os.path.exists(model_file):
         with zipfile.ZipFile(net_zip) as f:
-            f.extractall(extract_dir)
-    if not os.path.exists(mean_file):
-        with zipfile.ZipFile(preproc_zip) as f:
             f.extractall(extract_dir)
 
     """
@@ -188,7 +182,6 @@ def demo(client=None):
                     "dimension_order": "NHWC",
                     "target_size": "299x299",
                     "resize_type": "CROP",
-                    "mean_file": mean_file_name,
                     "color_channels": "BGR",
                     "pixel_scaling": 2.0,
                     "data_type": "FLOAT32"
@@ -205,7 +198,6 @@ def demo(client=None):
         model_file_name: open(model_file, 'rb'),
         variables_file_name: open(variables_file, 'rb'),
         variables_data_file_name: open(variables_data_file, 'rb'),
-        mean_file_name: open(mean_file, 'rb')
     }
 
     """
