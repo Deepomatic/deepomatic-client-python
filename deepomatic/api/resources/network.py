@@ -78,5 +78,5 @@ class Network(ListableResource,
     def _convert_result_to_numpy(result):
         new_result = {}
         for tensor in result['tensors']:
-            new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['dims'])
+            new_result[tensor['name']] = np.array(tensor['data']).reshape(tensor['shape'])
         return new_result
